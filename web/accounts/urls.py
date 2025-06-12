@@ -2,12 +2,23 @@
 
 from django.urls import path
 from .views import (
-    AccountSignupView, activate_account, ResendActivationView, ReactivateAccountView,
-    LoginView, logout_view, TwoFactorView,
-    ProfileView, ChangePasswordView, ChangeEmailView, DeleteAccountView,
-    delete_address_view, set_default_address_view,
-    CustomPasswordResetView, CustomPasswordResetDoneView,
-    CustomPasswordResetConfirmView, CustomPasswordResetCompleteView,
+    AccountSignupView,
+    activate_account,
+    ResendActivationView,
+    ReactivateAccountView,
+    LoginView,
+    logout_view,
+    TwoFactorView,
+    ProfileView,
+    ChangePasswordView,
+    ChangeEmailView,
+    DeleteAccountView,
+    delete_address_view,
+    set_default_address_view,
+    CustomPasswordResetView,
+    CustomPasswordResetDoneView,
+    CustomPasswordResetConfirmView,
+    CustomPasswordResetCompleteView,
 )
 
 app_name = "accounts"
@@ -19,7 +30,7 @@ urlpatterns = [
     path("resend-activation/", ResendActivationView.as_view(), name="resend_activation"),
     path("reactivate/", ReactivateAccountView.as_view(), name="reactivate"),
 
-    # Login / Logout
+    # Login/Logout
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", logout_view, name="logout"),
 
@@ -36,9 +47,17 @@ urlpatterns = [
     path("address/delete/<int:address_id>/", delete_address_view, name="delete_address"),
     path("address/set-default/<int:address_id>/", set_default_address_view, name="set_default_address"),
 
-    # Password reset flows
+    # Password reset
     path("password/reset/", CustomPasswordResetView.as_view(), name="password_reset"),
     path("password/reset/done/", CustomPasswordResetDoneView.as_view(), name="password_reset_done"),
-    path("password/reset/confirm/<uidb64>/<token>/", CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("password/reset/complete/", CustomPasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path(
+        "password/reset/confirm/<uidb64>/<token>/",
+        CustomPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
+    path(
+        "password/reset/complete/",
+        CustomPasswordResetCompleteView.as_view(),
+        name="password_reset_complete",
+    ),
 ]

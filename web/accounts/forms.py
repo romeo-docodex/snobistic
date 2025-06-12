@@ -1,40 +1,28 @@
 # accounts/forms.py
 
-from datetime import date, timedelta
-
+from datetime import date
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
+from django.utils import timezone
 from django_countries.widgets import CountrySelectWidget
 from phonenumber_field.formfields import PhoneNumberField
 
-from .models import CustomUser, UserProfile, UserAddress, EmailToken
-
-
-def validate_minimum_age(value):
-    """Verifică să fie cel puțin 18 ani."""
-    today = date.today()
-    age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
-    if age < 18:
-        raise ValidationError(_("Trebuie să ai cel puțin 18 ani."))
-
-
-def validate_iban(value):
-    """Validare superficială IBAN (lungime între 15 și 34)."""
-    iban = value.replace(' ', '').upper()
-    if len(iban) < 15 or len(iban) > 34:
-        raise ValidationError(_("IBAN invalid (lungime incorectă)."))
+from .models import CustomUser, UserProfile, UserAddress
 
 
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(label=_("Email"), widget=forms.EmailInput(attrs={'class':'form-control'}))
-    phone = PhoneNumberField(label=_("Telefon"), widget=forms.TextInput(attrs={'class':'form-control'}))
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ex: you@example.com'})
+    )
+    phone = PhoneNumberField(
+        label="Telefon",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex: +40741234567'})
+    )
     birth_date = forms.DateField(
-        label=_("Data nașterii"),
-        validators=[validate_minimum_age],
-        widget=forms.DateInput(attrs={'type': 'date', 'class':'form-control'})
+        label="Data nașterii",
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
 
     class Meta:
@@ -44,26 +32,22 @@ class RegisterForm(UserCreationForm):
             'password1', 'password2', 'user_type', 'is_company', 'vat_payer'
         ]
         widgets = {
-            'username': forms.TextInput(attrs={'class':'form-control'}),
-            'user_type': forms.Select(attrs={'class':'form-select'}),
-            'is_company': forms.CheckboxInput(attrs={'class':'form-check-input'}),
-            'vat_payer': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'user_type': forms.Select(attrs={'class': 'form-select'}),
+            'is_company': forms.CheckboxInput(),
+            'vat_payer': forms.CheckboxInput(),
         }
 
-    def clean_email(self):
-        email = self.cleaned_data['email'].lower()
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError(_("Un cont cu acest email există deja."))
-        return email
+    def clean_birth_date(self):
+        bd = self.cleaned_data['birth_date']
+        today = date.today()
+        age = today.year - bd.year - ((today.month, today.day) < (bd.month, bd.day))
+        if age < 18:
+            raise ValidationError("Trebuie să ai cel puțin 18 ani pentru a te înregistra.")
+        return bd
 
 
 class ProfileForm(forms.ModelForm):
-    iban = forms.CharField(
-        required=False,
-        validators=[validate_iban],
-        widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'RO49...'})
-    )
-
     class Meta:
         model = UserProfile
         fields = [
@@ -72,13 +56,15 @@ class ProfileForm(forms.ModelForm):
             'sleeve', 'leg_in', 'leg_out'
         ]
         widgets = {
-            'avatar': forms.ClearableFileInput(attrs={'class':'form-control'}),
-            'description': forms.Textarea(attrs={'class':'form-control', 'rows':3}),
-            **{
-                field: forms.NumberInput(attrs={'class':'form-control', 'step':'0.01'})
-                for field in ['shoulder','bust','waist','hips','length','sleeve','leg_in','leg_out']
-            }
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'iban': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'RO49AAAA1B31007593840000'}),
         }
+
+    def clean_iban(self):
+        iban = self.cleaned_data.get('iban', '').replace(' ', '')
+        if iban and (len(iban) < 15 or len(iban) > 34 or not iban.isalnum()):
+            raise ValidationError("IBAN pare invalid.")
+        return iban
 
 
 class CustomUserForm(forms.ModelForm):
@@ -86,19 +72,13 @@ class CustomUserForm(forms.ModelForm):
         model = CustomUser
         fields = ['email', 'phone', 'birth_date', 'user_type', 'is_company', 'vat_payer']
         widgets = {
-            'email': forms.EmailInput(attrs={'class':'form-control'}),
-            'phone': forms.TextInput(attrs={'class':'form-control'}),
-            'birth_date': forms.DateInput(attrs={'type':'date','class':'form-control'}),
-            'user_type': forms.Select(attrs={'class':'form-select'}),
-            'is_company': forms.CheckboxInput(attrs={'class':'form-check-input'}),
-            'vat_payer': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'user_type': forms.Select(attrs={'class': 'form-select'}),
+            'is_company': forms.CheckboxInput(),
+            'vat_payer': forms.CheckboxInput(),
         }
-
-    def clean_email(self):
-        email = self.cleaned_data['email'].lower()
-        if CustomUser.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
-            raise ValidationError(_("Email-ul este deja folosit de alt cont."))
-        return email
 
 
 class AddressForm(forms.ModelForm):
@@ -106,81 +86,58 @@ class AddressForm(forms.ModelForm):
         model = UserAddress
         fields = ['address_type', 'name', 'country', 'city', 'street_address', 'postal_code', 'is_default']
         widgets = {
-            'address_type': forms.Select(attrs={'class':'form-select'}),
-            'name': forms.TextInput(attrs={'class':'form-control'}),
-            'country': CountrySelectWidget(attrs={'class':'form-select'}),
-            'city': forms.TextInput(attrs={'class':'form-control'}),
-            'street_address': forms.TextInput(attrs={'class':'form-control'}),
-            'postal_code': forms.TextInput(attrs={'class':'form-control'}),
-            'is_default': forms.CheckboxInput(attrs={'class':'form-check-input'}),
+            'address_type': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': CountrySelectWidget(attrs={'class': 'form-select'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'street_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_default': forms.CheckboxInput(),
         }
-
-    def clean(self):
-        cleaned = super().clean()
-        if cleaned.get('is_default'):
-            # Resetăm celelalte implicit
-            UserAddress.objects.filter(
-                user=self.instance.user or self.initial.get('user'),
-                address_type=cleaned.get('address_type')
-            ).update(is_default=False)
-        return cleaned
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):
     old_password = forms.CharField(
-        label=_("Parola actuală"),
-        widget=forms.PasswordInput(attrs={'class':'form-control'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Parola actuală'}),
+        label="Parola actuală"
     )
     new_password1 = forms.CharField(
-        label=_("Noua parolă"),
-        widget=forms.PasswordInput(attrs={'class':'form-control'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Noua parolă'}),
+        label="Noua parolă"
     )
     new_password2 = forms.CharField(
-        label=_("Confirmă noua parolă"),
-        widget=forms.PasswordInput(attrs={'class':'form-control'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmă noua parolă'}),
+        label="Confirmare parolă"
     )
 
 
 class TwoFactorForm(forms.Form):
     code = forms.CharField(
         max_length=6,
-        label=_("Cod 2FA"),
-        widget=forms.TextInput(attrs={'class':'form-control','placeholder':_('Introdu codul primit')})
+        label='Cod 2FA',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Introdu codul primit'})
     )
 
 
 class ResendActivationForm(forms.Form):
     email = forms.EmailField(
-        label=_("Email"),
-        widget=forms.EmailInput(attrs={'class':'form-control'})
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+        label="Email"
     )
-
-    def clean_email(self):
-        email = self.cleaned_data['email'].lower()
-        if not CustomUser.objects.filter(email=email, is_active=False).exists():
-            raise ValidationError(_("Nu există cont inactiv cu acest email."))
-        return email
 
 
 class ChangeEmailForm(forms.Form):
     new_email = forms.EmailField(
-        label=_("Email nou"),
-        widget=forms.EmailInput(attrs={'class':'form-control'})
+        label="Email nou",
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ex: new@example.com'})
     )
     password = forms.CharField(
-        label=_("Parola"),
-        widget=forms.PasswordInput(attrs={'class':'form-control'})
+        label="Parolă actuală",
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Parola ta'})
     )
 
     def clean_new_email(self):
-        email = self.cleaned_data['new_email'].lower()
+        email = self.cleaned_data['new_email']
         if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError(_("Email-ul este deja folosit."))
+            raise ValidationError("Acest email este deja folosit.")
         return email
-
-    def clean(self):
-        cleaned = super().clean()
-        pwd = cleaned.get('password')
-        if pwd and not self.initial.get('request').user.check_password(pwd):
-            raise ValidationError({'password': _("Parolă incorectă.")})
-        return cleaned
