@@ -1,104 +1,128 @@
-# accounts/views.py
-
-from datetime import timedelta
-
+# web/accounts/views.py
+import uuid
 from django.contrib import messages
 from django.contrib.auth import (
-    authenticate, login, logout, update_session_auth_hash
+    login, logout, authenticate, update_session_auth_hash
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import (
+    PasswordResetView, PasswordResetDoneView,
+    PasswordResetConfirmView, PasswordResetCompleteView
+)
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.generic import FormView, TemplateView, View
+from django.utils.encoding import force_bytes, force_str
+from django.views import View
+from django.views.generic import FormView, TemplateView
 from django.views.decorators.http import require_POST
-from django.utils.decorators import method_decorator
 from allauth.account.views import SignupView
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 
 from .forms import (
-    RegisterForm, ResendActivationForm, ReactivateForm, ChangeEmailForm,
-    LoginForm, TwoFactorForm, CustomPasswordChangeForm,
-    CustomUserForm, ProfileForm, AddressForm
+    RegisterForm, ProfileForm, CustomUserForm,
+    AddressForm, CustomPasswordChangeForm, TwoFactorForm,
+    ResendActivationForm, ChangeEmailForm, ReactivateForm
 )
-from .models import CustomUser, UserAddress
+from .models import CustomUser, UserProfile, EmailToken
 from .tokens import account_activation_token
+
+
+def _send_activation_email(request, user, purpose='activation'):
+    # generate & store token
+    token = uuid.uuid4().hex
+    EmailToken.objects.create(user=user, token=token, purpose=purpose)
+    uid  = urlsafe_base64_encode(force_bytes(user.pk))
+    link = request.build_absolute_uri(
+        reverse_lazy("accounts:activate", args=[uid, token])
+    )
+    subject = {
+        'activation': "Activează contul tău Snobistic",
+        'email_change': "Confirmă noul email Snobistic",
+    }[purpose]
+    template = "accounts/auth/email_activate.html"
+    ctx = {'user': user, 'activation_link': link}
+    EmailMessage(subject, render_to_string(template, ctx), to=[user.email]).send()
 
 
 class AccountSignupView(SignupView):
     template_name = "accounts/auth/register.html"
-    form_class = RegisterForm
-    success_url = reverse_lazy("accounts:login")
+    form_class    = RegisterForm
+    success_url   = reverse_lazy("accounts:login")
 
 
 def activate_account(request, uidb64, token):
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = CustomUser.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        user = None
+        uid    = force_str(urlsafe_base64_decode(uidb64))
+        user   = CustomUser.objects.get(pk=uid)
+        etoken = EmailToken.objects.get(user=user, token=token, purpose='activation', used=False)
+    except Exception:
+        user = etoken = None
 
-    if user and account_activation_token.check_token(user, token):
-        user.is_active = True
+    if user and etoken and not etoken.is_expired():
+        user.is_active      = True
         user.verified_email = True
         user.save()
+        etoken.used = True
+        etoken.save()
         login(request, user)
         messages.success(request, "Cont activat cu succes.")
         return redirect("accounts:profile")
-
-    return render(request, "accounts/auth/email_activate.html", {"invalid": True})
+    messages.error(request, "Link de activare invalid sau expirat.")
+    return redirect("accounts:resend_activation")
 
 
 class ResendActivationView(FormView):
     template_name = "accounts/auth/resend_activation.html"
-    form_class = ResendActivationForm
-    success_url = reverse_lazy("accounts:login")
+    form_class    = ResendActivationForm
+    success_url   = reverse_lazy("accounts:login")
 
     def form_valid(self, form):
-        email = form.cleaned_data["email"]
-        try:
-            user = CustomUser.objects.get(email=email, is_active=False)
-            send_activation_email(self.request, user)
+        email = form.cleaned_data['email']
+        user  = CustomUser.objects.filter(email=email, is_active=False).first()
+        if user:
+            _send_activation_email(self.request, user)
             messages.success(self.request, "Email de activare retrimis.")
-        except CustomUser.DoesNotExist:
-            messages.error(self.request, "Nu am găsit niciun cont inactiv cu acest email.")
+        else:
+            messages.error(self.request, "Cont inactiv negăsit.")
         return super().form_valid(form)
 
 
 class ReactivateAccountView(FormView):
-    template_name = "accounts/auth/reactivate.html"
-    form_class = ReactivateForm
-    success_url = reverse_lazy("accounts:profile")
+    template_name = "accounts/auth/reactivate_account.html"
+    form_class    = ReactivateForm
+    success_url   = reverse_lazy("accounts:login")
 
     def form_valid(self, form):
-        email = form.cleaned_data["email"]
-        password = form.cleaned_data["password"]
-        user = authenticate(self.request, username=email, password=password)
-        if user and user.deleted_at is not None:
-            user.reactivate()
-            login(self.request, user)
-            messages.success(self.request, "Cont reactivat cu succes.")
-            return super().form_valid(form)
-        form.add_error(None, "Date invalide sau cont neexistent ori deja activ.")
-        return self.form_invalid(form)
+        email = form.cleaned_data['email']
+        user  = CustomUser.objects.get(email=email, deleted_at__isnull=False)
+        user.reactivate()
+        messages.success(self.request, "Cont reactivat. Verifică email-ul.")
+        _send_activation_email(self.request, user)
+        return super().form_valid(form)
 
 
-class LoginView(FormView):
+class LoginView(View):
     template_name = "accounts/auth/login.html"
-    form_class = LoginForm
-    success_url = reverse_lazy("accounts:profile")
 
-    def form_valid(self, form):
-        email = form.cleaned_data["email"]
-        password = form.cleaned_data["password"]
-        user = authenticate(self.request, username=email, password=password)
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        user = authenticate(
+            request,
+            username=request.POST.get("email"),
+            password=request.POST.get("password")
+        )
         if user:
-            login(self.request, user)
-            return super().form_valid(form)
-        form.add_error(None, "Date de autentificare invalide.")
-        return self.form_invalid(form)
+            if user.two_fa_enabled:
+                request.session['pre_2fa_user_id'] = user.pk
+                return redirect("accounts:two_factor")
+            login(request, user)
+            return redirect("accounts:profile")
+        messages.error(request, "Date de autentificare invalide.")
+        return render(request, self.template_name)
 
 
 def logout_view(request):
@@ -108,19 +132,18 @@ def logout_view(request):
 
 class TwoFactorView(FormView):
     template_name = "accounts/auth/two_factor.html"
-    form_class = TwoFactorForm
-    success_url = reverse_lazy("accounts:profile")
+    form_class    = TwoFactorForm
 
     def form_valid(self, form):
-        code = form.cleaned_data["code"]
-        # TODO: replace placeholder with real django-two-factor-auth
+        code = form.cleaned_data['code']
+        # TODO: integrate django-two-factor-auth
         if code == "123456":
-            uid = self.request.session.pop("pre_2fa_user_id", None)
+            uid  = request.session.pop("pre_2fa_user_id", None)
             user = get_object_or_404(CustomUser, pk=uid)
-            login(self.request, user)
-            return super().form_valid(form)
-        form.add_error("code", "Cod 2FA invalid.")
-        return self.form_invalid(form)
+            login(request, user)
+            return redirect("accounts:profile")
+        messages.error(request, "Cod greșit.")
+        return super().form_invalid(form)
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -128,31 +151,35 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["user_form"] = CustomUserForm(instance=self.request.user)
-        ctx["profile_form"] = ProfileForm(instance=self.request.user.profile)
-        ctx["address_form"] = AddressForm()
-        ctx["addresses"] = UserAddress.objects.filter(user=self.request.user)
+        ctx.update({
+            "user_form":    CustomUserForm(instance=self.request.user),
+            "profile_form": ProfileForm(instance=self.request.user.profile),
+            "address_form": AddressForm(),
+            "addresses":    self.request.user.addresses.all(),
+        })
         return ctx
 
     def post(self, request, *args, **kwargs):
-        user_form = CustomUserForm(request.POST, instance=request.user)
-        profile_form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
-        address_form = AddressForm(request.POST)
-        if user_form.is_valid() and profile_form.is_valid() and address_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            addr = address_form.save(commit=False)
+        uform = CustomUserForm(request.POST, instance=request.user)
+        pform = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        aform = AddressForm(request.POST)
+        if uform.is_valid() and pform.is_valid() and aform.is_valid():
+            uform.save()
+            pform.save()
+            addr = aform.save(commit=False)
             addr.user = request.user
+            if addr.is_default:
+                request.user.addresses.filter(address_type=addr.address_type).update(is_default=False)
             addr.save()
-            messages.success(request, "Datele au fost actualizate.")
+            messages.success(request, "Date salvate.")
             return redirect("accounts:profile")
         return self.get(request, *args, **kwargs)
 
 
 class ChangePasswordView(LoginRequiredMixin, FormView):
     template_name = "accounts/passwords/change_password.html"
-    form_class = CustomPasswordChangeForm
-    success_url = reverse_lazy("accounts:profile")
+    form_class    = CustomPasswordChangeForm
+    success_url   = reverse_lazy("accounts:profile")
 
     def form_valid(self, form):
         user = form.save()
@@ -163,75 +190,43 @@ class ChangePasswordView(LoginRequiredMixin, FormView):
 
 class ChangeEmailView(LoginRequiredMixin, FormView):
     template_name = "accounts/profile/change_email.html"
-    form_class = ChangeEmailForm
-    success_url = reverse_lazy("accounts:login")
+    form_class    = ChangeEmailForm
+    success_url   = reverse_lazy("accounts:login")
 
     def form_valid(self, form):
-        new_email = form.cleaned_data["new_email"]
-        password = form.cleaned_data["password"]
-        user = authenticate(self.request, username=self.request.user.email, password=password)
+        new  = form.cleaned_data["new_email"]
+        pwd  = form.cleaned_data["password"]
+        user = authenticate(self.request, username=self.request.user.email, password=pwd)
         if user:
-            # mark unverified and inactive until reactivated
-            self.request.user.email = new_email
-            self.request.user.verified_email = False
+            self.request.user.email = new
             self.request.user.is_active = False
+            self.request.user.verified_email = False
             self.request.user.save()
-            send_activation_email(self.request, self.request.user)
-            logout(self.request)
             messages.success(self.request, "Confirmă noul email din inbox.")
+            _send_activation_email(self.request, self.request.user, purpose='email_change')
+            logout(self.request)
             return super().form_valid(form)
-
-        form.add_error("password", "Parolă incorectă.")
-        return self.form_invalid(form)
-
-
-@require_POST
-@login_required
-def delete_address_view(request, address_id):
-    addr = get_object_or_404(UserAddress, id=address_id, user=request.user)
-    addr.delete()
-    messages.success(request, "Adresa a fost ștearsă.")
-    return redirect("accounts:profile")
+        messages.error(self.request, "Parolă incorectă.")
+        return super().form_invalid(form)
 
 
-@require_POST
-@login_required
-def set_default_address_view(request, address_id):
-    addr = get_object_or_404(UserAddress, id=address_id, user=request.user)
-    UserAddress.objects.filter(
-        user=request.user,
-        address_type=addr.address_type
-    ).update(is_default=False)
-    addr.is_default = True
-    addr.save()
-    messages.success(request, f"{addr.get_address_type_display()} setată ca implicită.")
-    return redirect("accounts:profile")
+class DeleteAccountView(LoginRequiredMixin, View):
+    def get(self, request):
+        return render(request, "accounts/profile/account_deletion_confirm.html")
+
+    def post(self, request):
+        request.user.delete()
+        logout(request)
+        messages.success(request, "Cont dezactivat.")
+        return redirect("accounts:login")
 
 
-def send_activation_email(request, user):
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    token = account_activation_token.make_token(user)
-    subject = "Activează contul tău Snobistic"
-    message = render_to_string("accounts/auth/email_activate.html", {
-        "user": user,
-        "uid": uid,
-        "token": token,
-    })
-    EmailMessage(subject, message, to=[user.email]).send()
-
-
-# Password reset flow (using Django’s built-in views)
-
-from django.contrib.auth.views import (
-    PasswordResetView, PasswordResetDoneView,
-    PasswordResetConfirmView, PasswordResetCompleteView
-)
-
+# Password reset using Django auth views + custom templates
 class CustomPasswordResetView(PasswordResetView):
-    template_name = "accounts/passwords/password_reset_form.html"
+    template_name       = "accounts/passwords/password_reset_form.html"
     email_template_name = "accounts/passwords/password_reset_email.html"
     subject_template_name = "accounts/passwords/password_reset_subject.txt"
-    success_url = reverse_lazy("accounts:password_reset_done")
+    success_url         = reverse_lazy("accounts:password_reset_done")
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
@@ -240,7 +235,7 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "accounts/passwords/password_reset_confirm.html"
-    success_url = reverse_lazy("accounts:password_reset_complete")
+    success_url   = reverse_lazy("accounts:password_reset_complete")
 
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
