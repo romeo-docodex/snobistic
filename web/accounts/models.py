@@ -1,5 +1,9 @@
+# accounts/models.py
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from django.urls import reverse
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -22,11 +26,30 @@ class CustomUser(AbstractUser):
     two_fa_enabled = models.BooleanField(default=False)
     verified_email = models.BooleanField(default=False)
 
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        return f"{self.email} ({self.user_type})"
+        status = " (dezactivat)" if self.deleted_at else ""
+        return f"{self.email} ({self.user_type}){status}"
+
+    def delete(self, using=None, keep_parents=False):
+        """Soft-delete: marchează utilizatorul ca dezactivat și salvează timestamp."""
+        self.deleted_at = timezone.now()
+        self.is_active = False
+        self.save(update_fields=['deleted_at', 'is_active'])
+
+    def reactivate(self):
+        """Reactivează utilizatorul, dacă a fost soft-deleted."""
+        self.deleted_at = None
+        self.is_active = True
+        self.save(update_fields=['deleted_at', 'is_active'])
+
+    def get_default_shipping_address(self):
+        """Returnează adresa de livrare implicită, dacă există."""
+        return self.addresses.filter(address_type='shipping', is_default=True).first()
 
 
 class UserProfile(models.Model):
@@ -50,7 +73,10 @@ class UserProfile(models.Model):
 
 
 class UserAddress(models.Model):
-    ADDRESS_TYPE_CHOICES = [('shipping', 'Adresă livrare'), ('billing', 'Adresă facturare')]
+    ADDRESS_TYPE_CHOICES = [
+        ('shipping', 'Adresă livrare'),
+        ('billing', 'Adresă facturare'),
+    ]
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='addresses')
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPE_CHOICES)
@@ -61,16 +87,39 @@ class UserAddress(models.Model):
     postal_code = models.CharField(max_length=20)
     is_default = models.BooleanField(default=False)
 
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'address_type', 'name')
+
     def __str__(self):
         return f"{self.get_address_type_display()} – {self.user.email}"
 
 
 class EmailToken(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    token = models.CharField(max_length=128)
+    PURPOSE_CHOICES = [
+        ('activation', 'Activare cont'),
+        ('password_reset', 'Resetare parolă'),
+        ('email_change', 'Schimbare email'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_tokens')
+    token = models.CharField(max_length=128, unique=True)
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='activation')
     created_at = models.DateTimeField(auto_now_add=True)
     used = models.BooleanField(default=False)
-    purpose = models.CharField(max_length=20, default='activation')
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['purpose']),
+        ]
 
     def __str__(self):
-        return f"Token {self.purpose} – {self.user.email}"
+        return f"Token {self.get_purpose_display()} – {self.user.email}"
+
+    def is_expired(self, hours=24):
+        """Verifică dacă token-ul a expirat după X ore (implicit 24h)."""
+        expiration_time = self.created_at + timezone.timedelta(hours=hours)
+        return timezone.now() > expiration_time
