@@ -1,31 +1,47 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+from two_factor.urls import urlpatterns as tf_urls
 
 urlpatterns = [
+    # Admin
     path('admin/', admin.site.urls),
 
-    # Aplicații interne
-    path('', include('core.urls')),
-    path('cont/', include('accounts.urls')),
-    path('produse/', include('products.urls')),
-    path('magazin/', include('shop.urls')),
-    path('comenzi/', include('orders.urls')),
-    path('cos/', include('cart.urls')),
-    path('portofel/', include('wallet.urls')),
-    path('plati/', include('payments.urls')),
-    path('licitatii/', include('auctions.urls')),
-    path('suport/', include('support.urls')),
-    path('chat/', include('chat.urls')),
+    # Two-Factor Authentication (django-two-factor-auth)
+    path('', include(tf_urls)),
 
-    # Dashboard (roluri separate)
-    path('dashboard/admin/', include('dashboard.admin_urls')),
-    path('dashboard/seller/', include('dashboard.seller_urls')),
-    path('dashboard/buyer/', include('dashboard.buyer_urls')),
-    path('dashboard/manager/', include('dashboard.shopmanager_urls')),
+    # Social & Account (django-allauth)
+    path('accounts/', include('allauth.urls')),
+
+    # Custom account views (register, profile, change-password etc.)
+    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
+
+    # Core (home, about, contact)
+    path('', include(('core.urls', 'core'), namespace='core')),
+
+    # Shop (catalog, favorites, search)
+    path('shop/', include(('shop.urls', 'shop'), namespace='shop')),
+
+    # Products
+    path('products/', include(('products.urls', 'products'), namespace='products')),
+
+    # Cart
+    path('cart/', include(('cart.urls', 'cart'), namespace='cart')),
+
+    # Orders & Returns
+    path('orders/', include(('orders.urls', 'orders'), namespace='orders')),
+
+    # Payments
+    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
+
+    # Auctions
+    path('auctions/', include(('auctions.urls', 'auctions'), namespace='auctions')),
+
+    # Chat/Inbox
+    path('chat/', include(('chat.urls', 'chat'), namespace='chat')),
+
+    # Support/Ticketing
+    path('support/', include(('support.urls', 'support'), namespace='support')),
+
+    # Wallet/Transactions
+    path('wallet/', include(('wallet.urls', 'wallet'), namespace='wallet')),
 ]
-
-# Servire fișiere media în dezvoltare
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
