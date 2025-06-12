@@ -1,12 +1,18 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
+
 {% block title %}Two-Factor Authentication{% endblock %}
+
 {% block content %}
-<div class="col-md-4 offset-md-4">
-  <h2>Introdu codul 2FA</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Verifică</button>
-  </form>
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <h2>Verificare în doi pași</h2>
+    {% include "components/alerts.html" %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary w-100">Verifică-mi codul</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

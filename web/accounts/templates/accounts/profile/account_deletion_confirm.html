@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Dezactivează cont{% endblock %}
 {% block content %}
-<div class="col-md-6 offset-md-3 text-center">
-  <h2>Confirmă dezactivarea contului</h2>
-  <p>Contul tău va fi dezactivat. Poți oricând să îl reactivezi prin suport.</p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Dezactivează cont</button>
-    <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Renunță</a>
-  </form>
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center">
+    <h3>Ești sigur că vrei să îți dezactivezi contul?</h3>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Da, dezactivează contul</button>
+      <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Anulează</a>
+    </form>
+  </div>
 </div>
 {% endblock %}

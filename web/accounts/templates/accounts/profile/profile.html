@@ -1,41 +1,105 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% block title %}Profilul meu{% endblock %}
+
+{% block title %}Contul meu{% endblock %}
+
 {% block content %}
 <div class="row">
-  <div class="col-md-4">
-    <h3>Date personale</h3>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ user_form|crispy }}
-      {{ profile_form|crispy }}
-      <button type="submit" class="btn btn-primary">Salvează modificări</button>
-    </form>
-    <hr>
-    <a href="{% url 'accounts:change_password' %}">Schimbă parola</a><br>
-    <a href="{% url 'accounts:change_email' %}">Schimbă email</a><br>
-    <a href="{% url 'accounts:delete_account' %}">Dezactivează cont</a>
+  <div class="col-md-3">
+    <div class="list-group">
+      <a href="#personal" class="list-group-item list-group-item-action active" data-bs-toggle="list">Date personale</a>
+      <a href="#password" class="list-group-item list-group-item-action" data-bs-toggle="list">Parolă</a>
+      <a href="#email" class="list-group-item list-group-item-action" data-bs-toggle="list">Email</a>
+      <a href="#addresses" class="list-group-item list-group-item-action" data-bs-toggle="list">Adrese</a>
+      <a href="#delete" class="list-group-item list-group-item-action text-danger" data-bs-toggle="list">Dezactivează cont</a>
+    </div>
   </div>
-  <div class="col-md-8">
-    <h3>Adrese</h3>
-    {% include "accounts/profile/address_form.html" %}
-    <ul class="list-group mt-3">
-      {% for addr in addresses %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ addr.get_address_type_display }}: {{ addr.street_address }}, {{ addr.city }}, {{ addr.country }}
-        <div>
-          <form method="post" action="{% url 'accounts:set_default_address' addr.id %}" class="d-inline">
-            {% csrf_token %}
-            <button class="btn btn-sm btn-outline-success" {% if addr.is_default %}disabled{% endif %}>Default</button>
-          </form>
-          <form method="post" action="{% url 'accounts:delete_address' addr.id %}" class="d-inline">
-            {% csrf_token %}
-            <button class="btn btn-sm btn-outline-danger">Șterge</button>
-          </form>
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
+  <div class="col-md-9">
+    {% include "components/alerts.html" %}
+    <div class="tab-content">
+      <!-- Personal Data -->
+      <div class="tab-pane fade show active" id="personal">
+        <h4>Date personale</h4>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ user_form|crispy }}
+          {{ profile_form|crispy }}
+          <button type="submit" class="btn btn-primary">Salvează</button>
+        </form>
+      </div>
+      <!-- Password -->
+      <div class="tab-pane fade" id="password">
+        <h4>Schimbă parola</h4>
+        <form action="{% url 'accounts:change_password' %}" method="post">
+          {% csrf_token %}
+          {{ form_password|crispy }}
+          <button type="submit" class="btn btn-primary">Schimbă</button>
+        </form>
+      </div>
+      <!-- Email -->
+      <div class="tab-pane fade" id="email">
+        <h4>Schimbă email</h4>
+        <form action="{% url 'accounts:change_email' %}" method="post">
+          {% csrf_token %}
+          {{ form_email|crispy }}
+          <button type="submit" class="btn btn-primary">Schimbă email</button>
+        </form>
+      </div>
+      <!-- Addresses -->
+      <div class="tab-pane fade" id="addresses">
+        <h4>Adrese</h4>
+        <ul class="list-group mb-3">
+          {% for addr in addresses %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ addr.name }}</strong> ({{ addr.get_address_type_display }})<br>
+                {{ addr.street_address }}, {{ addr.city }}, {{ addr.country.name }} – {{ addr.postal_code }}
+              </div>
+              <div class="btn-group btn-group-sm">
+                <form action="{% url 'accounts:set_default_address' addr.id %}" method="post">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-success" {% if addr.is_default %}disabled{% endif %}>
+                    {% if addr.is_default %}Implicită{% else %}Setează implicită{% endif %}
+                  </button>
+                </form>
+                <form action="{% url 'accounts:delete_address' addr.id %}" method="post">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger">Șterge</button>
+                </form>
+              </div>
+            </li>
+          {% empty %}
+            <li class="list-group-item">Nu ai nicio adresă înregistrată.</li>
+          {% endfor %}
+        </ul>
+        <h5>Adaugă adresă nouă</h5>
+        <form method="post" action="{% url 'accounts:profile' %}">
+          {% csrf_token %}
+          {{ address_form|crispy }}
+          <button type="submit" class="btn btn-primary">Adaugă address</button>
+        </form>
+      </div>
+      <!-- Delete -->
+      <div class="tab-pane fade" id="delete">
+        <h4>Dezactivează contul</h4>
+        <p>Pentru a-ți dezactiva contul, confirmă mai jos:</p>
+        <form action="{% url 'accounts:delete_account' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-danger">Dezactivează cont</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
+
+<script>
+  const triggerTabList = [].slice.call(document.querySelectorAll('.list-group-item'))
+  triggerTabList.forEach(function (triggerEl) {
+    const tabTrigger = new bootstrap.Tab(triggerEl)
+    triggerEl.addEventListener('click', function (e) {
+      e.preventDefault()
+      tabTrigger.show()
+    })
+  })
+</script>
