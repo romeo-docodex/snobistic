@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Two-Factor Authentication{% endblock %}
+{% block content %}
+<div class="col-md-4 offset-md-4">
+  <h2>Introdu codul 2FA</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Verifică</button>
+  </form>
+</div>
+{% endblock %}

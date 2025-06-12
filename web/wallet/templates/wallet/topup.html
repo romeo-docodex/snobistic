@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Alimentare portofel{% endblock %}
+{% block content %}
+<h2>Alimentare portofel</h2>
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    {{ form.amount.label_tag }}
+    {{ form.amount }}
+    {{ form.amount.errors }}
+  </div>
+  <div class="mb-3">
+    {{ form.description.label_tag }}
+    {{ form.description }}
+    {{ form.description.errors }}
+  </div>
+  <button class="btn btn-success">Alimentează</button>
+  <a href="{% url 'wallet:wallet_overview' %}" class="btn btn-secondary ms-2">Anulează</a>
+</form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Încarcă certificat autenticitate{% endblock %}
+{% block content %}
+<h2>Încarcă certificat de autenticitate</h2>
+<p>Produs: {{ product.name }}</p>
+{% if product.authenticity_proof %}
+  <p>Fișier curent: <a href="{{ product.authenticity_proof.url }}">{{ product.authenticity_proof.name }}</a></p>
+{% endif %}
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="id_authenticity_proof" class="form-label">Alege fișier</label>
+    <input type="file" name="authenticity_proof" class="form-control" id="id_authenticity_proof">
+  </div>
+  <button class="btn btn-primary">Încarcă</button>
+</form>
+{% endblock %}

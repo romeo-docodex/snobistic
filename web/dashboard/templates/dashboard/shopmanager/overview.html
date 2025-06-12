@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard Shop Manager</h2>
+
+<h4 class="mt-4">Produse în așteptare</h4>
+<ul class="list-group">
+  {% for product in pending_products %}
+    <li class="list-group-item">
+      {{ product.name }} – propus de {{ product.user.email }}
+      <a href="{% url 'validate_product' product.pk %}" class="btn btn-sm btn-outline-success float-end">Validează</a>
+    </li>
+  {% empty %}
+    <li class="list-group-item text-muted">Nu sunt produse de validat.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

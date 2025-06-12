@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Chat cu {{ other_user.get_full_name|default:other_user.username }}{% endblock %}
+{% block content %}
+<h2>Chat cu {{ other_user.get_full_name|default:other_user.username }}</h2>
+
+<div class="card mb-3">
+  <div class="card-body" style="height:400px; overflow-y:auto;">
+    {% for msg in messages %}
+      <div class="d-flex mb-2 {% if msg.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+        <div class="p-2 rounded {% if msg.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %}"
+             style="max-width:75%;">
+          {{ msg.content|linebreaksbr }}
+          {% if msg.attachment %}
+            <div class="mt-1">
+              <a href="{{ msg.attachment.url }}" target="_blank">📎 Descarcă atașament</a>
+            </div>
+          {% endif %}
+          <div class="text-muted small text-end">
+            {{ msg.timestamp|date:"H:i, d.m.Y" }}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="mb-2">
+    {{ form.content }}
+  </div>
+  <div class="mb-2">
+    {{ form.attachment }}
+  </div>
+  <button class="btn btn-primary">Trimite</button>
+  <a href="{% url 'chat:inbox' %}" class="btn btn-secondary ms-2">Înapoi la Inbox</a>
+</form>
+{% endblock %}

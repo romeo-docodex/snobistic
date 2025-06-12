@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Raportează produs{% endblock %}
+{% block content %}
+<h2>Raportează: {{ product.name }}</h2>
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="id_reason" class="form-label">Motiv</label>
+    <textarea name="reason" id="id_reason" class="form-control" rows="4" required></textarea>
+  </div>
+  <button class="btn btn-warning">Trimite raport</button>
+  <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-secondary">Renunță</a>
+</form>
+{% endblock %}

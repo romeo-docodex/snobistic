@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Mesaje{% endblock %}
+{% block content %}
+<h2>Inbox</h2>
+{% if sessions %}
+  <ul class="list-group">
+    {% for session in sessions %}
+      {% with other=session.get_other_user request.user %}
+      <a href="{% url 'chat:chat_session' session.id %}"
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ other.get_full_name|default:other.username }}</strong><br>
+          <small class="text-muted">
+            Ultimul mesaj: {{ session.messages.last.content|truncatechars:30 }}
+          </small>
+        </div>
+        {% if session.has_unread_messages request.user %}
+          <span class="badge bg-primary rounded-pill">New</span>
+        {% endif %}
+      </a>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Nu ai niciun mesaj.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+django
+pillow
+django-six
+django-filter
+django-countries
+django-phonenumber-field
+django-phonenumber-field[phonenumberslite]
+djangorestframework
+django-crispy-forms
+crispy-bootstrap5

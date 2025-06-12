@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Editează tichet #{{ ticket.pk }}{% endblock %}
+{% block content %}
+<h2>#{{ ticket.pk }} – {{ ticket.subject }}</h2>
+<p><strong>User:</strong> {{ ticket.user.email }}</p>
+<p><strong>Deschis la:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+<p><strong>Descriere:</strong></p>
+<p>{{ ticket.description|linebreaksbr }}</p>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    {{ form.status.label_tag }}  
+    {{ form.status }}
+  </div>
+  <div class="mb-3">
+    {{ form.assigned_to.label_tag }}  
+    {{ form.assigned_to }}
+  </div>
+  <button class="btn btn-success">Salvează modificările</button>
+  <a href="{% url 'support:admin_ticket_list' %}" class="btn btn-secondary ms-2">Înapoi</a>
+</form>
+{% endblock %}

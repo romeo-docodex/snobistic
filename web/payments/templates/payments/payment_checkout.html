@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Plată comanda #{{ order.id }}{% endblock %}
+{% block content %}
+<h2>Plată pentru comanda #{{ order.id }}</h2>
+<p><strong>Total de plată:</strong> {{ order.total }} EUR</p>
+
+<h4>Alege metoda de plată:</h4>
+<div class="list-group mb-4">
+  <a href="{% url 'payments:payment_redirect' order.id 'stripe' %}" class="list-group-item list-group-item-action">
+    Pay with Stripe
+  </a>
+  <a href="{% url 'payments:payment_redirect' order.id 'platiro' %}" class="list-group-item list-group-item-action">
+    Pay with Plati.ro
+  </a>
+  <a href="{% url 'payments:payment_redirect' order.id 'manual' %}" class="list-group-item list-group-item-action">
+    Transfer bancar (manual)
+  </a>
+</div>
+
+<p>După ce efectuezi plata, vei fi redirecționat pe pagina de succes sau eșec.</p>
+{% endblock %}

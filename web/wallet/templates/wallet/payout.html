@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Retragere fonduri{% endblock %}
+{% block content %}
+<h2>Retragere fonduri</h2>
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    {{ form.amount.label_tag }}
+    {{ form.amount }}
+    {{ form.amount.errors }}
+  </div>
+  <div class="mb-3">
+    {{ form.iban.label_tag }}
+    {{ form.iban }}
+    {{ form.iban.errors }}
+  </div>
+  <button class="btn btn-warning">Trimite cerere de retragere</button>
+  <a href="{% url 'wallet:wallet_overview' %}" class="btn btn-secondary ms-2">Anulează</a>
+</form>
+{% endblock %}

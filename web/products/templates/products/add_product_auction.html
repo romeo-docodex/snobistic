@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Adaugă produs licitație{% endblock %}
+{% block content %}
+<h2>Adaugă produs – licitație</h2>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form|crispy }}
+  <h5>Imagini</h5>
+  {{ formset.management_form }}
+  <div class="row">
+    {% for fs in formset %}
+      <div class="col-md-4">
+        {{ fs|crispy }}
+      </div>
+    {% endfor %}
+  </div>
+  <button class="btn btn-primary">Trimite pentru validare</button>
+</form>
+{% endblock %}

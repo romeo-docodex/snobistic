@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Catalog{% endblock %}
+{% block content %}
+<div class="row">
+  <!-- Sidebar filtru -->
+  <aside class="col-md-3">
+    <h5>Filtre</h5>
+    <form method="get">
+      {{ filter.form.as_p }}
+      <button type="submit" class="btn btn-sm btn-primary">Aplică</button>
+    </form>
+  </aside>
+
+  <!-- Lista produse -->
+  <section class="col-md-9">
+    <h2>Catalog</h2>
+    {% if filter.qs %}
+      <div class="row">
+        {% for product in filter.qs %}
+          <div class="col-md-4 mb-4">
+            <div class="card h-100">
+              {% with primary=product.images.filter(is_primary=True).first %}
+                {% if primary %}
+                  <img src="{{ primary.image.url }}" class="card-img-top" alt="{{ primary.alt_text }}">
+                {% elif product.images.first %}
+                  <img src="{{ product.images.first.image.url }}" class="card-img-top">
+                {% endif %}
+              {% endwith %}
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.price }} EUR</p>
+                <p class="card-text"><small class="text-muted">{{ product.get_condition_display }}</small></p>
+                <div class="mt-auto">
+                  <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Detalii</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Paginare -->
+      {% if filter.qs.has_other_pages %}
+        <nav>
+          <ul class="pagination">
+            {% if filter.qs.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ filter.qs.previous_page_number }}{% if request.GET %}&amp;{{ request.GET.urlencode }}{% endif %}">«</a>
+              </li>
+            {% endif %}
+            {% for num in filter.qs.paginator.page_range %}
+              <li class="page-item {% if filter.qs.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if request.GET %}&amp;{{ request.GET.urlencode }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endfor %}
+            {% if filter.qs.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ filter.qs.next_page_number }}{% if request.GET %}&amp;{{ request.GET.urlencode }}{% endif %}">»</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <p class="text-muted">Niciun produs găsit.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

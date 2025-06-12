@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Validare produs{% endblock %}
+{% block content %}
+<h2>Validatează: {{ product.name }}</h2>
+<form method="post">
+  {% csrf_token %}
+  <button name="action" value="approve" class="btn btn-success">Aprobă</button>
+  <button name="action" value="reject" class="btn btn-danger">Respinge</button>
+  <a href="{% url 'products:pending_products' %}" class="btn btn-secondary">Renunță</a>
+</form>
+{% endblock %}

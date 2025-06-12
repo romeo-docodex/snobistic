@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Eșec plată{% endblock %}
+{% block content %}
+<div class="text-center">
+  <h2 class="text-danger">Eroare la procesarea plății</h2>
+  <p>Îți cerem scuze, plata nu a fost finalizată.</p>
+  <a href="{% url 'payments:payment_checkout' payment.order.id %}" class="btn btn-warning">Încearcă din nou</a>
+  <a href="{% url 'orders:order_detail' payment.order.id %}" class="btn btn-secondary">Renunță</a>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Produse în așteptare{% endblock %}
+{% block content %}
+<h2>Produse în așteptare</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>#</th><th>Nume</th><th>Seller</th><th>Creat</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in pending %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.seller.email }}</td>
+        <td>{{ p.created_at|date:"d.m.Y H:i" }}</td>
+        <td><a href="{% url 'products:validate_product' p.id %}" class="btn btn-sm btn-outline-primary">Validatează</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

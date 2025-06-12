@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard Administrator</h2>
+
+<div class="row mt-4">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Utilizatori înregistrați</h5>
+      <p class="display-6">{{ users }}</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Tickete de suport</h5>
+      <p class="display-6">{{ tickets }}</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Sesiuni de chat</h5>
+      <p class="display-6">{{ sessions }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

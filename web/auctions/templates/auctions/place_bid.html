@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Plasează ofertă – {{ auction.product.name }}{% endblock %}
+{% block content %}
+<h2>Plasează ofertă pentru {{ auction.product.name }}</h2>
+<p>Ofertă minimă: <strong>{{ auction.next_minimum }} RON</strong></p>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success">Trimite oferta</button>
+  <a href="{% url 'auctions:auction_detail' auction.product.slug %}" class="btn btn-secondary">Renunță</a>
+</form>
+{% endblock %}

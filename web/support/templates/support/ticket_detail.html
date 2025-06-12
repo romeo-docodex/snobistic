@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Detalii tichet #{{ ticket.pk }}{% endblock %}
+{% block content %}
+<h2>Tichet #{{ ticket.pk }} – {{ ticket.subject }}</h2>
+<p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+<p><strong>Data deschiderii:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+<p><strong>Descriere:</strong></p>
+<p>{{ ticket.description|linebreaksbr }}</p>
+
+{% if ticket.attachment %}
+  <p><strong>Fișier atașat:</strong>
+    <a href="{{ ticket.attachment.url }}" target="_blank">Descarcă</a>
+  </p>
+{% endif %}
+
+<a href="{% url 'support:ticket_list' %}" class="btn btn-secondary">Înapoi</a>
+{% endblock %}

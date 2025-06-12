@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Activare cont{% endblock %}
+{% block content %}
+<div class="col-md-6 offset-md-3 text-center">
+  {% if invalid %}
+    <h2 class="text-danger">Link invalid sau expirat</h2>
+    <p>Token-ul nu este valid. Poți cere un <a href="{% url 'accounts:resend_activation' %}">nou email de activare</a>.</p>
+  {% else %}
+    <h2>Verifică-ți email-ul</h2>
+    <p>Ți-am trimis un link de activare pe email. Verifică inbox-ul și folderul de spam.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Licitații active{% endblock %}
+{% block content %}
+<h2>Licitații active</h2>
+<div class="row">
+  {% for auction in auctions %}
+  <div class="col-md-4 mb-4">
+    <div class="card h-100">
+      {% if auction.product.images.first %}
+        <img src="{{ auction.product.images.first.image.url }}" class="card-img-top" alt="{{ auction.product.name }}">
+      {% endif %}
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">{{ auction.product.name }}</h5>
+        <p class="card-text">Încheiere: {{ auction.end_time|date:"d.m.Y H:i" }}</p>
+        <p class="card-text">Ofertă min: {{ auction.next_minimum }} RON</p>
+        <div class="mt-auto">
+          <a href="{% url 'auctions:auction_detail' auction.product.slug %}" class="btn btn-outline-primary w-100">Intră în licitație</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if auctions.has_other_pages %}
+<nav>
+  <ul class="pagination">
+    {% if auctions.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ auctions.previous_page_number }}">«</a></li>
+    {% endif %}
+    {% for num in auctions.paginator.page_range %}
+      <li class="page-item {% if auctions.number == num %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+    {% if auctions.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ auctions.next_page_number }}">»</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

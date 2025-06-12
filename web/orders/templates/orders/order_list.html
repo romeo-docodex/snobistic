@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Comenzile mele{% endblock %}
+{% block content %}
+<h2>Comenzile mele</h2>
+{% if orders %}
+<table class="table">
+  <thead>
+    <tr><th>ID</th><th>Data</th><th>Status</th><th>Total</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+      <tr>
+        <td>#{{ o.id }}</td>
+        <td>{{ o.created_at|date:"d.m.Y H:i" }}</td>
+        <td>{{ o.get_status_display }}</td>
+        <td>{{ o.total }} EUR</td>
+        <td><a href="{{ o.get_absolute_url }}" class="btn btn-sm btn-primary">Detalii</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Nu ai plasat nicio comandă.</p>
+<a href="{% url 'products:product_list' %}" class="btn btn-primary">Continuă cumpărăturile</a>
+{% endif %}
+{% endblock %}

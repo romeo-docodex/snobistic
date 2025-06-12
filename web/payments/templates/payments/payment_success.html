@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Plată reușită{% endblock %}
+{% block content %}
+<div class="text-center">
+  <h2 class="text-success">Plată efectuată cu succes!</h2>
+  <p>Referință plată: <code>{{ payment.processor_payment_id }}</code></p>
+  <p>Sumă: <strong>{{ payment.amount }} EUR</strong></p>
+  <a href="{% url 'orders:order_detail' payment.order.id %}" class="btn btn-primary">Vezi detalii comandă</a>
+</div>
+{% endblock %}

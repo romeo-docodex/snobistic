@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Catalog Produse</h2>
+
+<form method="get" action="{% url 'catalog' %}" class="mb-4">
+  <input type="text" name="q" class="form-control" placeholder="Caută produse..." value="{{ query }}">
+</form>
+
+<div class="row">
+  {% for product in products %}
+    <div class="col-md-4 mb-4">
+      {% include "shop/partials/card_product.html" with product=product %}
+    </div>
+  {% empty %}
+    <p class="text-muted">Nu au fost găsite produse.</p>
+  {% endfor %}
+</div>
+{% endblock %}

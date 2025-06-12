@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Tichete suport{% endblock %}
+{% block content %}
+<h2>Istoric cereri suport</h2>
+<a href="{% url 'support:create_ticket' %}" class="btn btn-primary mb-3">Deschide tichet nou</a>
+
+{% if tickets %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Subiect</th>
+      <th>Status</th>
+      <th>Data</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tickets %}
+    <tr>
+      <td>#{{ t.pk }}</td>
+      <td>{{ t.subject }}</td>
+      <td>{{ t.get_status_display }}</td>
+      <td>{{ t.created_at|date:"d.m.Y H:i" }}</td>
+      <td>
+        <a href="{% url 'support:ticket_detail' t.pk %}" class="btn btn-sm btn-info">Detalii</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Nu ai nicio cerere înregistrată.</p>
+{% endif %}
+{% endblock %}

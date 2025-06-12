@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load tz %}
+{% block title %}Licitație – {{ auction.product.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'auctions:auction_list' %}">Licitații</a></li>
+    <li class="breadcrumb-item active">{{ auction.product.name }}</li>
+  </ol>
+</nav>
+
+<div class="row">
+  <div class="col-md-6">
+    {% if auction.product.images.exists %}
+      <img src="{{ auction.product.images.first.image.url }}" class="img-fluid" alt="{{ auction.product.name }}">
+    {% endif %}
+    <p class="mt-2"><strong>Start:</strong> {{ auction.start_time|date:"d.m.Y H:i" }}</p>
+    <p><strong>Încheiere:</strong> {{ auction.end_time|date:"d.m.Y H:i" }}</p>
+    <p><strong>Timp rămas:</strong> <span id="countdown"></span></p>
+  </div>
+  <div class="col-md-6">
+    <h3>{{ auction.product.name }}</h3>
+    <p class="h4 text-primary">{{ auction.highest_bid.amount if auction.highest_bid else auction.starting_price }} RON</p>
+    <p>{{ auction.product.description|linebreaks }}</p>
+
+    {% if can_bid %}
+      <a href="{% url 'auctions:place_bid' auction.product.slug %}" class="btn btn-success mb-3">Plasează ofertă</a>
+    {% else %}
+      <button class="btn btn-secondary mb-3" disabled>Licitație închisă</button>
+    {% endif %}
+
+    {% if user.is_staff %}
+      <a href="{% url 'auctions:close_auction' auction.product.slug %}" class="btn btn-danger">Închide manual</a>
+    {% endif %}
+  </div>
+</div>
+
+<hr>
+<h4>Istoric evenimente</h4>
+<ul class="list-group">
+  {% for ev in history %}
+    <li class="list-group-item">
+      {{ ev.created_at|localtime|date:"d.m.Y H:i" }} – {{ ev.event }}
+      {% if ev.user %} (<em>{{ ev.user.email }}</em>){% endif %}
+    </li>
+  {% empty %}
+    <li class="list-group-item text-muted">Fără evenimente</li>
+  {% endfor %}
+</ul>
+
+<hr>
+<h4>Ofertă nouă</h4>
+<form method="post" action="{% url 'auctions:place_bid' auction.product.slug %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-primary" {% if not can_bid %}disabled{% endif %}>Trimite ofertă</button>
+</form>
+
+<script>
+  // Countdown JS
+  const endTime = new Date("{{ auction.end_time|date:'Y-m-d H:i:s' }}").getTime();
+  const cdElem = document.getElementById('countdown');
+  const x = setInterval(function() {
+    const now = new Date().getTime();
+    const diff = endTime - now;
+    if (diff < 0) {
+      clearInterval(x);
+      cdElem.innerText = '00:00:00';
+    } else {
+      const h = String(Math.floor(diff/(1000*60*60))).padStart(2,'0');
+      const m = String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
+      const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+      cdElem.innerText = `${h}:${m}:${s}`;
+    }
+  },1000);
+</script>
+{% endblock %}

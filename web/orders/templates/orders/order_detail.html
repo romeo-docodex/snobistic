@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Detalii comandă #{{ order.id }}{% endblock %}
+{% block content %}
+<h2>Comandă #{{ order.id }}</h2>
+<p><strong>Status:</strong> {{ order.get_status_display }}</p>
+<p><strong>Plasată la:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+
+<h4>Articole</h4>
+<table class="table">
+  <thead><tr><th>Produs</th><th>Cantitate</th><th>Preț</th><th>Subtotal</th><th></th></tr></thead>
+  <tbody>
+    {% for item in order.items.all %}
+      <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }} EUR</td>
+        <td>{{ item.subtotal }} EUR</td>
+        <td>
+          {% if order.is_returnable and not item.return_request %}
+            <a href="{% url 'orders:return_request' item.id %}" class="btn btn-sm btn-warning">Retur</a>
+          {% elif item.return_request %}
+            <span class="badge bg-info">Retur {{ item.return_request.get_status_display }}</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Adresă de livrare</h4>
+<p>{{ order.shipping_address|linebreaksbr }}</p>
+{% if order.billing_address %}
+<h4>Adresă de facturare</h4>
+<p>{{ order.billing_address|linebreaksbr }}</p>
+{% endif %}
+{% endblock %}

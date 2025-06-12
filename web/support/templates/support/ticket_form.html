@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Deschide cerere suport{% endblock %}
+{% block content %}
+<h2>Deschide tichet suport</h2>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="mb-3">
+    {{ form.subject.label_tag }}  
+    {{ form.subject }}
+    {{ form.subject.errors }}
+  </div>
+  <div class="mb-3">
+    {{ form.description.label_tag }}  
+    {{ form.description }}
+    {{ form.description.errors }}
+  </div>
+  <div class="mb-3">
+    {{ form.attachment.label_tag }}  
+    {{ form.attachment }}
+    {{ form.attachment.errors }}
+  </div>
+  <button class="btn btn-success">Trimite cererea</button>
+  <a href="{% url 'support:ticket_list' %}" class="btn btn-secondary ms-2">Anulează</a>
+</form>
+{% endblock %}

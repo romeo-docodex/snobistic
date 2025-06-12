@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Cerere de retur{% endblock %}
+{% block content %}
+<h2>Retur – {{ order_item.product.name }}</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-warning">Trimite cererea</button>
+  <a href="{% url 'orders:order_detail' order_item.order.id %}" class="btn btn-secondary">Renunță</a>
+</form>
+{% endblock %}

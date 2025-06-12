@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Profilul meu{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <h3>Date personale</h3>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ user_form|crispy }}
+      {{ profile_form|crispy }}
+      <button type="submit" class="btn btn-primary">Salvează modificări</button>
+    </form>
+    <hr>
+    <a href="{% url 'accounts:change_password' %}">Schimbă parola</a><br>
+    <a href="{% url 'accounts:change_email' %}">Schimbă email</a><br>
+    <a href="{% url 'accounts:delete_account' %}">Dezactivează cont</a>
+  </div>
+  <div class="col-md-8">
+    <h3>Adrese</h3>
+    {% include "accounts/profile/address_form.html" %}
+    <ul class="list-group mt-3">
+      {% for addr in addresses %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ addr.get_address_type_display }}: {{ addr.street_address }}, {{ addr.city }}, {{ addr.country }}
+        <div>
+          <form method="post" action="{% url 'accounts:set_default_address' addr.id %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-success" {% if addr.is_default %}disabled{% endif %}>Default</button>
+          </form>
+          <form method="post" action="{% url 'accounts:delete_address' addr.id %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">Șterge</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

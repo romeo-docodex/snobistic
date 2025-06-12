@@ -1,0 +1,5 @@
+<form method="post">
+  {% csrf_token %}
+  {{ address_form|crispy }}
+  <button type="submit" class="btn btn-secondary">Adaugă adresă</button>
+</form>
