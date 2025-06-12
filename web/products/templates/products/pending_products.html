@@ -1,11 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Produse în așteptare{% endblock %}
+
+{% block title %}Produse în Așteptare{% endblock %}
+
 {% block content %}
-<h2>Produse în așteptare</h2>
+<h1>Produse în așteptare de validare</h1>
 <table class="table">
   <thead>
     <tr>
-      <th>#</th><th>Nume</th><th>Seller</th><th>Creat</th><th></th>
+      <th>#</th><th>Nume</th><th>Vânzător</th><th>Data</th><th>Acțiuni</th>
     </tr>
   </thead>
   <tbody>
@@ -15,8 +17,12 @@
         <td>{{ p.name }}</td>
         <td>{{ p.seller.email }}</td>
         <td>{{ p.created_at|date:"d.m.Y H:i" }}</td>
-        <td><a href="{% url 'products:validate_product' p.id %}" class="btn btn-sm btn-outline-primary">Validatează</a></td>
+        <td>
+          <a href="{% url 'products:validate_product' p.id %}" class="btn btn-sm btn-outline-primary">Verifică</a>
+        </td>
       </tr>
+    {% empty %}
+      <tr><td colspan="5">Nicio intrare.</td></tr>
     {% endfor %}
   </tbody>
 </table>

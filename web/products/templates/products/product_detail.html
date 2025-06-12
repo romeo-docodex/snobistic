@@ -1,21 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ product.name }}{% endblock %}
+
+{% block title %}{{ meta_title|default:product.name }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'products:product_list' %}">Catalog</a></li>
-    {% if product.category %}<li class="breadcrumb-item">{{ product.category.name }}</li>{% endif %}
-    <li class="breadcrumb-item active">{{ product.name }}</li>
-  </ol>
-</nav>
-
 <div class="row">
   <div class="col-md-6">
-    {% if product.images.exists %}
-      <div id="carouselProd" class="carousel slide" data-bs-ride="carousel">
+    {% if product.images.all %}
+      <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
           {% for img in product.images.all %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
@@ -23,38 +15,44 @@
             </div>
           {% endfor %}
         </div>
-        <button class="carousel-control-prev" data-bs-target="#carouselProd" data-bs-slide="prev">
+        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
           <span class="carousel-control-prev-icon"></span>
         </button>
-        <button class="carousel-control-next" data-bs-target="#carouselProd" data-bs-slide="next">
+        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
           <span class="carousel-control-next-icon"></span>
         </button>
       </div>
     {% endif %}
-    {% if product.authenticity_proof %}
-      <p class="mt-2"><a href="{{ product.authenticity_proof.url }}" target="_blank">Descarcă certificatul de autenticitate</a></p>
-    {% endif %}
   </div>
-  <div class="col-md-6">
-    <h2>{{ product.name }}</h2>
-    <p class="h4 text-primary">{{ product.price }} EUR</p>
-    <p><strong>Stare:</strong> {{ product.get_condition_display }}</p>
-    <p><strong>Brand:</strong> {{ product.brand.name if product.brand }}</p>
-    <p>{{ product.description|linebreaks }}</p>
 
-    <div class="d-grid gap-2">
-      {% if user.is_authenticated %}
-        <a href="{% url 'cart:add_to_cart' product.id %}" class="btn btn-success">Adaugă în coș</a>
-        <a href="{% url 'shop:add_to_favorites' product.id %}" class="btn btn-outline-secondary">Favorite ❤️</a>
-      {% else %}
-        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-success">Autentifică-te ca să cumperi</a>
-      {% endif %}
-      <form method="post" action="{% url 'products:report_product' product.id %}">
+  <div class="col-md-6">
+    <h1>{{ product.name }}</h1>
+    <p class="text-muted">{{ product.get_condition_display }}</p>
+    <h3 class="text-primary">{{ product.price }} RON</h3>
+    <p>{{ product.description }}</p>
+
+    {% if user.is_authenticated and user.user_type == 'seller' and product.seller == user %}
+      <a href="{% url 'products:upload_proof' product.id %}" class="btn btn-sm btn-outline-secondary">Încarcă dovadă</a>
+    {% endif %}
+
+    {% if product.listing_type == 'auction' %}
+      <a href="{% url 'auctions:auction_detail' product.auction.id %}" class="btn btn-success btn-lg mt-3">Participă la licitație</a>
+    {% else %}
+      <form action="{% url 'cart:add_to_cart' %}" method="post" class="d-inline-block mt-3">
         {% csrf_token %}
-        <textarea name="reason" class="form-control mb-2" placeholder="Motiv raport (opțional)"></textarea>
-        <button class="btn btn-warning">Raportează produs</button>
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <input type="number" name="quantity" min="1" value="1" class="form-control form-control-sm w-auto d-inline-block">
+        <button type="submit" class="btn btn-primary">Adaugă în coș</button>
       </form>
-    </div>
+    {% endif %}
+
+    <hr>
+    <h5>Raportează produs</h5>
+    <form action="{% url 'products:report_product' product.id %}" method="post">
+      {% csrf_token %}
+      <textarea name="reason" class="form-control mb-2" rows="3" placeholder="Motiv..."></textarea>
+      <button type="submit" class="btn btn-outline-danger btn-sm">Raportează</button>
+    </form>
   </div>
 </div>
 {% endblock %}
