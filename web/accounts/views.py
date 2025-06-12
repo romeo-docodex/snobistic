@@ -181,6 +181,12 @@ class ChangePasswordView(LoginRequiredMixin, FormView):
     form_class    = CustomPasswordChangeForm
     success_url   = reverse_lazy("accounts:profile")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # PasswordChangeForm needs the current user
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         user = form.save()
         update_session_auth_hash(self.request, user)
