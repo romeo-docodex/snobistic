@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     # Third-party
     'django_countries',
     'phonenumber_field',
+    'crispy_forms',
+    'crispy_bootstrap5',
 
     # Allauth (social login)
     'allauth',
@@ -166,6 +168,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ======================================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@snobistic.com'
+
+# ======================================
+# Crispy Forms
+# ======================================
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # ======================================
 # Default primary key
