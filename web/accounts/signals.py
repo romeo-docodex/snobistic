@@ -11,6 +11,5 @@ def create_profile_wallet_and_activation_token(sender, instance, created, **kwar
     if created:
         UserProfile.objects.create(user=instance)
         Wallet.objects.create(user=instance)
-        # create an activation token for new user
         token = uuid.uuid4().hex
         EmailToken.objects.create(user=instance, token=token, purpose='activation')

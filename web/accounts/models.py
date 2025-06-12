@@ -83,7 +83,7 @@ class UserAddress(models.Model):
     street_address = models.CharField(max_length=255)
     postal_code    = models.CharField(max_length=20)
     is_default     = models.BooleanField(default=False)
-    created_at     = models.DateTimeField(auto_now_add=True)
+    created_at     = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'address_type', 'name')
@@ -102,7 +102,7 @@ class EmailToken(models.Model):
     user       = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_tokens')
     token      = models.CharField(max_length=128, unique=True, default=uuid.uuid4().hex)
     purpose    = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='activation')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     used       = models.BooleanField(default=False)
 
     class Meta:
@@ -110,7 +110,6 @@ class EmailToken(models.Model):
         indexes = [
             models.Index(fields=['token']),
             models.Index(fields=['purpose']),
-
         ]
 
     def __str__(self):

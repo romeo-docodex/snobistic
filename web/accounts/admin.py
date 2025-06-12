@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import CustomUser, UserProfile, UserAddress, EmailToken
 
+
 @admin.register(CustomUser)
 class CustomUserAdmin(BaseUserAdmin):
     list_display  = ('email','username','user_type','is_company','verified_email','is_active')
@@ -21,16 +22,19 @@ class CustomUserAdmin(BaseUserAdmin):
         )}),
     )
 
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display  = ('user','iban','avatar')
     search_fields = ('user__email',)
+
 
 @admin.register(UserAddress)
 class UserAddressAdmin(admin.ModelAdmin):
     list_display  = ('user','address_type','city','is_default')
     list_filter   = ('address_type','country','is_default')
     search_fields = ('user__email','city')
+
 
 @admin.register(EmailToken)
 class EmailTokenAdmin(admin.ModelAdmin):

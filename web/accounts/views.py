@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import (
     login, logout, authenticate, update_session_auth_hash
 )
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
     PasswordResetView, PasswordResetDoneView,
@@ -25,12 +26,11 @@ from .forms import (
     AddressForm, CustomPasswordChangeForm, TwoFactorForm,
     ResendActivationForm, ChangeEmailForm, ReactivateForm
 )
-from .models import CustomUser, UserProfile, EmailToken
+from .models import CustomUser, UserProfile, EmailToken, UserAddress
 from .tokens import account_activation_token
 
 
 def _send_activation_email(request, user, purpose='activation'):
-    # generate & store token
     token = uuid.uuid4().hex
     EmailToken.objects.create(user=user, token=token, purpose=purpose)
     uid  = urlsafe_base64_encode(force_bytes(user.pk))
@@ -38,8 +38,8 @@ def _send_activation_email(request, user, purpose='activation'):
         reverse_lazy("accounts:activate", args=[uid, token])
     )
     subject = {
-        'activation': "Activează contul tău Snobistic",
-        'email_change': "Confirmă noul email Snobistic",
+        'activation':     "Activează contul tău Snobistic",
+        'email_change':   "Confirmă noul email Snobistic",
     }[purpose]
     template = "accounts/auth/email_activate.html"
     ctx = {'user': user, 'activation_link': link}
@@ -58,9 +58,10 @@ def activate_account(request, uidb64, token):
         user   = CustomUser.objects.get(pk=uid)
         etoken = EmailToken.objects.get(user=user, token=token, purpose='activation', used=False)
     except Exception:
-        user = etoken = None
+        messages.error(request, "Link invalid.")
+        return redirect("accounts:resend_activation")
 
-    if user and etoken and not etoken.is_expired():
+    if not etoken.is_expired():
         user.is_active      = True
         user.verified_email = True
         user.save()
@@ -69,7 +70,7 @@ def activate_account(request, uidb64, token):
         login(request, user)
         messages.success(request, "Cont activat cu succes.")
         return redirect("accounts:profile")
-    messages.error(request, "Link de activare invalid sau expirat.")
+    messages.error(request, "Link expirat.")
     return redirect("accounts:resend_activation")
 
 
@@ -121,7 +122,7 @@ class LoginView(View):
                 return redirect("accounts:two_factor")
             login(request, user)
             return redirect("accounts:profile")
-        messages.error(request, "Date de autentificare invalide.")
+        messages.error(request, "Date invalide.")
         return render(request, self.template_name)
 
 
@@ -136,13 +137,12 @@ class TwoFactorView(FormView):
 
     def form_valid(self, form):
         code = form.cleaned_data['code']
-        # TODO: integrate django-two-factor-auth
         if code == "123456":
-            uid  = request.session.pop("pre_2fa_user_id", None)
+            uid  = self.request.session.pop("pre_2fa_user_id", None)
             user = get_object_or_404(CustomUser, pk=uid)
-            login(request, user)
+            login(self.request, user)
             return redirect("accounts:profile")
-        messages.error(request, "Cod greșit.")
+        messages.error(self.request, "Cod greșit.")
         return super().form_invalid(form)
 
 
@@ -210,6 +210,26 @@ class ChangeEmailView(LoginRequiredMixin, FormView):
         return super().form_invalid(form)
 
 
+@login_required
+@require_POST
+def delete_address_view(request, address_id):
+    addr = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    addr.delete()
+    messages.success(request, "Adresa a fost ștearsă.")
+    return redirect("accounts:profile")
+
+
+@login_required
+@require_POST
+def set_default_address_view(request, address_id):
+    addr = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    request.user.addresses.filter(address_type=addr.address_type).update(is_default=False)
+    addr.is_default = True
+    addr.save()
+    messages.success(request, f"{addr.get_address_type_display()} implicită.")
+    return redirect("accounts:profile")
+
+
 class DeleteAccountView(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, "accounts/profile/account_deletion_confirm.html")
@@ -221,7 +241,7 @@ class DeleteAccountView(LoginRequiredMixin, View):
         return redirect("accounts:login")
 
 
-# Password reset using Django auth views + custom templates
+# password‐reset CBVs below
 class CustomPasswordResetView(PasswordResetView):
     template_name       = "accounts/passwords/password_reset_form.html"
     email_template_name = "accounts/passwords/password_reset_email.html"
