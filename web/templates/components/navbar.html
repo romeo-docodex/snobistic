@@ -8,22 +8,28 @@
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'core:about' %}">About</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'core:contact' %}">Contact</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'products:product_list' %}">Catalog</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'auctions:auction_list' %}">Licitații</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'shop:catalog' %}">Catalog</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'shop:favorites' %}">Favorite</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'cart:cart_detail' %}">Coș</a></li>
+        {% if user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'orders:order_list' %}">Comenzi</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'auctions:auction_list' %}">Licitații</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'support:ticket_list' %}">Support</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'wallet:wallet_overview' %}">Portofel</a></li>
+        {% endif %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'core:contact' %}">Contact</a></li>
       </ul>
       <ul class="navbar-nav ms-auto">
         {% if user.is_authenticated %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
-              {{ user.username }}
+              {{ user.get_full_name|default:user.email }}
             </a>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
               <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Profil</a></li>
-              <li><a class="dropdown-item" href="{% url 'orders:order_list' %}">Comenzi</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}">Schimbă parola</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:change_email' %}">Schimbă email</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:delete_account' %}">Dezactivează cont</a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
             </ul>
@@ -31,6 +37,7 @@
         {% else %}
           <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Înregistrare</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:password_reset' %}">Resetare parolă</a></li>
         {% endif %}
       </ul>
     </div>
