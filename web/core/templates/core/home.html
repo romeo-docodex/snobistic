@@ -1,8 +1,34 @@
 {% extends "base.html" %}
+{% block title %}Acasă – Snobistic{% endblock %}
 {% block content %}
-<div class="text-center mt-5">
-  <h1>Bine ai venit la Snobistic</h1>
-  <p class="lead">Platforma de lux pentru modă, licitații și colecționari.</p>
-  <a href="{% url 'shop:catalog' %}" class="btn btn-dark btn-lg mt-3">Explorează Catalogul</a>
+<h1>Welcome to Snobistic</h1>
+
+<h3>Produse recomandate</h3>
+<div class="row">
+  {% for p in featured_products %}
+    <div class="col-md-3 mb-4">
+      {% include "shop/partials/card_product.html" with product=p %}
+    </div>
+  {% empty %}
+    <p>Nu există produse de afișat.</p>
+  {% endfor %}
+</div>
+
+<h3>Licitații în desfășurare</h3>
+<div class="row">
+  {% for a in ongoing_auctions %}
+    <div class="col-md-3 mb-4">
+      <div class="card">
+        <img src="{{ a.product.images.first.image.url }}" class="card-img-top" alt="{{ a.product.name }}">
+        <div class="card-body">
+          <h5 class="card-title">{{ a.product.name }}</h5>
+          <p class="card-text">Preț de pornire: {{ a.starting_price }} RON</p>
+          <a href="{% url 'auctions:auction_detail' a.pk %}" class="btn btn-primary">Vezi licitație</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>Nu există licitații active momentan.</p>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -8,9 +8,9 @@ urlpatterns = [
 
     # Aplicații interne
     path('', include('core.urls')),
-    path('magazin/', include('products.urls')),
-    path('magazin/', include('shop.urls')),
     path('cont/', include('accounts.urls')),
+    path('produse/', include('products.urls')),
+    path('magazin/', include('shop.urls')),
     path('comenzi/', include('orders.urls')),
     path('cos/', include('cart.urls')),
     path('portofel/', include('wallet.urls')),

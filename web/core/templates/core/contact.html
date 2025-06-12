@@ -1,19 +1,32 @@
 {% extends "base.html" %}
+{% block title %}Contact – Snobistic{% endblock %}
 {% block content %}
-<h2>Contactează-ne</h2>
+<h1>Contact</h1>
+<p>Ne poți scrie completând formularul de mai jos:</p>
 
-<form method="post" class="mt-4">
+<form method="post">
   {% csrf_token %}
   {{ form.non_field_errors }}
   <div class="mb-3">
-    {{ form.name.label_tag }} {{ form.name }}
+    {{ form.name.label_tag }}  
+    {{ form.name }}
+    {{ form.name.errors }}
   </div>
   <div class="mb-3">
-    {{ form.email.label_tag }} {{ form.email }}
+    {{ form.email.label_tag }}  
+    {{ form.email }}
+    {{ form.email.errors }}
   </div>
   <div class="mb-3">
-    {{ form.message.label_tag }} {{ form.message }}
+    {{ form.subject.label_tag }}  
+    {{ form.subject }}
+    {{ form.subject.errors }}
   </div>
-  <button type="submit" class="btn btn-primary">Trimite mesajul</button>
+  <div class="mb-3">
+    {{ form.message.label_tag }}  
+    {{ form.message }}
+    {{ form.message.errors }}
+  </div>
+  <button class="btn btn-primary">Trimite</button>
 </form>
 {% endblock %}
