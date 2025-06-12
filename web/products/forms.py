@@ -8,12 +8,15 @@ class BaseProductForm(forms.ModelForm):
         model = Product
         fields = [
             'name', 'brand', 'category', 'description',
-            'listing_type', 'price', 'condition',
-            'authenticity_proof', 'size', 'color', 'material', 'weight'
+            'listing_type', 'price', 'stock', 'condition',
+            'authenticity_proof', 'size', 'color', 'material',
+            'weight', 'meta_title', 'meta_description'
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
             'price': forms.NumberInput(attrs={'step': '0.01'}),
+            'stock': forms.NumberInput(attrs={'min': 0}),
+            'meta_description': forms.Textarea(attrs={'rows': 3}),
         }
 
     def clean_price(self):
@@ -21,6 +24,12 @@ class BaseProductForm(forms.ModelForm):
         if price <= 0:
             raise forms.ValidationError("Prețul trebuie să fie pozitiv.")
         return price
+
+    def clean_stock(self):
+        stock = self.cleaned_data['stock']
+        if stock < 0:
+            raise forms.ValidationError("Stock-ul nu poate fi negativ.")
+        return stock
 
 
 class StoreProductForm(BaseProductForm):
@@ -31,7 +40,9 @@ class StoreProductForm(BaseProductForm):
 
 
 class AuctionProductForm(BaseProductForm):
-    auction_duration_days = forms.IntegerField(label="Durată licitație (zile)", min_value=1, max_value=30)
+    auction_duration_days = forms.IntegerField(
+        label="Durată licitație (zile)", min_value=1, max_value=30
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,7 +56,6 @@ class ProductImageForm(forms.ModelForm):
         fields = ['image', 'alt_text', 'is_primary']
 
 
-# Formular pentru multiple imagini (FormSet)
 ProductImageFormSet = modelformset_factory(
     ProductImage,
     form=ProductImageForm,

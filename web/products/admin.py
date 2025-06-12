@@ -1,14 +1,12 @@
 from django.contrib import admin
-from .models import (
-    Brand, Category, Product, ProductImage,
-    ProductReport, ProductAuditLog
-)
+from .models import Brand, Category, Product, ProductImage, ProductReport, ProductAuditLog
 
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('name', 'country')
     search_fields = ('name',)
+    list_filter = ('country',)
 
 
 @admin.register(Category)
@@ -18,35 +16,45 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
-
-
-@admin.action(description="Marchează ca aprobat")
-def mark_as_approved(modeladmin, request, queryset):
-    queryset.update(is_approved=True)
-
-
-@admin.action(description="Publică produsele")
-def mark_as_published(modeladmin, request, queryset):
-    queryset.update(is_published=True)
-
-
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
-        'name', 'seller', 'listing_type', 'price', 'condition',
-        'is_approved', 'is_published', 'created_at'
+        'name', 'seller', 'listing_type', 'price_display',
+        'stock', 'condition', 'is_active', 'is_published', 'is_approved', 'created_at'
     )
     list_filter = (
-        'listing_type', 'condition', 'is_approved', 'is_published',
-        'brand', 'category'
+        'listing_type', 'condition', 'is_active',
+        'is_published', 'is_approved', 'brand', 'category'
     )
-    search_fields = ('name', 'description', 'seller__email')
-    inlines = [ProductImageInline]
+    search_fields = ('name', 'seller__email', 'brand__name', 'category__name')
     readonly_fields = ('slug', 'created_at')
-    actions = [mark_as_approved, mark_as_published]
+    fieldsets = (
+        (None, {
+            'fields': (
+                'name', 'slug', 'seller', 'brand', 'category', 'description',
+                'listing_type', 'condition', 'price', 'stock'
+            )
+        }),
+        ('SEO', {
+            'classes': ('collapse',),
+            'fields': ('meta_title', 'meta_description'),
+        }),
+        ('Status & Dates', {
+            'classes': ('collapse',),
+            'fields': ('is_active', 'is_published', 'is_approved', 'created_at')
+        }),
+        ('Optional attributes', {
+            'classes': ('collapse',),
+            'fields': ('size', 'color', 'material', 'weight', 'authenticity_proof')
+        }),
+    )
+
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ('product', 'is_primary', 'alt_text')
+    list_filter = ('is_primary',)
+    search_fields = ('product__name', 'alt_text')
 
 
 @admin.register(ProductReport)
@@ -59,5 +67,5 @@ class ProductReportAdmin(admin.ModelAdmin):
 @admin.register(ProductAuditLog)
 class ProductAuditLogAdmin(admin.ModelAdmin):
     list_display = ('product', 'user', 'action', 'timestamp')
-    list_filter = ('action',)
     search_fields = ('product__name', 'user__email', 'action')
+    readonly_fields = ('timestamp',)
