@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Retur pentru comanda #{{ order.id }} – Snobistic{% endblock %}
+
+{% block content %}
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Cerere retur</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+        <a class="breadcrumb-item" href="{% url 'orders:order_list' %}">Comenzi</a>
+        <a class="breadcrumb-item" href="{% url 'orders:order_detail' order.id %}">#{{ order.id }}</a>
+        <div class="breadcrumb-item current">Retur</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <!-- sidebar-account (mobil) -->
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      <!-- Sidebar desktop -->
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'orders:order_list' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Comenzile mele
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'catalog:favorites' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Favorite
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:address_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Adrese
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_data' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Date personale
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_dimensions' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Măsurători
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_security' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Securitate
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:logout' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Deloghează-te
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Content -->
+      <div class="my-acount-content account-address">
+        <h6 class="title-account">Cerere retur – comanda #{{ order.id }}</h6>
+
+        <div class="widget-inner-address">
+
+          <!-- Info comandă -->
+          <div class="account-address-item">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-sm mb-1">
+                  <strong>Total comandă:</strong> {{ order.total }} RON
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Status livrare:</strong> {{ order.get_shipping_status_display }}
+                </p>
+                <p class="text-xxs text-grey mb-0">
+                  Returul este disponibil doar în interiorul perioadei stabilite
+                  în politicile Snobistic. Ți se vor cere poze și detalii suplimentare
+                  după ce trimiți această cerere (prin suport).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formular retur -->
+          <div class="account-address-item mt-3">
+            <p class="title text-md fw-medium">Completează motivul returului</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <form method="post" class="form-login">
+                  {% csrf_token %}
+                  <div class="mb-3">
+                    {{ form.reason.label_tag }}
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                      <div class="text-danger small mt-1">
+                        {{ form.reason.errors }}
+                      </div>
+                    {% endif %}
+                    <p class="text-xxs text-grey mt-1 mb-0">
+                      Exemplu: „Produsul nu corespunde descrierii, culoarea este diferită”
+                      sau „Există un defect care nu era menționat”.
+                    </p>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button type="submit" class="tf-btn btn-dark2 animate-btn">
+                      Trimite cererea de retur
+                    </button>
+                    <a href="{% url 'orders:order_detail' order.id %}"
+                       class="tf-btn btn-out-line-dark-2">
+                      Anulează
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /widget-inner-address -->
+      </div><!-- /my-acount-content -->
+    </div><!-- /main-content-account -->
+  </div>
+</div>
+{% endblock %}

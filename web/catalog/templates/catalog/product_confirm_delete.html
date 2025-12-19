@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Șterge produs{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 600px;">
+  <h2 class="mb-4 text-danger">Ștergi produsul?</h2>
+  <p>“{{ object.title }}” va fi șters definitiv. Ești sigur?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Da, șterge-l</button>
+    <a href="{% url 'dashboard:products_list' %}" class="btn btn-outline-secondary ms-2">Nu</a>
+  </form>
+</div>
+{% endblock %}

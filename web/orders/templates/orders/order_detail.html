@@ -1,36 +1,411 @@
 {% extends "base.html" %}
-{% block title %}Detalii comandă #{{ order.id }}{% endblock %}
+{% load static %}
+{% block title %}Detalii comandă #{{ order.id }} – Snobistic{% endblock %}
+
 {% block content %}
-<h2>Comandă #{{ order.id }}</h2>
-<p><strong>Status:</strong> {{ order.get_status_display }}</p>
-<p><strong>Plasată la:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Comanda #{{ order.id }}</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
 
-<h4>Articole</h4>
-<table class="table">
-  <thead><tr><th>Produs</th><th>Cantitate</th><th>Preț</th><th>Subtotal</th><th></th></tr></thead>
-  <tbody>
-    {% for item in order.items.all %}
-      <tr>
-        <td>{{ item.product.name }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>{{ item.price }} EUR</td>
-        <td>{{ item.subtotal }} EUR</td>
-        <td>
-          {% if order.is_returnable and not item.return_request %}
-            <a href="{% url 'orders:return_request' item.id %}" class="btn btn-sm btn-warning">Retur</a>
-          {% elif item.return_request %}
-            <span class="badge bg-info">Retur {{ item.return_request.get_status_display }}</span>
+        {% if is_seller %}
+          <a class="breadcrumb-item" href="{% url 'dashboard:seller_dashboard' %}">Panou vânzător</a>
+          <div class="breadcrumb-item current">#{{ order.id }}</div>
+        {% else %}
+          <div class="breadcrumb-item current">Cont</div>
+          <a class="breadcrumb-item" href="{% url 'orders:order_list' %}">Comenzile mele</a>
+          <div class="breadcrumb-item current">#{{ order.id }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <!-- sidebar-account (mobil) -->
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+
+      {# Sidebar doar pentru BUYER; seller vede pagina ca detaliu „în vizită” #}
+      {% if not is_seller %}
+        <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+          <ul class="my-account-nav">
+            <li>
+              <a href="{% url 'accounts:profile' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Profil
+              </a>
+            </li>
+
+            {% if request.user.is_seller %}
+            <li>
+              <a href="{% url 'dashboard:seller_dashboard' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Panou vânzător
+              </a>
+            </li>
+            {% endif %}
+
+            <li>
+              <a href="{% url 'orders:order_list' %}"
+                 class="text-sm link fw-medium my-account-nav-item active">
+                Comenzile mele
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'catalog:favorites' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Favorite
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'accounts:profile_dimensions' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Măsurători
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'accounts:profile_security' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Setări
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'accounts:logout' %}"
+                 class="text-sm link fw-medium my-account-nav-item">
+                Deloghează-te
+              </a>
+            </li>
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- Content -->
+      <div class="my-acount-content account-address">
+        <h6 class="title-account">Detalii comandă #{{ order.id }}</h6>
+
+        <div class="widget-inner-address">
+
+          <!-- Box: Info generală -->
+          <div class="account-address-item">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-sm mb-1">
+                  <strong>Data plasării:</strong>
+                  {{ order.created_at|date:"d.m.Y H:i" }}
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Tip comandă:</strong>
+                  {% if order.order_type == 'auction_win' %}
+                    Licitație câștigată
+                  {% else %}
+                    Comandă magazin
+                  {% endif %}
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Status plată:</strong>
+                  {% if order.payment_status == 'paid' %}
+                    <span class="badge bg-success text-xxs">Plătită</span>
+                  {% else %}
+                    <span class="badge bg-secondary text-xxs">În așteptare</span>
+                  {% endif %}
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Metodă plată:</strong>
+                  {% if order.latest_payment %}
+                    {{ order.latest_payment.get_provider_display }}
+                    · P#{{ order.latest_payment.id }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Status livrare:</strong>
+                  {{ order.get_shipping_status_display }}
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Status escrow:</strong>
+                  <span class="badge bg-outline text-xxs">
+                    {{ order.get_escrow_status_display }}
+                  </span>
+                </p>
+                <p class="text-sm mb-1">
+                  <strong>Adresă livrare:</strong> {{ order.address }}
+                </p>
+                <p class="text-sm mb-0">
+                  <strong>Metodă transport:</strong> {{ order.shipping_method }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box: Produse comandate -->
+          <div class="account-address-item mt-3">
+            <p class="title text-md fw-medium">Produse în comandă</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <div class="table-responsive">
+                  <table class="table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th class="text-xs text-uppercase text-muted">Produs</th>
+                        <th class="text-xs text-uppercase text-muted text-center">Cant.</th>
+                        <th class="text-xs text-uppercase text-muted text-end">Preț</th>
+                        <th class="text-xs text-uppercase text-muted text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for item in order.items.all %}
+                        <tr>
+                          <td class="text-sm">
+                            <div class="d-flex align-items-center gap-2">
+                              {% if item.product.main_image %}
+                                <a href="{{ item.product.get_absolute_url }}"
+                                   class="img-box"
+                                   style="width:60px; height:80px; overflow:hidden; border-radius:8px;">
+                                  <img src="{{ item.product.main_image.url }}"
+                                       alt="{{ item.product.title }}"
+                                       class="img-fluid"
+                                       style="object-fit:cover; width:100%; height:100%;">
+                                </a>
+                              {% endif %}
+                              <div>
+                                <a href="{{ item.product.get_absolute_url }}"
+                                   class="name text-sm link fw-medium d-block">
+                                  {{ item.product.title }}
+                                </a>
+                                <div class="text-xxs text-grey">
+                                  {% if item.product.size %}
+                                    Mărime: {{ item.product.size }} ·
+                                  {% endif %}
+                                  {% if item.product.sku %}
+                                    SKU: {{ item.product.sku }}
+                                  {% endif %}
+
+                                  {# opțional: marcaj pentru seller, vede ce e „al lui” #}
+                                  {% if is_seller and item.product.owner == request.user %}
+                                    · <span class="badge bg-dark">Articolul tău</span>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="text-sm text-center">
+                            {{ item.quantity }}
+                          </td>
+                          <td class="text-sm text-end">
+                            {{ item.price }} RON
+                          </td>
+                          <td class="text-sm text-end">
+                            {{ item.subtotal }} RON
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box: Sumar comandă & Escrow -->
+          <div class="account-address-item mt-3">
+            <p class="title text-md fw-medium">Sumar comandă & escrow</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <ul class="list-unstyled mb-2">
+                  <li class="d-flex justify-content-between text-sm mb-1">
+                    <span>Subtotal produse</span>
+                    <span>{{ order.subtotal }} RON</span>
+                  </li>
+                  <li class="d-flex justify-content-between text-sm mb-1">
+                    <span>Buyer protection</span>
+                    <span>{{ order.buyer_protection_fee_amount }} RON</span>
+                  </li>
+                  <li class="d-flex justify-content-between text-sm mb-1">
+                    <span>Transport</span>
+                    <span>{{ order.shipping_cost }} RON</span>
+                  </li>
+
+                  <li class="d-flex justify-content-between text-sm mb-1">
+                    <span>Comision platformă (vânzător)</span>
+                    <span>{{ order.seller_commission_amount }} RON</span>
+                  </li>
+
+                  <li class="d-flex justify-content-between text-md fw-semibold mt-2 pt-2 border-top">
+                    <span>Total de plată</span>
+                    <span>{{ order.total }} RON</span>
+                  </li>
+                </ul>
+
+                <p class="text-xxs text-grey mb-0">
+                  Suma plătită de cumpărător este păstrată în
+                  <strong>escrow Snobistic</strong> până la confirmarea recepției
+                  sau expirarea perioadei de retur. În cazul unei dispute, statusul
+                  escrow devine „{{ order.get_escrow_status_display }}”.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Box: Facturi (buyer + seller + staff – controlul accesului e în views de facturi) #}
+          {% with invoices=order.invoices.all %}
+            {% if invoices %}
+              <div class="account-address-item mt-3">
+                <p class="title text-md fw-medium">Facturi</p>
+                <div class="info-detail">
+                  <div class="box-infor">
+                    <div class="table-responsive">
+                      <table class="table table-sm align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th class="text-xs text-uppercase text-muted">Număr</th>
+                            <th class="text-xs text-uppercase text-muted">Tip</th>
+                            <th class="text-xs text-uppercase text-muted text-end">Total</th>
+                            <th class="text-xs text-uppercase text-muted text-end">Emisă la</th>
+                            <th class="text-xs text-uppercase text-muted text-end">Acțiuni</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for invoice in invoices %}
+                            <tr>
+                              <td class="text-sm">
+                                {{ invoice.invoice_number }}
+                              </td>
+                              <td class="text-sm">
+                                {{ invoice.get_invoice_type_display }}
+                              </td>
+                              <td class="text-sm text-end">
+                                {{ invoice.total_amount }} {{ invoice.currency }}
+                              </td>
+                              <td class="text-sm text-end">
+                                {{ invoice.issued_at|date:"d.m.Y H:i" }}
+                              </td>
+                              <td class="text-sm text-end">
+                                <a href="{% url 'invoices:invoice_detail' invoice.pk %}"
+                                   class="btn btn-xs btn-outline-secondary">
+                                  Vezi detalii
+                                </a>
+                                <a href="{% url 'invoices:invoice_download' invoice.pk %}"
+                                   class="btn btn-xs btn-outline-dark ms-1">
+                                  PDF
+                                </a>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          {% if is_seller %}
+            <!-- Box: Livrare & AWB (vânzător) -->
+            <div class="account-address-item mt-3">
+              <p class="title text-md fw-medium">Livrare & AWB</p>
+              <div class="info-detail">
+                <div class="box-infor">
+                  <p class="text-sm mb-2">
+                    Gestionează AWB-ul pentru această comandă prin Curiera.
+                  </p>
+                  <p class="text-xxs text-grey mb-2">
+                    Poți genera AWB-ul, seta rambursul și urca poze cu articolul și coletul.
+                  </p>
+                  <a href="{% url 'logistics:generate_awb' order.id %}"
+                     class="tf-btn btn-out-line-dark text-sm">
+                    Vezi / generează AWB prin Curiera
+                  </a>
+                </div>
+              </div>
+            </div>
           {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<h4>Adresă de livrare</h4>
-<p>{{ order.shipping_address|linebreaksbr }}</p>
-{% if order.billing_address %}
-<h4>Adresă de facturare</h4>
-<p>{{ order.billing_address|linebreaksbr }}</p>
-{% endif %}
+          {% if not is_seller %}
+            <!-- Box: Retur (doar pentru buyer) -->
+            <div class="account-address-item mt-3">
+              <p class="title text-md fw-medium">Retur comandă</p>
+              <div class="info-detail">
+                <div class="box-infor">
+                  {% if last_return %}
+                    <p class="text-sm mb-2">
+                      Ultima cerere de retur:
+                      {{ last_return.created_at|date:"d.m.Y H:i" }} –
+                      Status: {{ last_return.get_status_display }}
+                    </p>
+                  {% endif %}
+
+                  {% if can_request_return %}
+                    <p class="text-xxs text-grey mb-2">
+                      Poți solicita retur pentru această comandă conform politicilor Snobistic.
+                    </p>
+                    <a href="{% url 'orders:order_return_request' order.id %}"
+                       class="tf-btn btn-out-line-dark text-sm">
+                      Solicită retur
+                    </a>
+                  {% elif not last_return %}
+                    <p class="text-sm mb-0">
+                      Poți solicita retur după ce comanda este marcată ca
+                      <strong>expediată</strong>.
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Box: Suport (doar pentru buyer) -->
+            <div class="account-address-item mt-3">
+              <p class="title text-md fw-medium">Ai nevoie de ajutor?</p>
+              <div class="info-detail">
+                <div class="box-infor">
+                  <p class="text-sm mb-2">
+                    Dacă ai întrebări despre această comandă sau vrei să raportezi o problemă,
+                    trimite un tichet către echipa de suport Snobistic.
+                  </p>
+                  <a href="{% url 'support:ticket_create' %}"
+                     class="tf-btn btn-out-line-dark text-sm">
+                    Deschide un ticket de suport
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Back link -->
+          <div class="mt-4">
+            {% if is_seller %}
+              <a href="{% url 'dashboard:sold_list' %}"
+                 class="tf-btn btn-out-line-dark-2 text-sm">
+                &larr; Înapoi la articole vândute
+              </a>
+            {% else %}
+              <a href="{% url 'orders:order_list' %}"
+                 class="tf-btn btn-out-line-dark-2 text-sm">
+                &larr; Înapoi la comenzile mele
+              </a>
+            {% endif %}
+          </div>
+
+        </div><!-- /widget-inner-address -->
+      </div><!-- /my-acount-content -->
+    </div><!-- /main-content-account -->
+  </div>
+</div>
 {% endblock %}

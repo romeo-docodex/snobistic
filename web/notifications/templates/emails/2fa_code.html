@@ -1,0 +1,7 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Codul tău de autentificare în doi pași este:</p>
+<h2 style="text-align:center;">{{ code }}</h2>
+<p>Expiră la: {{ expires_at }}</p>
+<p>Dacă nu ai cerut acest cod, poți ignora acest email.</p>
+{% include "emails/partials/footer.html" %}

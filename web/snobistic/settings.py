@@ -1,81 +1,54 @@
 from pathlib import Path
+import os
 
-# ======================================
-# Base
-# ======================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-_1fu7oppr0t6=h36sg2eupn8+#&bs7126kyiv7244-+n1(nl@r'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['snobistic.ro', 'www.snobistic.ro', 'localhost', '127.0.0.1']
 
-# ======================================
-# Applications
-# ======================================
 INSTALLED_APPS = [
-    # Django contrib
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
 
-    # Third-party
+    # External
     'django_countries',
     'phonenumber_field',
     'crispy_forms',
     'crispy_bootstrap5',
 
-    # Allauth (social login)
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.apple',
-
-    # Two-factor auth
-    'django_otp',
-    'django_otp.plugins.otp_totp',
-    'two_factor',
-
-    # Your apps
-    'accounts',
-    'auctions',
-    'cart',
-    'chat',
+    # Internal apps
     'core',
-    'dashboard',
+    'accounts.apps.AccountsConfig',
+    'catalog',
+    'cart',
     'orders',
+    'auctions',
+    'authenticator',
+    'messaging',
+    'dashboard',
     'payments',
-    'products',
-    'shop',
     'support',
-    'wallet',
+    'invoices',
+    'logistics',
 ]
 
-# ======================================
-# Middleware
-# ======================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'snobistic.urls'
 
-# ======================================
-# Templates
-# ======================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -84,9 +57,13 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',  # required by allauth
+                'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.login_form_context',
+                'cart.context_processors.cart',
+                "catalog.context_processors.favorites_badge",
+                "catalog.context_processors.mega_menu_categories",
             ],
         },
     },
@@ -94,9 +71,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'snobistic.wsgi.application'
 
-# ======================================
-# Database
-# ======================================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -104,40 +78,26 @@ DATABASES = {
     }
 }
 
-# ======================================
-# Auth / Allauth / Two-Factor
-# ======================================
-AUTH_USER_MODEL = 'accounts.CustomUser'
-SITE_ID = 1
+AUTH_USER_MODEL = "accounts.CustomUser"
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "dashboard:buyer_dashboard"
+LOGOUT_REDIRECT_URL = "accounts:login"
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+DEFAULT_FROM_EMAIL = "Snobistic <no-reply@snobistic.ro>"
+SNOBISTIC_CONTACT_EMAIL = "support@snobistic.ro"
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_UNIQUE_EMAIL = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+else:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
 
-# Rate‐limit failed login attempts
-ACCOUNT_RATE_LIMITS = {
-    'login_failed': ['5/m', '30/h'],
-}
-
-LOGIN_REDIRECT_URL = '/accounts/profile/'
-LOGOUT_REDIRECT_URL = '/'
-
-# Two-factor auth settings (using fake gateways for development)
-TWO_FACTOR_CALL_GATEWAY = 'two_factor.gateways.fake.Fake'
-TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.fake.Fake'
-
-# ======================================
-# Password validation
-# ======================================
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -145,37 +105,41 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ======================================
-# Internationalization
-# ======================================
 LANGUAGE_CODE = 'ro'
 TIME_ZONE = 'Europe/Bucharest'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# ======================================
-# Static & Media
-# ======================================
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# unde se colectează fișierele statice pentru producție
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# folderele sursă (pentru dezvoltare și pentru collectstatic)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ======================================
-# Email (Console for dev)
-# ======================================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'no-reply@snobistic.com'
 
-# ======================================
-# Crispy Forms
-# ======================================
+PHONENUMBER_DEFAULT_REGION = 'RO'
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# ======================================
-# Default primary key
-# ======================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ==========================
+# Stripe config
+# ==========================
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+# Moneda principală a platformei
+SNOBISTIC_CURRENCY = "RON"

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Sustenabilitate{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .sustainability-toggle input[type="checkbox"],
+  .sustainability-none input[type="checkbox"] {
+    display: none;
+  }
+
+  .sustainability-btn {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left !important;
+
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  .sustainability-btn.active {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  .sustainability-btn .sustainability-title {
+    font-weight: 600;
+    display: block;
+  }
+
+  .sustainability-btn .sustainability-desc {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    display: block;
+  }
+</style>
+
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      {# STÂNGA – formular #}
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <h4>Sustenabilitate</h4>
+          <p class="small text-secondary mb-0">
+            Alege cum se încadrează produsul tău din punct de vedere al sustenabilității.
+          </p>
+        </div>
+
+        <div class="wrap">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {# === ELEMENTE DE SUSTENABILITATE (multi-select) === #}
+            <div class="mb-4">
+              <div class="small text-uppercase text-secondary fw-semibold mb-2">
+                Elemente de sustenabilitate
+              </div>
+              <p class="small text-secondary mb-3">
+                Bifează toate afirmațiile care se potrivesc produsului tău (ex.: second-hand, materiale reciclate, brand responsabil etc.).
+              </p>
+
+              <div class="row g-2 sustainability-toggle">
+                {% for checkbox in form.sustainability_tags %}
+                  <div class="col-12 col-md-6">
+                    <label class="tf-btn w-100 sustainability-btn">
+                      {{ checkbox.tag }}
+                      <span class="sustainability-title">
+                        {{ checkbox.choice_label }}
+                      </span>
+                    </label>
+                  </div>
+                {% empty %}
+                  <p class="small text-secondary">
+                    Nu există încă tag-uri de sustenabilitate definite.
+                  </p>
+                {% endfor %}
+              </div>
+
+              {% if form.sustainability_tags.errors %}
+                <div class="text-danger small mt-2">
+                  {{ form.sustainability_tags.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+
+            {# === FĂRĂ ELEMENTE DE SUSTENABILITATE === #}
+            <div class="mb-4">
+              <div class="small text-uppercase text-secondary fw-semibold mb-2">
+                Fără elemente de sustenabilitate
+              </div>
+
+              <div class="sustainability-none">
+                <label class="tf-btn w-100 sustainability-btn">
+                  {{ form.sustainability_none }}
+                  <span class="sustainability-title">
+                    Produs fără beneficii de sustenabilitate
+                  </span>
+                  <span class="sustainability-desc">
+                    De ex. produs nou, cumpărat recent, fără materiale / origini speciale.
+                  </span>
+                </label>
+              </div>
+
+              {% if form.sustainability_none.errors %}
+                <div class="text-danger small mt-2">
+                  {{ form.sustainability_none.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      {# DREAPTA – explicații + butoane (ca la Preț & colet) #}
+      <div class="right">
+        <h4 class="mb_8">De ce contează sustenabilitatea?</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1">
+            Cumpărătorii apreciază transparența – vor să știe dacă produsul este second-hand, recondiționat sau realizat din materiale responsabile.
+          </li>
+          <li class="mb-1">
+            Tag-urile de sustenabilitate ajută produsul să apară în filtrele dedicate (ex.: „eco”, „materiale reciclate”, „second-hand”).
+          </li>
+          <li class="mb-1">
+            Dacă produsul nu are astfel de beneficii, poți selecta clar „Produs fără beneficii de sustenabilitate” – nu este o problemă, important este să fii sincer(ă).
+          </li>
+        </ul>
+
+        <p class="text-secondary small mb-4">
+          Poți selecta mai multe tag-uri de sustenabilitate, sau varianta „fără”, dar nu ambele în același timp.
+        </p>
+
+        <div class="button-submit d-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+
+          {% if wizard.steps.prev %}
+            <button class="tf-btn btn-outline"
+                    name="wizard_goto_step"
+                    value="{{ wizard.steps.prev }}"
+                    type="submit"
+                    form="wizardForm">
+              <span class="text">Înapoi</span>
+            </button>
+          {% endif %}
+
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // multi-select pentru sustainability_tags
+    const container = document.querySelector(".sustainability-toggle");
+    if (container) {
+      container.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+        const label = input.closest(".sustainability-btn");
+        if (!label) return;
+
+        // stare inițială
+        if (input.checked) {
+          label.classList.add("active");
+        }
+
+        label.addEventListener("click", function (e) {
+          if (e.target.tagName.toLowerCase() === "input") {
+            return;
+          }
+          e.preventDefault();
+          input.checked = !input.checked;
+          label.classList.toggle("active", input.checked);
+
+          // dacă bifăm orice tag, debifăm „Nici una”
+          const noneInput = document.getElementById("id_sustainability_none");
+          if (noneInput && input.checked) {
+            const noneLabel = noneInput.closest(".sustainability-btn");
+            noneInput.checked = false;
+            if (noneLabel) {
+              noneLabel.classList.remove("active");
+            }
+          }
+        });
+      });
+    }
+
+    // butonul „Nici una”
+    const noneInput = document.getElementById("id_sustainability_none");
+    if (noneInput) {
+      const noneLabel = noneInput.closest(".sustainability-btn");
+      if (noneInput.checked && noneLabel) {
+        noneLabel.classList.add("active");
+      }
+
+      if (noneLabel) {
+        noneLabel.addEventListener("click", function (e) {
+          if (e.target.tagName.toLowerCase() === "input") {
+            return;
+          }
+          e.preventDefault();
+          noneInput.checked = !noneInput.checked;
+          noneLabel.classList.toggle("active", noneInput.checked);
+
+          if (noneInput.checked) {
+            const tagsContainer = document.querySelector(".sustainability-toggle");
+            if (tagsContainer) {
+              tagsContainer.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+                input.checked = false;
+                const lbl = input.closest(".sustainability-btn");
+                if (lbl) {
+                  lbl.classList.remove("active");
+                }
+              });
+            }
+          }
+        });
+      }
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Editează Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+<h1>Actualizează tichetul #{{ ticket.id }}</h1>
+<form method="post">
+  {% csrf_token %}
+  {% include "support/partials/form_errors.html" with form=form %}
+  {{ form.as_p }}
+  <button class="btn btn-primary">Salvează modificările</button>
+  <a class="btn btn-outline-secondary" href="{% url 'support:ticket_detail' ticket.id %}">Anulează</a>
+</form>
+{% endblock %}

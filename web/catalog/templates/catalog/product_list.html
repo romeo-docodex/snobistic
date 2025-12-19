@@ -1,0 +1,853 @@
+{% extends "base.html" %}
+{% load query_utils %}
+
+{% block title %}Magazin – Snobistic{% endblock %}
+{% block content %}
+
+<!-- Section Product -->
+<section class="flat-spacing-24">
+    <div class="container">
+
+        <!-- Top control: sort + layout -->
+        <div class="tf-shop-control mb1 d-flex justify-content-between align-items-center">
+            <div class="tf-group-filter">
+                <div class="dropdown dropdown-filter">
+                    <div class="dropdown-toggle" id="sort" data-bs-toggle="dropdown"
+                         aria-expanded="false" data-bs-auto-close="outside">
+                        <span class="text-value">
+                            {% if request.GET.sort == 'a-z' %}
+                                Alfabetică, A–Z
+                            {% elif request.GET.sort == 'z-a' %}
+                                Alfabetică, Z–A
+                            {% elif request.GET.sort == 'price-low-high' %}
+                                Preț, crescător
+                            {% elif request.GET.sort == 'price-high-low' %}
+                                Preț, descrescător
+                            {% else %}
+                                Sortare implicită
+                            {% endif %}
+                        </span>
+                        <span class="icon icon-arr-down"></span>
+                    </div>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item {% if request.GET.sort == 'a-z' %}active{% endif %}"
+                               href="{% update_query_params request sort='a-z' %}">
+                                Alfabetică, A–Z
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if request.GET.sort == 'z-a' %}active{% endif %}"
+                               href="{% update_query_params request sort='z-a' %}">
+                                Alfabetică, Z–A
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if request.GET.sort == 'price-low-high' %}active{% endif %}"
+                               href="{% update_query_params request sort='price-low-high' %}">
+                                Preț ascendent
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if request.GET.sort == 'price-high-low' %}active{% endif %}"
+                               href="{% update_query_params request sort='price-high-low' %}">
+                                Preț descendent
+                            </a>
+                        </li>
+                        {% if request.GET.sort %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger"
+                                   href="{% update_query_params request sort=None %}">
+                                    Reset
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            {# Buton Filtre - doar pe mobile #}
+            <div class="d-md-none">
+                <button class="btn btn-outline-dark btn-sm rounded-pill px-3 d-inline-flex align-items-center"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#filtersOffcanvas"
+                        aria-controls="filtersOffcanvas">
+                    <i class="icon icon-filter me-1"></i>
+                    Filtre
+                </button>
+            </div>
+        </div>
+
+        <!-- FILTRE DROPDOWN (design Vineta) – DESKTOP/TABLETĂ -->
+        <form method="get" id="filtersForm" class="d-none d-md-block">
+            {# păstrăm sortarea curentă când schimbăm filtrele #}
+            {% if request.GET.sort %}
+                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+            {% endif %}
+
+            <div class="tf-filter-dropdown">
+                <span class="title-filter">Filtre:</span>
+                <div class="meta-dropdown-filter">
+
+                    {# === Categorie (fost Availability) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="category" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_category_slug %}
+                                    {% for cat in root_categories %}
+                                        {% if cat.slug == selected_category_slug %}
+                                            {{ cat.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    Categorie
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="category">
+                            <ul class="filter-group-check">
+                                <li class="list-item">
+                                    <input type="radio"
+                                           name="category"
+                                           class="tf-check"
+                                           id="category_all"
+                                           value=""
+                                           {% if not selected_category_slug %}checked{% endif %}>
+                                    <label for="category_all" class="label">
+                                        <span>Toate categoriile</span>
+                                    </label>
+                                </li>
+                                {% for cat in root_categories %}
+                                    <li class="list-item">
+                                        <input type="radio"
+                                               name="category"
+                                               class="tf-check"
+                                               id="category_{{ cat.slug }}"
+                                               value="{{ cat.slug }}"
+                                               {% if cat.slug == selected_category_slug %}checked{% endif %}>
+                                        <label for="category_{{ cat.slug }}" class="label">
+                                            <span>{{ cat.name }}</span>
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {# === Stare (condiție) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="condition" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_conditions %}
+                                    Stare ({{ selected_conditions|length }})
+                                {% else %}
+                                    Stare
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="condition">
+                            <ul class="filter-group-check">
+                                {% for code, label in condition_choices %}
+                                    <li class="list-item">
+                                        <input type="checkbox"
+                                               name="condition"
+                                               class="tf-check"
+                                               id="condition_{{ code }}"
+                                               value="{{ code }}"
+                                               {% if code in selected_conditions %}checked{% endif %}>
+                                        <label for="condition_{{ code }}" class="label">
+                                            <span>{{ label }}</span>
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {# === Material === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="material" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_materials %}
+                                    Material ({{ selected_materials|length }})
+                                {% else %}
+                                    Material
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="material">
+                            <ul class="filter-group-check">
+                                {% for m in materials %}
+                                    <li class="list-item">
+                                        <input type="checkbox"
+                                               name="material"
+                                               class="tf-check"
+                                               id="material_{{ m.id }}"
+                                               value="{{ m.id }}"
+                                               {% if m.id in selected_materials %}checked{% endif %}>
+                                        <label for="material_{{ m.id }}" class="label">
+                                            <span>{{ m.name }}</span>
+                                        </label>
+                                    </li>
+                                {% empty %}
+                                    <li class="list-item px-3 py-2 text-muted text-sm">
+                                        Nu există materiale definite.
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {# === Preț (slider design + hidden inputs min_price / max_price) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="price" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if min_price or max_price %}
+                                    Preț: {{ min_price|default:price_min_global }} – {{ max_price|default:price_max_global }} RON
+                                {% else %}
+                                    Preț
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="price">
+                            <div class="widget-price filter-price">
+                                {# slider-ul din tema, dar cu min/max din DB #}
+                                <div class="price-val-range noUi-target noUi-ltr noUi-horizontal"
+                                     id="price-value-range"
+                                     data-min="{{ price_min_global }}"
+                                     data-max="{{ price_max_global }}">
+                                    <div class="noUi-base">
+                                        <div class="noUi-connects">
+                                            <div class="noUi-connect"></div>
+                                        </div>
+                                        <div class="noUi-origin">
+                                            <div class="noUi-handle noUi-handle-lower" data-handle="0"></div>
+                                        </div>
+                                        <div class="noUi-origin">
+                                            <div class="noUi-handle noUi-handle-upper" data-handle="1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="box-value-price">
+                                    <span class="text-sm">Preț:</span>
+                                    <div class="price-box">
+                                        <div class="price-val"
+                                             id="price-min-value"
+                                             data-currency="RON">
+                                            {% if min_price %}{{ min_price }}{% else %}{{ price_min_global }}{% endif %}
+                                        </div>
+                                        <span>-</span>
+                                        <div class="price-val"
+                                             id="price-max-value"
+                                             data-currency="RON">
+                                            {% if max_price %}{{ max_price }}{% else %}{{ price_max_global }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span class="reset-price"
+                                      data-min="{{ price_min_global }}"
+                                      data-max="{{ price_max_global }}">
+                                    Reset
+                                </span>
+
+                                {# input-urile care se trimit spre backend #}
+                                <input type="hidden" name="min_price" id="min_price_input" value="{{ min_price }}">
+                                <input type="hidden" name="max_price" id="max_price_input" value="{{ max_price }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    {# === Culoare (colors din context, M2M) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="color" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_colors %}
+                                    Culoare ({{ selected_colors|length }})
+                                {% else %}
+                                    Culoare
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="color">
+                            <div class="filter-color-box flat-check-list">
+                                {% for c in colors %}
+                                    <label class="check-item color-item color-check {% if c.id in selected_colors %}active{% endif %}">
+                                        <input type="checkbox"
+                                               name="color"
+                                               value="{{ c.id }}"
+                                               class="d-none"
+                                               {% if c.id in selected_colors %}checked{% endif %}>
+                                        <span class="color"
+                                              {% if c.hex_code %}
+                                                  style="background-color: {{ c.hex_code }};"
+                                              {% endif %}>
+                                        </span>
+                                        <span class="color-text">{{ c.name }}</span>
+                                    </label>
+                                {% empty %}
+                                    <span class="px-3 py-2 d-block text-muted text-sm">
+                                        Nu există culori definite.
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# === Mărime (size choices) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="size" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_sizes %}
+                                    Mărime ({{ selected_sizes|length }})
+                                {% else %}
+                                    Mărime
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="size">
+                            <div class="filter-size-box flat-check-list">
+                                {% for size in sizes %}
+                                    <label class="check-item size-item size-check {% if size in selected_sizes %}active{% endif %}">
+                                        <input type="checkbox"
+                                               name="size"
+                                               value="{{ size }}"
+                                               class="d-none"
+                                               {% if size in selected_sizes %}checked{% endif %}>
+                                        <span class="size">{{ size }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# === Brand (branduri vizibile public) === #}
+                    <div class="dropdown dropdown-filter">
+                        <div class="dropdown-toggle" id="brand" data-bs-toggle="dropdown"
+                             aria-expanded="false" data-bs-auto-close="outside">
+                            <span class="text-value">
+                                {% if selected_brands and brands %}
+                                    {% with first_brand_id=selected_brands.0 %}
+                                        {% for b in brands %}
+                                            {% if b.id == first_brand_id %}
+                                                {{ b.name }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                {% else %}
+                                    Brand
+                                {% endif %}
+                            </span>
+                            <span class="icon icon-arr-down"></span>
+                        </div>
+                        <div class="dropdown-menu" aria-labelledby="brand">
+                            <ul class="filter-group-check">
+                                <li class="list-item">
+                                    <input type="radio"
+                                           name="brand"
+                                           class="tf-check"
+                                           id="brand_all"
+                                           value=""
+                                           {% if not selected_brands %}checked{% endif %}>
+                                    <label for="brand_all" class="label">
+                                        <span>Toate brandurile</span>
+                                    </label>
+                                </li>
+                                {% for b in brands %}
+                                    <li class="list-item">
+                                        <input type="radio"
+                                               name="brand"
+                                               class="tf-check"
+                                               id="brand_{{ b.id }}"
+                                               value="{{ b.id }}"
+                                               {% if b.id in selected_brands %}checked{% endif %}>
+                                        <label for="brand_{{ b.id }}" class="label">
+                                            <span>{{ b.name }}</span>
+                                        </label>
+                                    </li>
+                                {% empty %}
+                                    <li class="list-item px-3 py-2 text-muted text-sm">
+                                        Nu există branduri publice.
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <a href="{% url 'catalog:product_list' %}" class="btn btn-link btn-sm">
+                        Reset tot
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        {# ===== OFFCANVAS FILTRE – MOBILE ONLY ===== #}
+        <div class="offcanvas offcanvas-end d-md-none"
+             tabindex="-1"
+             id="filtersOffcanvas"
+             aria-labelledby="filtersOffcanvasLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="filtersOffcanvasLabel">Filtre</h5>
+                <button type="button"
+                        class="btn-close text-reset"
+                        data-bs-dismiss="offcanvas"
+                        aria-label="Închide"></button>
+            </div>
+            <div class="offcanvas-body">
+                <form method="get" id="filtersFormMobile">
+                    {% if request.GET.sort %}
+                        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                    {% endif %}
+
+                    {# Categorie #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Categorie</div>
+                        <ul class="filter-group-check">
+                            <li class="list-item">
+                                <input type="radio"
+                                       name="category"
+                                       class="tf-check"
+                                       id="m_category_all"
+                                       value=""
+                                       {% if not selected_category_slug %}checked{% endif %}>
+                                <label for="m_category_all" class="label">
+                                    <span>Toate categoriile</span>
+                                </label>
+                            </li>
+                            {% for cat in root_categories %}
+                                <li class="list-item">
+                                    <input type="radio"
+                                           name="category"
+                                           class="tf-check"
+                                           id="m_category_{{ cat.slug }}"
+                                           value="{{ cat.slug }}"
+                                           {% if cat.slug == selected_category_slug %}checked{% endif %}>
+                                    <label for="m_category_{{ cat.slug }}" class="label">
+                                        <span>{{ cat.name }}</span>
+                                    </label>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {# Stare #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Stare</div>
+                        <ul class="filter-group-check">
+                            {% for code, label in condition_choices %}
+                                <li class="list-item">
+                                    <input type="checkbox"
+                                           name="condition"
+                                           class="tf-check"
+                                           id="m_condition_{{ code }}"
+                                           value="{{ code }}"
+                                           {% if code in selected_conditions %}checked{% endif %}>
+                                    <label for="m_condition_{{ code }}" class="label">
+                                        <span>{{ label }}</span>
+                                    </label>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {# Material #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Material</div>
+                        <ul class="filter-group-check">
+                            {% for m in materials %}
+                                <li class="list-item">
+                                    <input type="checkbox"
+                                           name="material"
+                                           class="tf-check"
+                                           id="m_material_{{ m.id }}"
+                                           value="{{ m.id }}"
+                                           {% if m.id in selected_materials %}checked{% endif %}>
+                                    <label for="m_material_{{ m.id }}" class="label">
+                                        <span>{{ m.name }}</span>
+                                    </label>
+                                </li>
+                            {% empty %}
+                                <li class="list-item px-3 py-2 text-muted text-sm">
+                                    Nu există materiale definite.
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {# Preț - mobil: input numeric simplu #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Preț (RON)</div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small mb-1">Min</label>
+                                <input type="number"
+                                       name="min_price"
+                                       class="form-control form-control-sm"
+                                       min="0"
+                                       step="1"
+                                       value="{{ min_price|default_if_none:'' }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small mb-1">Max</label>
+                                <input type="number"
+                                       name="max_price"
+                                       class="form-control form-control-sm"
+                                       min="0"
+                                       step="1"
+                                       value="{{ max_price|default_if_none:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Culoare #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Culoare</div>
+                        <div class="filter-color-box flat-check-list">
+                            {% for c in colors %}
+                                <label class="check-item color-item color-check {% if c.id in selected_colors %}active{% endif %}">
+                                    <input type="checkbox"
+                                           name="color"
+                                           value="{{ c.id }}"
+                                           class="d-none"
+                                           {% if c.id in selected_colors %}checked{% endif %}>
+                                    <span class="color"
+                                          {% if c.hex_code %}
+                                              style="background-color: {{ c.hex_code }};"
+                                          {% endif %}>
+                                    </span>
+                                    <span class="color-text">{{ c.name }}</span>
+                                </label>
+                            {% empty %}
+                                <span class="px-3 py-2 d-block text-muted text-sm">
+                                    Nu există culori definite.
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {# Mărime #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Mărime</div>
+                        <div class="filter-size-box flat-check-list">
+                            {% for size in sizes %}
+                                <label class="check-item size-item size-check {% if size in selected_sizes %}active{% endif %}">
+                                    <input type="checkbox"
+                                           name="size"
+                                           value="{{ size }}"
+                                           class="d-none"
+                                           {% if size in selected_sizes %}checked{% endif %}>
+                                    <span class="size">{{ size }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {# Brand #}
+                    <div class="mb-3">
+                        <div class="fw-semibold small mb-2">Brand</div>
+                        <ul class="filter-group-check">
+                            <li class="list-item">
+                                <input type="radio"
+                                       name="brand"
+                                       class="tf-check"
+                                       id="m_brand_all"
+                                       value=""
+                                       {% if not selected_brands %}checked{% endif %}>
+                                <label for="m_brand_all" class="label">
+                                    <span>Toate brandurile</span>
+                                </label>
+                            </li>
+                            {% for b in brands %}
+                                <li class="list-item">
+                                    <input type="radio"
+                                           name="brand"
+                                           class="tf-check"
+                                           id="m_brand_{{ b.id }}"
+                                           value="{{ b.id }}"
+                                           {% if b.id in selected_brands %}checked{% endif %}>
+                                    <label for="m_brand_{{ b.id }}" class="label">
+                                        <span>{{ b.name }}</span>
+                                    </label>
+                                </li>
+                            {% empty %}
+                                <li class="list-item px-3 py-2 text-muted text-sm">
+                                    Nu există branduri publice.
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'catalog:product_list' %}"
+                           class="btn btn-link btn-sm">
+                            Reset tot
+                        </a>
+                        <button type="submit"
+                                class="btn btn-dark btn-sm px-3"
+                                data-bs-dismiss="offcanvas">
+                            Aplică filtre
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results count -->
+        <div class="mb-3 text-sm text-muted">
+            {% if page_obj %}
+                {{ page_obj.paginator.count }} produse găsite
+            {% else %}
+                0 produse găsite
+            {% endif %}
+        </div>
+
+        <!-- Product Grid -->
+        {% if products %}
+            <div class="wrapper-shop tf-grid-layout" id="productGrid">
+
+                {# ===== MOBILE: GRID 2 / RÂND ===== #}
+                <div class="row g-2 d-md-none">
+                    {% for product in products %}
+                        <div class="col-6 mt-5">
+                            <div class="card-product card-product-size card-product-mobile text-start">
+
+                                {# Imagine produs #}
+                                <a href="{{ product.get_absolute_url }}"
+                                   class="product-img mobile-grid-thumb d-block mb-2">
+                                    <img class="img-product lazyload w-100 h-100 object-fit-cover"
+                                         data-src="{{ product.main_image.url }}"
+                                         src="{{ product.main_image.url }}"
+                                         alt="{{ product.title }}">
+                                </a>
+
+                                {# Info sub poză #}
+                                <div class="card-product-info">
+
+                                    {# Brand #}
+                                    {% if product.brand %}
+                                        <div class="sub-title text-xs text-uppercase text-main-4 brand-mobile mb-1">
+                                            {{ product.brand.name }}
+                                        </div>
+                                    {% endif %}
+
+                                    {# Dimensiune – Stare #}
+                                    <div class="meta-mobile text-xs mb-1">
+                                        {% if product.size %}
+                                            <span class="size-mobile">{{ product.size }}</span>
+                                        {% endif %}
+                                        {% if product.size and product.get_condition_display %}
+                                            <span class="dot-sep"> • </span>
+                                        {% endif %}
+                                        {% if product.get_condition_display %}
+                                            <span class="condition-mobile">{{ product.get_condition_display }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {# Preț #}
+                                    <div class="price-wrap fw-medium mb-0">
+                                        <span class="price-new price-mobile">{{ product.price }} RON</span>
+                                    </div>
+                                </div>
+
+                                {# Butoane sub info #}
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <!-- Add to cart -->
+                                    <form method="post"
+                                          action="{% url 'cart:add' product.pk %}"
+                                          class="flex-grow-1">
+                                        {% csrf_token %}
+                                        <button class="tf-btn btn-sm w-100 d-flex align-items-center justify-content-center btn-mobile-cart"
+                                                type="submit">
+                                            <span class="icon icon-cart2"></span>
+                                        </button>
+                                    </form>
+
+                                    <!-- Favorite -->
+                                    <a href="{% url 'catalog:toggle_favorite' product.pk %}"
+                                       class="box-icon hover-tooltip btn-mobile-icon {% if product.pk in favorite_ids %}active{% endif %}"
+                                       data-toggle-fav>
+                                        <span class="icon icon-heart2"></span>
+                                    </a>
+                                </div>
+
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {# ===== DESKTOP / TABLETĂ: GRID 4/COL (layout existent) ===== #}
+                <div class="row g-3 g-lg-4 d-none d-md-flex">
+                    {% for product in products %}
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card-product style-2 card-product-size">
+                                <div class="card-product-wrapper">
+                                    <a href="{{ product.get_absolute_url }}" class="product-img">
+                                        <img class="img-product lazyload"
+                                             data-src="{{ product.main_image.url }}"
+                                             src="{{ product.main_image.url }}"
+                                             alt="{{ product.title }}">
+                                        {% with extra=product.images.all|first %}
+                                            {% if extra %}
+                                                <img class="img-hover lazyload"
+                                                     data-src="{{ extra.image.url }}"
+                                                     src="{{ extra.image.url }}"
+                                                     alt="{{ extra.alt_text|default:product.title }}">
+                                            {% else %}
+                                                <img class="img-hover lazyload"
+                                                     data-src="{{ product.main_image.url }}"
+                                                     src="{{ product.main_image.url }}"
+                                                     alt="{{ product.title }}">
+                                            {% endif %}
+                                        {% endwith %}
+                                    </a>
+                                    <ul class="list-product-btn">
+                                        <li>
+                                            <form method="post" action="{% url 'cart:add' product.pk %}">
+                                                {% csrf_token %}
+                                                <button class="box-icon hover-tooltip" type="submit">
+                                                    <span class="icon icon-cart2"></span>
+                                                    <span class="tooltip">Adaugă în coș</span>
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li class="wishlist">
+                                            <a href="{% url 'catalog:toggle_favorite' product.pk %}"
+                                               class="box-icon hover-tooltip {% if product.pk in favorite_ids %}active{% endif %}"
+                                               data-toggle-fav>
+                                                <span class="icon icon-heart2"></span>
+                                                <span class="tooltip">
+                                                    {% if product.pk in favorite_ids %}
+                                                        Șterge de la favorite
+                                                    {% else %}
+                                                        Adaugă la favorite
+                                                    {% endif %}
+                                                </span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ product.get_absolute_url }}"
+                                               class="box-icon hover-tooltip quickview">
+                                                <span class="icon icon-view"></span>
+                                                <span class="tooltip">Detalii</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-product-info">
+                                    {% if product.brand %}
+                                        <a href="{% update_query_params request brand=product.brand.id page=None %}"
+                                           class="sub-title text-xs text-uppercase text-main-4">
+                                            {{ product.brand.name }}
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ product.get_absolute_url }}"
+                                       class="name-product link fw-medium text-md">
+                                        {{ product.title }}
+                                    </a>
+                                    <p class="price-wrap fw-medium">
+                                        <span class="price-new">{{ product.price }} RON</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        {% else %}
+            <p class="text-center text-muted mt-5">
+                Nu am găsit produse pentru filtrarea curentă.
+            </p>
+        {% endif %}
+
+        {# aici bagi paginarea ta existentă, dacă ai partial #}
+        {# {% include "catalog/partials/pagination.html" with page_obj=page_obj %} #}
+
+    </div>
+</section>
+
+{# JS: filtre live (fără buton Aplică) + preț din slider (DESKTOP) #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('filtersForm');
+    if (!form) return;
+
+    function updatePriceHiddenInputs() {
+        const minSpan = document.getElementById('price-min-value');
+        const maxSpan = document.getElementById('price-max-value');
+        const minInput = document.getElementById('min_price_input');
+        const maxInput = document.getElementById('max_price_input');
+
+        if (minSpan && minInput) {
+            const v = minSpan.textContent.replace(/[^\d.]/g, '');
+            minInput.value = v || '';
+        }
+        if (maxSpan && maxInput) {
+            const v = maxSpan.textContent.replace(/[^\d.]/g, '');
+            maxInput.value = v || '';
+        }
+    }
+
+    function submitWithPriceUpdate() {
+        updatePriceHiddenInputs();
+        form.submit();
+    }
+
+    // live: radio + checkbox + select (desktop)
+    const liveInputs = form.querySelectorAll('input[type="checkbox"], input[type="radio"], select');
+    liveInputs.forEach(el => {
+        el.addEventListener('change', function () {
+            submitWithPriceUpdate();
+        });
+    });
+
+    // slider handles (noUi) -> la mouseup/touchend filtrăm
+    const sliderHandles = document.querySelectorAll('#price-value-range .noUi-handle');
+    sliderHandles.forEach(handle => {
+        handle.addEventListener('mouseup', submitWithPriceUpdate);
+        handle.addEventListener('touchend', submitWithPriceUpdate);
+    });
+
+    // reset preț
+    const resetPrice = document.querySelector('.reset-price');
+    if (resetPrice) {
+        resetPrice.addEventListener('click', function (e) {
+            e.preventDefault();
+            const minSpan = document.getElementById('price-min-value');
+            const maxSpan = document.getElementById('price-max-value');
+            const minInput = document.getElementById('min_price_input');
+            const maxInput = document.getElementById('max_price_input');
+
+            const globalMin = resetPrice.getAttribute('data-min') || '0';
+            const globalMax = resetPrice.getAttribute('data-max') || '0';
+
+            if (minSpan) minSpan.textContent = globalMin;
+            if (maxSpan) maxSpan.textContent = globalMax;
+            if (minInput) minInput.value = '';
+            if (maxInput) maxInput.value = '';
+
+            form.submit();
+        });
+    }
+});
+</script>
+
+{% endblock %}

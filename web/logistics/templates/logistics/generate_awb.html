@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Generează AWB – Comanda #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="mb-4">
+        <h1 class="h4 mb-1">Generează AWB pentru comanda #{{ order.id }}</h1>
+        <p class="text-muted mb-0">
+          AWB-ul va fi generat prin Curiera, folosind datele de livrare din comandă.
+        </p>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h6 class="text-uppercase small text-muted mb-3">Adresă livrare</h6>
+          <p class="mb-1">
+            <strong>{{ order.shipping_name|default:order.buyer.get_full_name }}</strong><br>
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_city }}, {{ order.shipping_zip }}<br>
+            Tel: {{ order.shipping_phone }}
+          </p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-uppercase small text-muted mb-3">Detalii colet</h6>
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label">Greutate (kg)</label>
+              {{ form.weight_kg }}
+              {% if form.weight_kg.errors %}
+                <div class="text-danger small">{{ form.weight_kg.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Tip serviciu</label>
+              {{ form.service_name }}
+              <div class="form-text">
+                Exemplu: Standard, Easybox, SameDay – mapezi ulterior cu serviciile reale Curiera.
+              </div>
+              {% if form.service_name.errors %}
+                <div class="text-danger small">{{ form.service_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3 form-check">
+              {{ form.cash_on_delivery }}
+              <label class="form-check-label">Ramburs (cash on delivery)</label>
+              {% if form.cash_on_delivery.errors %}
+                <div class="text-danger small">{{ form.cash_on_delivery.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Valoare ramburs (RON)</label>
+              {{ form.cod_amount }}
+              {% if form.cod_amount.errors %}
+                <div class="text-danger small">{{ form.cod_amount.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Poză articol</label>
+                {{ form.package_photo }}
+                {% if form.package_photo.errors %}
+                  <div class="text-danger small">{{ form.package_photo.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Poză colet închis</label>
+                {{ form.parcel_photo }}
+                {% if form.parcel_photo.errors %}
+                  <div class="text-danger small">{{ form.parcel_photo.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if shipment %}
+              <div class="alert alert-info small">
+                AWB deja generat:
+                <strong>{{ shipment.tracking_number }}</strong><br>
+                {% if shipment.effective_tracking_url %}
+                  <a href="{{ shipment.effective_tracking_url }}" target="_blank" class="link-primary">
+                    Vezi status livrare
+                  </a>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-outline-secondary">
+                &larr; Înapoi la comandă
+              </a>
+              <button type="submit" class="btn btn-primary">
+                {% if shipment %}Actualizează{% else %}Generează AWB{% endif %}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

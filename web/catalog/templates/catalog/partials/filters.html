@@ -1,0 +1,131 @@
+{# catalog/templates/catalog/partials/filters.html #}
+{% load static %}
+
+<form method="get" class="filter-form">
+  {# --- SEARCH BAR --- #}
+  <div class="card mb-4">
+    <div class="card-header">Caută</div>
+    <div class="card-body p-3">
+      <div class="input-group">
+        <input
+          type="search"
+          name="q"
+          value="{{ request.GET.q|default:'' }}"
+          class="form-control"
+          placeholder="Caută produse…"
+        >
+        <button class="btn btn-outline-secondary" type="submit">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# --- CATEGORII --- #}
+  <div class="card mb-4">
+    <div class="card-header">Categorii</div>
+    <ul class="list-group list-group-flush">
+      {% for cat in root_categories %}
+        <li class="list-group-item px-3 py-2">
+          <label class="mb-0">
+            <input
+              type="radio"
+              name="category"
+              value="{{ cat.slug }}"
+              {% if request.GET.category == cat.slug %}checked{% endif %}
+            >
+            {{ cat.name }}
+          </label>
+        </li>
+      {% empty %}
+        <li class="list-group-item">Nu există categorii.</li>
+      {% endfor %}
+      <li class="list-group-item px-3 py-2">
+        <label class="mb-0">
+          <input
+            type="radio"
+            name="category"
+            value=""
+            {% if not request.GET.category %}checked{% endif %}
+          >
+          Toate
+        </label>
+      </li>
+    </ul>
+  </div>
+
+  {# --- MĂRIMI --- #}
+  <div class="card mb-4">
+    <div class="card-header">Mărimi</div>
+    <div class="card-body">
+      {% for size in sizes %}
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="size"
+            value="{{ size }}"
+            id="size_{{ forloop.counter }}"
+            {% if size in selected_sizes %}checked{% endif %}
+          >
+          <label class="form-check-label" for="size_{{ forloop.counter }}">
+            {{ size }}
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# --- DIMENSIUNI SLIDER --- #}
+  <div class="card mb-4">
+    <div class="card-header">Dimensiuni (cm)</div>
+    <div class="card-body">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <label for="dim_min" class="col-form-label">Min:</label>
+        </div>
+        <div class="col">
+          <input
+            type="number"
+            name="dim_min"
+            id="dim_min"
+            class="form-control"
+            min="0"
+            max="10"
+            value="{{ request.GET.dim_min|default:0 }}"
+          >
+        </div>
+        <div class="col-auto">
+          <label for="dim_max" class="col-form-label">Max:</label>
+        </div>
+        <div class="col">
+          <input
+            type="number"
+            name="dim_max"
+            id="dim_max"
+            class="form-control"
+            min="0"
+            max="10"
+            value="{{ request.GET.dim_max|default:10 }}"
+          >
+        </div>
+      </div>
+      <small class="form-text text-muted mt-2">
+        Filtrează produsele cu dimensiuni între valorile indicate.
+      </small>
+    </div>
+  </div>
+
+  {# --- APPLY BUTTON --- #}
+  <div class="d-grid">
+    <button type="submit" class="btn btn-primary">
+      Aplică filtre
+    </button>
+  </div>
+</form>
+
+{# Optional: some JS to make the two number inputs work as a range-slider #}
+<script>
+  // synchronize min/max sliders (if you add actual range inputs)
+  // or add a JS range-slider library here
+</script>

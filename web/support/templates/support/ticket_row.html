@@ -1,0 +1,10 @@
+<tr>
+  <td>#{{ ticket.id }}</td>
+  <td>{{ ticket.subject }}</td>
+  <td>{{ ticket.created_at|date:"Y-m-d H:i" }}</td>
+  <td>{{ ticket.get_status_display }}</td>
+  <td>{{ ticket.get_priority_display }}</td>
+  <td>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'support:ticket_detail' ticket.id %}">Vizualizează</a>
+  </td>
+</tr>

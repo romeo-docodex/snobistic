@@ -1,3 +1,136 @@
-<footer class="bg-light text-center py-4 mt-5 border-top">
-    <p class="mb-0">&copy; {{ now|date:"Y" }} Snobistic. Toate drepturile rezervate.</p>
+{% load static %}
+
+<!-- Footer -->
+<footer id="footer" class="footer-default xl-pb-70">
+    <div class="footer-top">
+        <div class="container">
+            <div class="footer-top-wrap">
+                <div class="footer-logo">
+                    <a href="{% url 'core:home' %}">
+                        <img src="{% static 'images/logo/logo.png' %}" class="logo" alt="logo">
+                    </a>
+                </div>
+                <ul class="tf-social-icon style-large">
+                    <li>
+                        <a href="https://www.facebook.com/" class="social-item social-facebook">
+                            <i class="icon icon-fb"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/" class="social-item social-instagram">
+                            <i class="icon icon-instagram"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/" class="social-item social-linkedin">
+                            <i class="icon icon-linkedin"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://x.com/" class="social-item social-x">
+                            <i class="icon icon-x"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-body">
+        <div class="container">
+            <div class="row-footer">
+                <div class="footer-col-block s1">
+                    <div class="footer-heading footer-heading-mobile text-xl fw-medium">
+                        Contact comercial
+                    </div>
+                    <div class="tf-collapse-content">
+                        <div class="footer-contact">
+                            <ul class="footer-info">
+                                <li class="item">
+                                    <span class="box-icon">
+                                        <!-- icon locație -->
+                                        ...
+                                    </span>
+                                    <a target="_blank" href="#">
+                                        Adresă sediu Snobistic (de completat)
+                                    </a>
+                                </li>
+                                <li class="item">
+                                    <span class="box-icon">
+                                        <!-- icon telefon -->
+                                        ...
+                                    </span>
+                                    <a href="tel:+40XXXXXXXXX">+40 XX XXX XX XX</a>
+                                </li>
+                                <li class="item">
+                                    <span class="box-icon">
+                                        <!-- icon mail -->
+                                        ...
+                                    </span>
+                                    <a href="mailto:support@snobistic.ro">support@snobistic.ro</a>
+                                </li>
+                            </ul>
+                            <a href="#" class="tf-btn btn-line-dark fw-normal">
+                                <span class="text-sm text-transform-none">
+                                    Obține indicații
+                                </span>
+                                <i class="icon-arrow-top-left fs-8"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-inner-wrap footer-col-block s2">
+                    <div class="footer-col-block inner-col">
+                        <div class="footer-heading footer-heading-mobile text-xl fw-medium">Resurse</div>
+                        <div class="tf-collapse-content">
+                            <ul class="footer-menu-list">
+                                <li><a href="{% url 'core:privacy' %}">Politica de confidențialitate</a></li>
+                                <li><a href="{% url 'core:terms' %}">Termeni și condiții</a></li>
+                                <li><a href="{% url 'core:terms' %}">Retururi și rambursări</a></li>
+                                <li><a href="{% url 'core:terms' %}">Livrare</a></li>
+                                <li><a href="{% url 'core:contact' %}">Contact</a></li>
+                                <li><a href="{% url 'support:tickets_list' %}">Suport &amp; tichete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-inner-wrap s3">
+                    <div class="footer-col-block inner-col">
+                        <div class="footer-heading footer-heading-mobile text-xl fw-medium">Despre noi</div>
+                        <div class="tf-collapse-content">
+                            <ul class="footer-menu-list">
+                                <li><a href="{% url 'core:about' %}">Despre</a></li>
+                                <li><a href="/blog/">Blog</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div> <!-- /s3 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="container">
+            <div class="footer-bottom-wrap">
+                <p class="text-dark">
+                    Drepturi de autor © 2025 <span class="fw-medium">Snobistic.</span> Toate drepturile rezervate.
+                </p>
+                <ul class="tf-payment">
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/EximBank.png" alt="EximBank"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/ApplePay.png" alt="Apple Pay"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/DinersClub.png" alt="Diners Club"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/Discover.png" alt="Discover"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/GooglePay.png" alt="Google Pay"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard-2.png" alt="Mastercard"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard.png" alt="Mastercard"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/Shop.png" alt="Shop Pay"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/UnionPay.png" alt="UnionPay"></li>
+                    <li class="item"><img src="https://themesflat.co/html/vineta/images/payment/Visa.png" alt="Visa"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </footer>
+<!-- /Footer -->

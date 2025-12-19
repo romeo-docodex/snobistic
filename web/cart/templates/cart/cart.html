@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Coșul meu – Snobistic{% endblock %}
+{% block content %}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Coșul Meu</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Coș</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-2 pt-0 mt-5">
+  <div class="container">
+    {% if cart and cart.items.exists %}
+    <div class="row">
+      <div class="col-xl-8">
+        <div class="tf-page-cart-main">
+          <form method="post" class="form-cart">
+            {% csrf_token %}
+            <table class="table-page-cart">
+              <thead>
+                <tr>
+                  <th>Produs</th>
+                  <th>Preț</th>
+                  <th>Acțiune</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for item in cart.items.all %}
+                <tr class="tf-cart-item file-delete" data-price="{{ item.product.price }}" data-id="{{ item.id }}">
+                  <td class="tf-cart-item_product">
+                    <a href="{{ item.product.get_absolute_url }}" class="img-box">
+                      <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
+                    </a>
+                    <div class="cart-info">
+                      <a href="{{ item.product.get_absolute_url }}" class="name text-md link fw-medium">
+                        {{ item.product.title }}
+                      </a>
+                      <div class="variants">
+                        {% if item.product.size %}<strong>Mărime:</strong> {{ item.product.size }}<br>{% endif %}
+                        {% if item.product.material %}<strong>Material:</strong> {{ item.product.material }}<br>{% endif %}
+                        {% if item.product.sku %}<strong>SKU:</strong> {{ item.product.sku }}{% endif %}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="tf-cart-item_price text-center">
+                    <span class="cart-price price-on-sale text-md fw-medium">{{ item.product.price }} RON</span>
+                  </td>
+                  <td class="tf-cart-item_product text-center">
+                    <button type="submit"
+                            name="action"
+                            value="remove_{{ item.id }}"
+                            class="w-100 remove-cart text-danger btn btn-link p-0"
+                            title="Șterge produsul">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+
+            <div class="cart-actions mt-4 d-flex justify-content-between">
+              <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark-2">Continuă cumpărăturile</a>
+              {# Nu mai avem buton „Actualizează coșul” pentru că nu există cantități de modificat #}
+            </div>
+
+            <div class="cart-note mt-5">
+              <label for="note" class="text-md fw-medium">Instrucțiuni extra pentru vânzător</label>
+              <textarea id="note"></textarea>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-xl-4">
+        <div class="tf-page-cart-sidebar">
+          <form class="cart-box shipping-cart-box" onsubmit="return false;">
+            <div class="text-lg title fw-medium">Estimare transport</div>
+            <div class="row">
+              <div class="col-xl-6">
+                <fieldset class="field">
+                  <label for="country" class="text-sm">Țară</label>
+                  <input type="text" id="country" name="country" placeholder="România" value="{{ shipping_address.country.name|default:'' }}">
+                </fieldset>
+              </div>
+              <div class="col-xl-6">
+                <fieldset class="field">
+                  <label for="state" class="text-sm">Județ / Regiune</label>
+                  <input type="text" id="state" name="state" placeholder="Bihor" value="{{ shipping_address.region|default:'' }}">
+                </fieldset>
+              </div>
+              <div class="col-xl-6 mt-3">
+                <fieldset class="field">
+                  <label for="city" class="text-sm">Oraș</label>
+                  <input type="text" id="city" name="city" placeholder="Oradea" value="{{ shipping_address.city|default:'' }}">
+                </fieldset>
+              </div>
+              <div class="col-xl-6 mt-3">
+                <fieldset class="field">
+                  <label for="code" class="text-sm">Cod Poștal</label>
+                  <input type="text" id="code" name="code" placeholder="410000" value="{{ shipping_address.postal_code|default:'' }}">
+                </fieldset>
+              </div>
+              <div class="col-xl-12 mt-3">
+                <fieldset class="field">
+                  <label for="street" class="text-sm">Stradă și număr</label>
+                  <input type="text" id="street" name="street" placeholder="Strada Republicii 1A" value="{{ shipping_address.street_address|default:'' }}">
+                </fieldset>
+              </div>
+            </div>
+            <button type="button" class="tf-btn btn-dark2 animate-btn w-100 mt-3">Estimează</button>
+          </form>
+
+          {# Formular cupon #}
+          <form method="post" class="cart-box mt-4">
+            {% csrf_token %}
+            <div class="text-lg title fw-medium">Cupon de reducere</div>
+            <div class="d-flex gap-2 mt-2">
+              {{ coupon_form.code }}
+              <button type="submit" name="apply_coupon" class="tf-btn btn-dark2">
+                Aplică
+              </button>
+            </div>
+            {% if cart.coupon %}
+              <p class="text-sm text-success mt-2">
+                Cupon aplicat: {{ cart.coupon.code }} (-{{ cart.coupon.discount }}%)
+              </p>
+            {% endif %}
+            {% if coupon_error %}
+              <p class="text-sm text-danger mt-1">{{ coupon_error }}</p>
+            {% endif %}
+          </form>
+
+          <div class="cart-box checkout-cart-box mt-4">
+            <div class="cart-head">
+              <div class="total-discount text-xl fw-medium d-flex justify-content-between">
+                <span>Total:</span>
+                <span class="total">{{ cart.get_total_price }} RON</span>
+              </div>
+              {% if cart.coupon %}
+                <p class="text-sm text-success mt-1">
+                  Reducere aplicată prin cuponul {{ cart.coupon.code }}.
+                </p>
+              {% endif %}
+              <p class="text-sm text-dark-4 mt-1">Taxele și livrarea se calculează în pagina de finalizare comandă.</p>
+            </div>
+
+            <div class="check-agree">
+              <input type="checkbox" class="tf-check" id="check-agree" required>
+              <label for="check-agree" class="label text-dark-4">
+                Sunt de acord cu <a href="{% url 'core:terms' %}" class="text-dark-4 fw-medium text-underline link">termenii și condițiile</a>
+              </label>
+            </div>
+
+            <div class="checkout-btn">
+              <a href="{% url 'cart:checkout' %}" class="tf-btn btn-dark2 animate-btn w-100" data-checkout>
+                Finalizează comanda
+              </a>
+            </div>
+
+            <div class="cart-imgtrust mt-4">
+              <p class="text-center text-sm text-dark-1">Acceptăm următoarele metode de plată</p>
+              <div class="cart-list-social d-flex justify-content-center gap-2 mt-2">
+                <div class="payment-card"><img src="https://themesflat.co/html/vineta/images/payment/Visa.png" alt="Visa"></div>
+                <div class="payment-card"><img src="https://themesflat.co/html/vineta/images/payment/DinersClub.png" alt="Diners Club"></div>
+                <div class="payment-card"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard.png" alt="Mastercard"></div>
+                <div class="payment-card"><img src="https://themesflat.co/html/vineta/images/payment/Stripe.png" alt="Stripe"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+      <div class="text-center py-5">
+        <h4 class="mb-3">Coșul tău este gol.</h4>
+        <p class="text-muted mb-4">Nu ai adăugat încă niciun produs în coș. Explorează colecțiile noastre.</p>
+        <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-dark2 animate-btn">Mergi la magazin</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{# Gate checkout pentru guest (login offcanvas) #}
+<script>
+  window.APP_IS_AUTH = {{ request.user.is_authenticated|yesno:'true,false' }};
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-checkout]');
+    if (!btn) return;
+    if (!window.APP_IS_AUTH) {
+      e.preventDefault();
+      const offcanvasEl = document.querySelector('#login');
+      if (offcanvasEl && window.bootstrap?.Offcanvas) {
+        new bootstrap.Offcanvas(offcanvasEl).show();
+      } else {
+        window.location.href = btn.getAttribute('href');
+      }
+    }
+  });
+</script>
+
+{% endblock %}

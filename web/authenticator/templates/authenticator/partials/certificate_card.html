@@ -1,0 +1,7 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">Certificat pentru produs</h5>
+    <p>Număr certificat: {{ req.certificate_file.name|slice:"-12:" }}</p>
+    <a href="{{ req.certificate_file.url }}" class="btn btn-secondary">Descarcă</a>
+  </div>
+</div>

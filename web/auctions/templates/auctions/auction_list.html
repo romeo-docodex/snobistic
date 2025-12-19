@@ -1,42 +1,106 @@
 {% extends "base.html" %}
-{% block title %}Licitații active{% endblock %}
+{% load static %}
+{% block title %}Licitații – Snobistic{% endblock %}
+
 {% block content %}
-<h2>Licitații active</h2>
-<div class="row">
-  {% for auction in auctions %}
-  <div class="col-md-4 mb-4">
-    <div class="card h-100">
-      {% if auction.product.images.first %}
-        <img src="{{ auction.product.images.first.image.url }}" class="card-img-top" alt="{{ auction.product.name }}">
-      {% endif %}
-      <div class="card-body d-flex flex-column">
-        <h5 class="card-title">{{ auction.product.name }}</h5>
-        <p class="card-text">Încheiere: {{ auction.end_time|date:"d.m.Y H:i" }}</p>
-        <p class="card-text">Ofertă min: {{ auction.next_minimum }} RON</p>
-        <div class="mt-auto">
-          <a href="{% url 'auctions:auction_detail' auction.product.slug %}" class="btn btn-outline-primary w-100">Intră în licitație</a>
+<section class="flat-spacing-24">
+  <div class="container">
+
+    <!-- Toolbar -->
+    <div class="tf-shop-control mb1">
+      <div class="tf-group-filter">
+        <div class="dropdown dropdown-filter">
+          <div class="dropdown-toggle" id="state" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+            <span class="text-value">
+              {% if selected_state == 'ended' %}Încheiate{% else %}Active{% endif %}
+            </span>
+            <span class="icon icon-arr-down"></span>
+          </div>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item {% if selected_state != 'ended' %}active{% endif %}" href="?state=active">Active</a></li>
+            <li><a class="dropdown-item {% if selected_state == 'ended' %}active{% endif %}" href="?state=ended">Încheiate</a></li>
+          </ul>
         </div>
       </div>
+
+      <ul class="tf-control-layout">
+        <li class="tf-view-layout-switch sw-layout-2" data-value-layout="tf-col-2">
+          <div class="item icon-grid-2"><span></span><span></span></div>
+        </li>
+        <li class="tf-view-layout-switch sw-layout-3" data-value-layout="tf-col-3">
+          <div class="item icon-grid-3"><span></span><span></span><span></span></div>
+        </li>
+        <li class="tf-view-layout-switch sw-layout-4 active" data-value-layout="tf-col-4">
+          <div class="item icon-grid-4"><span></span><span></span><span></span><span></span></div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Grid -->
+    <div class="wrapper-shop tf-grid-layout tf-col-4">
+      {% for auction in auctions %}
+        <div class="card-product grid card-product-size">
+          <div class="card-product-wrapper">
+            <a href="{% url 'auctions:auction_detail' auction.pk %}" class="product-img">
+              {% with cover=auction.images.first %}
+                <img class="img-product lazyload"
+                     src="{{ cover.image.url|default:auction.product.main_image.url }}"
+                     alt="{{ auction.product.title }}">
+                <img class="img-hover lazyload"
+                     src="{{ cover.image.url|default:auction.product.main_image.url }}"
+                     alt="{{ auction.product.title }}">
+              {% endwith %}
+            </a>
+
+            <div class="on-sale-wrap">
+              {% if auction.is_active %}
+                <span class="on-sale-item new">Activă</span>
+              {% else %}
+                <span class="on-sale-item limited">Încheiată</span>
+              {% endif %}
+            </div>
+
+            <ul class="list-product-btn">
+              <li>
+                <a href="{% url 'auctions:auction_detail' auction.pk %}" class="hover-tooltip tooltip-left box-icon">
+                  <span class="icon icon-view"></span>
+                  <span class="tooltip">Detalii licitație</span>
+                </a>
+              </li>
+            </ul>
+
+            {% if auction.is_active %}
+              <div class="countdown-box">
+                <div class="text-sm px-2 py-1 bg-white rounded shadow-sm">
+                  Se încheie în: {{ auction.end_time|timeuntil }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="card-product-info">
+            <a href="{% url 'auctions:auction_detail' auction.pk %}" class="name-product link fw-medium text-md">
+              {{ auction.product.title }}
+            </a>
+            <p class="price-wrap fw-medium">
+              <span class="price-new">{{ auction.current_price }} RON</span>
+              {% if auction.start_price and auction.current_price != auction.start_price %}
+                <span class="price-old">{{ auction.start_price }} RON</span>
+              {% endif %}
+            </p>
+            <div class="text-sm text-main-4">
+              {% if auction.is_active %}
+                Timp rămas: {{ auction.end_time|timeuntil }}
+              {% else %}
+                Încheiat acum {{ auction.end_time|timesince }}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">Nu sunt licitații disponibile.</p>
+      {% endfor %}
     </div>
   </div>
-  {% endfor %}
-</div>
-
-{% if auctions.has_other_pages %}
-<nav>
-  <ul class="pagination">
-    {% if auctions.has_previous %}
-      <li class="page-item"><a class="page-link" href="?page={{ auctions.previous_page_number }}">«</a></li>
-    {% endif %}
-    {% for num in auctions.paginator.page_range %}
-      <li class="page-item {% if auctions.number == num %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-      </li>
-    {% endfor %}
-    {% if auctions.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{ auctions.next_page_number }}">»</a></li>
-    {% endif %}
-  </ul>
-</nav>
-{% endif %}
+</section>
 {% endblock %}

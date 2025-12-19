@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{{ sitemap_pages.0.url }}</loc>
+    <lastmod>{{ today|date:"Y-m-d" }}</lastmod>
+    <changefreq>{{ sitemap_pages.0.changefreq }}</changefreq>
+    <priority>{{ sitemap_pages.0.priority }}</priority>
+  </url>
+  {% for page in sitemap_pages %}
+  {% if not forloop.first %}
+  <url>
+    <loc>{{ page.url }}</loc>
+    <lastmod>{{ page.lastmod|date:"Y-m-d" }}</lastmod>
+    <changefreq>{{ page.changefreq }}</changefreq>
+    <priority>{{ page.priority }}</priority>
+  </url>
+  {% endif %}
+  {% endfor %}
+</urlset>

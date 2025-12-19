@@ -1,5 +1,160 @@
-<form method="post">
-  {% csrf_token %}
-  {{ address_form|crispy }}
-  <button type="submit" class="btn btn-secondary">Adaugă adresă</button>
-</form>
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ form.instance.pk|yesno:"Editează,Adaugă" }} adresă – Snobistic{% endblock %}
+
+{% block content %}
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">
+        {{ form.instance.pk|yesno:"Editează adresă,Adaugă adresă nouă" }}
+      </h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'accounts:profile' %}">Cont</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">
+          {{ form.instance.pk|yesno:"Editează adresă,Adaugă adresă" }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="main-content-account">
+
+      <!-- Sidebar desktop -->
+      {% include "accounts/profile/_account_sidebar.html" with account_section="addresses" %}
+
+      <!-- Content -->
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-3">
+          {{ form.instance.pk|yesno:"Editează adresă,Adaugă adresă nouă" }}
+        </h6>
+
+        <p class="text-xxs text-grey mb-3">
+          Te rugăm să scrii date reale; curierul va folosi aceste informații pentru livrare.
+        </p>
+
+        <form method="post" class="wd-form-address form-default" novalidate>
+          {% csrf_token %}
+
+          {# Mesaje de eroare globale, dacă există #}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <!-- Secțiunea 1 – Date de contact -->
+          <div class="account-address-item mb-4">
+            <p class="title text-md fw-medium mb-2">Date de contact</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-sm mb-1">
+                  <strong>Nume destinatar:</strong> {{ request.user.full_name }}
+                </p>
+                {% if request.user.profile.phone %}
+                  <p class="text-sm mb-0">
+                    <strong>Telefon:</strong> {{ request.user.profile.phone }}
+                  </p>
+                {% else %}
+                  <p class="text-sm mb-0 text-warning">
+                    Nu ai un telefon salvat în profil. Îți recomandăm să-l completezi în
+                    <a href="{% url 'accounts:profile_data' %}" class="link">Date personale</a>.
+                  </p>
+                {% endif %}
+                <p class="text-xxs text-grey mt-2 mb-0">
+                  Numele și telefonul pentru livrare sunt preluate din profilul tău.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secțiunea 2 – Adresă -->
+          <div class="account-address-item mb-4">
+            <p class="title text-md fw-medium mb-2">Adresă</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <div class="cols">
+                  {{ form.street_address|as_crispy_field }}
+                  {{ form.building_info|as_crispy_field }}
+                </div>
+
+                <div class="cols">
+                  {{ form.city|as_crispy_field }}
+                  {{ form.region|as_crispy_field }}
+                </div>
+
+                <div class="cols">
+                  {{ form.postal_code|as_crispy_field }}
+                  {{ form.country|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secțiunea 3 – Tip adresă & implicită -->
+          <div class="account-address-item mb-4">
+            <p class="title text-md fw-medium mb-2">Tip adresă & setări implicite</p>
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-sm mb-2">
+                  Alege cum vrei să folosești această adresă în comenzile tale.
+                </p>
+
+                <div class="tf-cart-checkbox mb-2">
+                  {{ form.is_billing }}
+                  <label for="{{ form.is_billing.id_for_label }}" class="label">
+                    <span>Folosește această adresă și pentru facturare</span>
+                  </label>
+                  <p class="text-xxs text-grey mb-0">
+                    Dacă este bifat, adresa poate apărea pe facturile tale.
+                  </p>
+                </div>
+
+                <hr class="my-3">
+
+                <p class="text-sm mb-2">
+                  Poți seta adresa ca implicită pentru livrare și/sau facturare.
+                </p>
+
+                <div class="tf-cart-checkbox mb-2">
+                  {{ form.is_default_shipping }}
+                  <label for="{{ form.is_default_shipping.id_for_label }}" class="label">
+                    <span>Setează ca adresă de livrare principală</span>
+                  </label>
+                </div>
+
+                <div class="tf-cart-checkbox mb-0">
+                  {{ form.is_default_billing }}
+                  <label for="{{ form.is_default_billing.id_for_label }}" class="label">
+                    <span>Setează ca adresă de facturare principală</span>
+                  </label>
+                </div>
+
+                <p class="text-xxs text-grey mt-2 mb-0">
+                  Va exista o singură adresă implicită de livrare și una de facturare pentru fiecare cont.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acțiuni -->
+          <div class="box-btn mt-3">
+            <button type="submit" class="tf-btn animate-btn">Salvează</button>
+            <a href="{% url 'accounts:address_list' %}" class="tf-btn btn-out-line-dark">
+              Anulează
+            </a>
+          </div>
+        </form>
+      </div> <!-- /my-acount-content -->
+    </div> <!-- /main-content-account -->
+  </div>
+</div>
+{% endblock %}

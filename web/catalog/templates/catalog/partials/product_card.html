@@ -1,0 +1,66 @@
+{# catalog/partials/product_card.html #}
+{% load static %}
+
+<div class="card-product grid card-product-size">
+  <div class="card-product-wrapper">
+    <a href="{{ product.get_absolute_url }}" class="product-img">
+      {% if product.main_image %}
+        <img class="img-product lazyload"
+             src="{{ product.main_image.url }}"
+             alt="{{ product.title }}">
+        <img class="img-hover lazyload"
+             src="{{ product.main_image.url }}"
+             alt="{{ product.title }}">
+      {% else %}
+        <img class="img-product lazyload"
+             src="{% static 'images/placeholder.png' %}"
+             alt="{{ product.title }}">
+        <img class="img-hover lazyload"
+             src="{% static 'images/placeholder.png' %}"
+             alt="{{ product.title }}">
+      {% endif %}
+    </a>
+
+    {% if product.discount %}
+      <div class="on-sale-wrap">
+        <span class="on-sale-item">{{ product.discount }}% Off</span>
+      </div>
+    {% endif %}
+
+    <ul class="list-product-btn">
+      <li>
+        <form method="post" action="{% url 'cart:add' product.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="hover-tooltip tooltip-left box-icon">
+            <span class="icon icon-cart2"></span>
+            <span class="tooltip">Adaugă în coș</span>
+          </button>
+        </form>
+      </li>
+      <li class="wishlist">
+        <a href="{% url 'catalog:toggle_favorite' product.pk %}"
+           class="hover-tooltip tooltip-left box-icon"
+           data-toggle-fav>
+          <span class="icon icon-heart2"></span>
+          <span class="tooltip">Favorite</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ product.get_absolute_url }}"
+           class="hover-tooltip tooltip-left box-icon quickview">
+          <span class="icon icon-view"></span>
+          <span class="tooltip">Detalii</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card-product-info">
+    <a href="{{ product.get_absolute_url }}" class="name-product link fw-medium text-md">
+      {{ product.title }}
+    </a>
+    <p class="price-wrap fw-medium">
+      <span class="price-new">{{ product.price }} RON</span>
+    </p>
+  </div>
+</div>

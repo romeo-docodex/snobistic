@@ -1,46 +1,959 @@
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'core:home' %}">Snobistic</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navMain">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}">Acasa</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'products:product_list' %}">Produse</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'shop:catalog' %}">Catalog</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'shop:favorites' %}">Favorite</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'cart:cart_detail' %}">Coș</a></li>
-        {% if user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'orders:order_list' %}">Comenzi</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'auctions:auction_list' %}">Licitații</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'support:ticket_list' %}">Support</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'wallet:wallet_overview' %}">Portofel</a></li>
-        {% endif %}
-        <li class="nav-item"><a class="nav-link" href="{% url 'core:contact' %}">Contact</a></li>
-      </ul>
-      <ul class="navbar-nav ms-auto">
-        {% if user.is_authenticated %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
-              {{ user.get_full_name|default:user.email }}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Profil</a></li>
-              <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}">Schimbă parola</a></li>
-              <li><a class="dropdown-item" href="{% url 'accounts:change_email' %}">Schimbă email</a></li>
-              <li><a class="dropdown-item" href="{% url 'accounts:delete_account' %}">Dezactivează cont</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
-            </ul>
-          </li>
-        {% else %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Înregistrare</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:password_reset' %}">Resetare parolă</a></li>
-        {% endif %}
-      </ul>
+
+<header id="header" class="header-default">
+    <div class="container">
+
+        {# ===== MOBILE HEADER BAR (doar < xl) ===== #}
+        <div class="row align-items-center d-flex d-xl-none mobile-header-bar py-2 border-bottom bg-white">
+            <!-- Burger -->
+            <div class="col-3">
+                <a class="mobile-menu d-inline-flex align-items-center justify-content-start"
+                   data-bs-toggle="offcanvas"
+                   data-bs-target="#mobileMenu"
+                   href="#mobileMenu"
+                   aria-controls="mobileMenu"
+                   aria-label="Deschide meniul">
+                    <i class="icon icon-categories1"></i>
+                </a>
+            </div>
+
+            <!-- Logo -->
+            <div class="col-6 text-center">
+                <a href="{% url 'core:home' %}" class="logo-header d-inline-flex align-items-center justify-content-center">
+                    <img src="{% static 'images/logo/logo.png' %}"
+                         alt="Snobistic"
+                         class="logo"
+                         style="max-height:32px;">
+                </a>
+            </div>
+
+            <!-- Quick icons: search, wishlist, cart -->
+            <div class="col-3">
+                <ul class="nav-icon nav-icon-mobile d-flex justify-content-end align-items-center gap-2 mb-0">
+                    <li class="nav-search">
+                        <a href="#search"
+                           data-bs-toggle="modal"
+                           class="nav-icon-item">
+                            <i class="icon icon-search"></i>
+                        </a>
+                    </li>
+
+                    <li class="nav-wishlist d-none d-sm-block">
+                        <a href="{% url 'catalog:favorites' %}" class="nav-icon-item">
+                            <i class="icon icon-heart"></i>
+                            <span class="count-box">{{ favorites_count|default:0 }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-cart d-flex align-items-center position-relative">
+                        <a href="{% url 'cart:cart' %}" class="nav-icon-item" title="Coșul meu">
+                            <i class="icon icon-cart"></i>
+                            {% if cart_items_count %}
+                                <span class="count-box">{{ cart_items_count }}</span>
+                            {% else %}
+                                <span class="count-box">0</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {# ===== DESKTOP HEADER (≥ xl) ===== #}
+        <div class="row wrapper-header align-items-center d-none d-xl-flex">
+            <!-- LOGO -->
+            <div class="col-xl-2">
+                <a href="{% url 'core:home' %}" class="logo-header">
+                    <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" class="logo">
+                </a>
+            </div>
+
+            <!-- MAIN NAV -->
+            <div class="col-xl-8">
+                <nav class="box-navigation text-center">
+                    <ul class="box-nav-menu">
+                        <!-- Acasă -->
+                        <li class="menu-item">
+                            <a href="{% url 'core:home' %}" class="item-link">Acasă</a>
+                        </li>
+
+                        <!-- Toate produsele -->
+                        <li class="menu-item">
+                            <a href="{% url 'catalog:product_list' %}" class="item-link">Toate</a>
+                        </li>
+
+                        <!-- Licitații -->
+                        <li class="menu-item">
+                            <a href="{% url 'auctions:auction_list' %}" class="item-link">Licitații</a>
+                        </li>
+
+                        {# Femei – mega menu, cu categorii + subcategorii din DB #}
+                        <li class="menu-item">
+                            <a href="{% url 'catalog:product_list' %}?gender=F" class="item-link">
+                                Femei<i class="icon icon-arr-down"></i>
+                            </a>
+
+                            <div class="sub-menu mega-menu mega-product">
+                                <div class="wrapper-sub-menu">
+
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Categorii</div>
+                                        <ul class="menu-list">
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                   class="menu-link-text link">Toate</a>
+                                            </li>
+
+                                            {% for cat in nav_categories_women %}
+                                                <li class="{% if cat.subcategories.all %}has-children{% endif %}">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=F&category={{ cat.slug }}"
+                                                       class="menu-link-text link">
+                                                        {{ cat.name }}
+                                                    </a>
+
+                                                    {% if cat.subcategories.all %}
+                                                        <ul class="sub-menu-list">
+                                                            {% for sub in cat.subcategories.all %}
+                                                                {% if sub.is_active %}
+                                                                    <li>
+                                                                        <a href="{% url 'catalog:product_list' %}?gender=F&category={{ cat.slug }}&subcategory={{ sub.slug }}"
+                                                                           class="menu-link-text">
+                                                                            {{ sub.name }}
+                                                                        </a>
+                                                                    </li>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Colecții</div>
+                                        <ul class="menu-list">
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=F&segment=new"
+                                                   class="menu-link-text link">New In</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=F&segment=outlet"
+                                                   class="menu-link-text link">Outlet</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=F&segment=preloved"
+                                                   class="menu-link-text link">Preloved</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=F&segment=auctions"
+                                                   class="menu-link-text link">Licitatii</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Funcționalități</div>
+                                        <ul class="menu-list">
+                                            <li><a href="{% url 'catalog:product_list' %}?tag=best-sellers"
+                                                   class="menu-link-text link">Best Sellers</a></li>
+                                            <li><a href="{% url 'catalog:product_list' %}?tag=editor-choice"
+                                                   class="menu-link-text link">Recomandate</a></li>
+                                            <li><a href="{% url 'catalog:product_list' %}?tag=last-chance"
+                                                   class="menu-link-text link">Last Chance</a></li>
+                                            <li><a href="{% url 'catalog:product_list' %}?tag=eco"
+                                                   class="menu-link-text link">Eco / Sustainable</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {# Slider-ul de produse #}
+                                <div class="wrapper-sub-product">
+                                    <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+                                            "slidesPerView": 2,
+                                            "spaceBetween": 24,
+                                            "speed": 800,
+                                            "observer": true,
+                                            "observeParents": true,
+                                            "slidesPerGroup": 2,
+                                            "navigation": {
+                                                "clickable": true,
+                                                "nextEl": ".nav-next-product-header",
+                                                "prevEl": ".nav-prev-product-header"
+                                            },
+                                            "pagination": { "el": ".sw-pagination-product-header", "clickable": true }
+                                        }'>
+                                        <div class="swiper-wrapper">
+                                            <!-- item 1 -->
+                                            <div class="swiper-slide">
+                                                <div class="card-product">
+                                                    <div class="card-product-wrapper">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                           class="product-img">
+                                                            <img class="img-product lazyload"
+                                                                 data-src="https://themesflat.co/html/vineta/images/products/fashion/product-12.jpg"
+                                                                 src="https://themesflat.co/html/vineta/images/products/fashion/product-12.jpg"
+                                                                 alt="image-product">
+                                                            <img class="img-hover lazyload"
+                                                                 data-src="https://themesflat.co/html/vineta/images/products/fashion/product-20.jpg"
+                                                                 src="https://themesflat.co/html/vineta/images/products/fashion/product-20.jpg"
+                                                                 alt="image-product">
+                                                        </a>
+                                                    </div>
+                                                    <div class="card-product-info text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                           class="name-product link fw-medium text-md">
+                                                            Daystak Chair RD1
+                                                        </a>
+                                                        <p class="price-wrap fw-medium">
+                                                            <span class="price-new">$100.00</span>
+                                                            <span class="price-old">$130.00</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- item 2 -->
+                                            <div class="swiper-slide">
+                                                <div class="card-product">
+                                                    <div class="card-product-wrapper">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                           class="product-img">
+                                                            <img class="img-product lazyload"
+                                                                 data-src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
+                                                                 src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
+                                                                 alt="image-product">
+                                                            <img class="img-hover lazyload"
+                                                                 data-src="https://themesflat.co/html/vineta/images/products/fashion/product-7.jpg"
+                                                                 src="https://themesflat.co/html/vineta/images/products/fashion/product-7.jpg"
+                                                                 alt="image-product">
+                                                        </a>
+                                                    </div>
+                                                    <div class="card-product-info text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                           class="name-product link fw-medium text-md">Loose Fit Tee</a>
+                                                        <p class="price-wrap fw-medium">
+                                                            <span class="price-new">$130.00</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="sw-dot-default sw-pagination-product-header justify-content-center"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+
+                        {# Bărbați – mega menu, cu categorii + subcategorii din DB #}
+                        <li class="menu-item">
+                            <a href="{% url 'catalog:product_list' %}?gender=M" class="item-link">
+                                Bărbați<i class="icon icon-arr-down"></i>
+                            </a>
+
+                            <div class="sub-menu mega-menu mega-shop">
+                                <div class="wrapper-sub-menu">
+
+                                    {# CATEGORII + SUBCATEGORII #}
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Categorii</div>
+                                        <ul class="menu-list">
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M"
+                                                   class="menu-link-text link">Toate</a>
+                                            </li>
+
+                                            {% for cat in nav_categories_men %}
+                                                <li class="{% if cat.subcategories.all %}has-children{% endif %}">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=M&category={{ cat.slug }}"
+                                                       class="menu-link-text link">
+                                                        {{ cat.name }}
+                                                    </a>
+
+                                                    {# Subcategoriile din DB pentru categoria curentă #}
+                                                    {% if cat.subcategories.all %}
+                                                        <ul class="sub-menu-list">
+                                                            {% for sub in cat.subcategories.all %}
+                                                                {% if sub.is_active %}
+                                                                    <li>
+                                                                        <a href="{% url 'catalog:product_list' %}?gender=M&category={{ cat.slug }}&subcategory={{ sub.slug }}"
+                                                                           class="menu-link-text">
+                                                                            {{ sub.name }}
+                                                                        </a>
+                                                                    </li>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+
+                                    {# STIL #}
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Stil</div>
+                                        <ul class="menu-list">
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&style=casual"
+                                                   class="menu-link-text link">Casual</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&style=office"
+                                                   class="menu-link-text link">Office</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&style=streetwear"
+                                                   class="menu-link-text link">Streetwear</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&style=sport"
+                                                   class="menu-link-text link">Sport</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    {# COLECȚII #}
+                                    <div class="mega-menu-item">
+                                        <div class="menu-heading">Colecții</div>
+                                        <ul class="menu-list">
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&segment=new"
+                                                   class="menu-link-text link">New In</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&segment=outlet"
+                                                   class="menu-link-text link">Outlet</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&segment=preloved"
+                                                   class="menu-link-text link">Preloved</a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'catalog:product_list' %}?gender=M&segment=auctions"
+                                                   class="menu-link-text link">Licitatii</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {# Slider colecții #}
+                                <div class="wrapper-sub-collection">
+                                    <div dir="ltr" class="swiper tf-swiper hover-sw-nav"
+                                         data-swiper='{
+                                            "slidesPerView": 2,
+                                            "spaceBetween": 24,
+                                            "speed": 800,
+                                            "observer": true,
+                                            "observeParents": true,
+                                            "slidesPerGroup": 2,
+                                            "navigation": {
+                                                "clickable": true,
+                                                "nextEl": ".nav-next-cls-header",
+                                                "prevEl": ".nav-prev-cls-header"
+                                            },
+                                            "pagination": { "el": ".sw-pagination-cls-header", "clickable": true }
+                                         }'>
+                                        <div class="swiper-wrapper">
+                                            <!-- Men -->
+                                            <div class="swiper-slide">
+                                                <div class="wg-cls style-abs asp-1 hover-img">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=M"
+                                                       class="image img-style d-block">
+                                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/men-2.jpg"
+                                                             data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/men-2.jpg"
+                                                             alt="" class="lazyload">
+                                                    </a>
+                                                    <div class="cls-btn text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=M"
+                                                           class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                                            Men
+                                                            <i class="icon icon-arrow-top-left"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Women -->
+                                            <div class="swiper-slide">
+                                                <div class="wg-cls style-abs asp-1 hover-img">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                       class="image img-style d-block">
+                                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/women.jpg"
+                                                             data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/women.jpg"
+                                                             alt="" class="lazyload">
+                                                    </a>
+                                                    <div class="cls-btn text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                           class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                                            Women
+                                                            <i class="icon icon-arrow-top-left"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Accessories -->
+                                            <div class="swiper-slide">
+                                                <div class="wg-cls style-abs asp-1 hover-img">
+                                                    <a href="{% url 'catalog:product_list' %}?category=accesorii"
+                                                       class="image img-style d-block">
+                                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/accessories.jpg"
+                                                             data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/accessories.jpg"
+                                                             alt="" class="lazyload">
+                                                    </a>
+                                                    <div class="cls-btn text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?category=accesorii"
+                                                           class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                                            Accessories
+                                                            <i class="icon icon-arrow-top-left"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Sportwear -->
+                                            <div class="swiper-slide">
+                                                <div class="wg-cls style-abs asp-1 hover-img">
+                                                    <a href="{% url 'catalog:product_list' %}?style=sport"
+                                                       class="image img-style d-block">
+                                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/sportwear.jpg"
+                                                             data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/sportwear.jpg"
+                                                             alt="" class="lazyload">
+                                                    </a>
+                                                    <div class="cls-btn text-center">
+                                                        <a href="{% url 'catalog:product_list' %}?style=sport"
+                                                           class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                                            Sportwear
+                                                            <i class="icon icon-arrow-top-left"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex d-xl-none sw-dot-default sw-pagination-cls-header justify-content-center"></div>
+                                        <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-cls-header"></div>
+                                        <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-cls-header"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- RIGHT ICONS: search, account (dropdown), wishlist, cart -->
+            <div class="col-xl-2">
+                <ul class="nav-icon d-flex justify-content-end align-items-center">
+                    <!-- Search -->
+                    <li class="nav-search">
+                        <a href="#search" data-bs-toggle="modal" class="nav-icon-item">
+                            <i class="icon icon-search"></i>
+                        </a>
+                    </li>
+
+                    <!-- Account: dropdown (hover) -->
+                    <li class="nav-account d-flex align-items-center position-relative">
+                        <a href="#"
+                           class="nav-icon-item"
+                           title="Contul meu">
+                            <i class="icon icon-user"></i>
+                        </a>
+
+                        <div class="dropdown-account dropdown-login">
+                            {% if request.user.is_authenticated %}
+                                <div class="sub-top account-menu-header">
+                                    <!-- USER CHIP: nume + trust + KYC -->
+                                    <span class="user-chip d-none d-xl-inline-flex align-items-center ms-2 text-center">
+                                        <span class="user-name small fw-semibold text-truncate"
+                                              style="max-width:140px; font-size:25px;">
+                                            {% if request.user.last_name %}
+                                                {{ request.user.last_name }}
+                                            {% else %}
+                                                {{ request.user.email }}
+                                            {% endif %}
+                                        </span>
+
+                                        {% with prof=request.user.profile %}
+
+                                            {# TRUST SCORE BADGE (Seller vs Buyer) – PNG icons #}
+                                            {% if request.user.is_seller and request.user.sellerprofile %}
+                                                {% with s_class=request.user.sellerprofile.seller_trust_class %}
+                                                    <span
+                                                        class="ms-1 has-tip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="bottom"
+                                                        data-bs-title="Trust Seller {{ request.user.sellerprofile.seller_trust_score }}/100 ({{ s_class }})"
+                                                        aria-label="Trust Seller {{ request.user.sellerprofile.seller_trust_score }}/100 ({{ s_class }})"
+                                                        tabindex="0">
+
+                                                        {% if s_class == 'A' %}
+                                                            <img src="{% static 'images/badge/trust_seller_a.png' %}"
+                                                                 alt="Trust Seller A"
+                                                                 class="badge-icon ">
+                                                        {% elif s_class == 'B' %}
+                                                            <img src="{% static 'images/badge/trust_seller_b.png' %}"
+                                                                 alt="Trust Seller B"
+                                                                 class="badge-icon ">
+                                                        {% elif s_class == 'C' %}
+                                                            <img src="{% static 'images/badge/trust_seller_c.png' %}"
+                                                                 alt="Trust Seller C"
+                                                                 class="badge-icon ">
+                                                        {% else %}
+                                                            <img src="{% static 'images/badge/trust_seller_d.png' %}"
+                                                                 alt="Trust Seller D"
+                                                                 class="badge-icon ">
+                                                        {% endif %}
+                                                    </span>
+                                                {% endwith %}
+                                            {% else %}
+                                                {% with b_class=prof.buyer_trust_class %}
+                                                    <span
+                                                        class="ms-1 has-tip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="bottom"
+                                                        data-bs-title="Trust Buyer {{ prof.buyer_trust_score }}/100 ({{ b_class }})"
+                                                        aria-label="Trust Buyer {{ prof.buyer_trust_score }}/100 ({{ b_class }})"
+                                                        tabindex="0">
+
+                                                        {% if b_class == 'A' %}
+                                                            <img src="{% static 'images/badge/trust_buyer_a.png' %}"
+                                                                 alt="Trust Buyer A"
+                                                                 class="badge-icon ">
+                                                        {% elif b_class == 'B' %}
+                                                            <img src="{% static 'images/badge/trust_buyer_b.png' %}"
+                                                                 alt="Trust Buyer B"
+                                                                 class="badge-icon ">
+                                                        {% elif b_class == 'C' %}
+                                                            <img src="{% static 'images/badge/trust_buyer_c.png' %}"
+                                                                 alt="Trust Buyer C"
+                                                                 class="badge-icon ">
+                                                        {% else %}
+                                                            <img src="{% static 'images/badge/trust_buyer_d.png' %}"
+                                                                 alt="Trust Buyer D"
+                                                                 class="badge-icon ">
+                                                        {% endif %}
+                                                    </span>
+                                                {% endwith %}
+                                            {% endif %}
+
+                                            {# KYC BADGE #}
+                                            {% if prof.has_kyc_badge %}
+                                                <span
+                                                    class="badge-icon badge-icon--kyc ms-1 has-tip"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="bottom"
+                                                    data-bs-title="KYC verificat"
+                                                    aria-label="KYC verificat"
+                                                    tabindex="0">
+                                                    <img src="{% static 'images/badge/kyc_verified.png' %}"
+                                                         alt="KYC Verified badge"
+                                                         loading="lazy">
+                                                </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </span>
+
+                                    {% if request.user.is_seller %}
+                                        <a href="{% url 'dashboard:seller_dashboard' %}"
+                                           class="tf-btn btn-reset w-100 mb-2">
+                                            Panou vânzător
+                                        </a>
+                                        <a href="{% url 'catalog:product_create_wizard' %}"
+                                           class="tf-btn btn-reset w-100"
+                                           style="background:#E43131;border-color:#E43131;">
+                                            Adaugă produs
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'dashboard:buyer_dashboard' %}"
+                                           class="tf-btn btn-reset w-100 mb-2">
+                                            Dashboard cont
+                                        </a>
+                                        <a href="{% url 'catalog:product_create_wizard' %}"
+                                           class="tf-btn btn-reset w-100"
+                                           style="background:#E43131;border-color:#E43131;">
+                                            Începe să vinzi pe Snobistic
+                                        </a>
+                                    {% endif %}
+                                </div>
+
+                                <div class="sub-bot account-menu-header">
+                                    <ul class="menu-list">
+                                        <li>
+                                            <a href="{% url 'accounts:profile' %}"
+                                               class="sub-nav-link">
+                                                Profil
+                                            </a>
+                                        </li>
+
+                                        {% if request.user.is_seller %}
+                                            <li>
+                                                <a href="{% url 'dashboard:wallet' %}"
+                                                   class="sub-nav-link">
+                                                    Portofel
+                                                </a>
+                                            </li>
+                                        {% endif %}
+
+                                        <li>
+                                            <a href="{% url 'orders:order_list' %}"
+                                               class="sub-nav-link">
+                                                Comenzile mele
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="{% url 'messaging:conversation_list' %}"
+                                               class="sub-nav-link">
+                                                Mesaje
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="{% url 'accounts:profile_security' %}"
+                                               class="sub-nav-link">
+                                                Setari
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="#"
+                                               class="sub-nav-link">
+                                                Ajutor &amp; suport
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <form method="post"
+                                                  action="{% url 'accounts:logout' %}"
+                                                  class="header-logout">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-link sub-nav-link">
+                                                    Deloghează-te
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <div class="sub-top account-menu-header">
+                                    <a href="{% url 'accounts:login' %}"
+                                       class="tf-btn btn-reset w-100 mb-2">
+                                        Autentificare
+                                    </a>
+                                    <p class="text-center mb-0">
+                                        Nu ai cont?
+                                        <a class="text-secondary" href="{% url 'accounts:register' %}">Creează cont</a>
+                                    </p>
+                                </div>
+                                <div class="sub-bot account-menu-header">
+                                    <ul class="menu-list">
+                                        <li>
+                                            <a href="#"
+                                               class="sub-nav-link">
+                                                Ajutor &amp; suport
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </li>
+
+                    <!-- Wishlist -->
+                    <li class="nav-wishlist">
+                        <a href="{% url 'catalog:favorites' %}" class="nav-icon-item">
+                            <i class="icon icon-heart"></i>
+                            <span class="count-box">{{ favorites_count|default:0 }}</span>
+                        </a>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="nav-cart nav-cart-dropdown d-flex align-items-center position-relative">
+                        <a href="{% url 'cart:cart' %}" class="nav-icon-item" title="Coșul meu">
+                            <i class="icon icon-cart"></i>
+                            {% if cart_items_count %}
+                                <span class="count-box">{{ cart_items_count }}</span>
+                            {% else %}
+                                <span class="count-box">0</span>
+                            {% endif %}
+                        </a>
+
+                        {# Dropdown mini-cart, afișat la hover #}
+                        {% include "cart/partials/cart_offcanvas.html" %}
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
-</nav>
+</header>
+
+<!-- SEARCH MODAL -->
+<div class="modal fade popup-search" id="search">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="header">
+                <button class="icon-close icon-close-popup" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="looking-for-wrap">
+                            <div class="heading">Ce căutați?</div>
+                            <form class="form-search" action="{% url 'catalog:product_list' %}" method="get">
+                                <fieldset class="text">
+                                    <input type="text"
+                                           placeholder="Căutați produse, branduri, categorii..."
+                                           name="q"
+                                           tabindex="0"
+                                           value="{{ request.GET.q|default_if_none:'' }}"
+                                           aria-required="true"
+                                           required>
+                                </fieldset>
+                                <button type="submit">
+                                    <i class="icon icon-search"></i>
+                                </button>
+                            </form>
+                            <div class="popular-searches justify-content-md-center">
+                                <div class="text fw-medium">Căutări populare:</div>
+                                <ul>
+                                    <li><a class="link" href="{% url 'catalog:product_list' %}?segment=new">New</a></li>
+                                    <li><a class="link" href="{% url 'catalog:product_list' %}?segment=outlet">Outlet</a></li>
+                                    <li><a class="link" href="{% url 'catalog:product_list' %}?segment=preloved">Preloved</a></li>
+                                    <li><a class="link" href="{% url 'catalog:product_list' %}?segment=auctions">Licitatii</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- /row -->
+            </div> <!-- /container -->
+        </div>
+    </div>
+</div>
+<!-- /search -->
+
+{# ===== MOBILE OFFCANVAS MENU ===== #}
+<div class="offcanvas offcanvas-start mobile-offcanvas"
+     tabindex="-1"
+     id="mobileMenu"
+     aria-labelledby="mobileMenuLabel">
+    <div class="offcanvas-header border-bottom-0">
+        <button type="button"
+                class="btn-close text-reset ms-auto"
+                data-bs-dismiss="offcanvas"
+                aria-label="Închide"></button>
+    </div>
+
+    <div class="offcanvas-body p-0 d-flex flex-column">
+
+        {# ===== TOP: USER CARD (similar cu meniul de users) ===== #}
+        <div class="account-menu-header mobile-user-header px-4 pt-3 pb-4 border-bottom">
+            {% if request.user.is_authenticated %}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {# Avatar simplu cu inițială #}
+                    <div class="user-avatar rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width:44px;height:44px;background:#111;color:#fff;font-weight:600;font-size:18px;">
+                        {% if request.user.first_name %}
+                            {{ request.user.first_name|first|upper }}
+                        {% else %}
+                            {{ request.user.email|first|upper }}
+                        {% endif %}
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <div class="small text-muted mb-1">Bun venit,</div>
+                        <div class="fw-semibold text-truncate" style="max-width:180px;">
+                            {% if request.user.first_name %}
+                                {{ request.user.first_name }}
+                            {% elif request.user.last_name %}
+                                {{ request.user.last_name }}
+                            {% else %}
+                                {{ request.user.email }}
+                            {% endif %}
+                        </div>
+
+                        {# TRUST + KYC – exact ca în meniul de users #}
+                        {% with prof=request.user.profile %}
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                {% if request.user.is_seller and request.user.sellerprofile %}
+                                    {% with s_class=request.user.sellerprofile.seller_trust_class %}
+                                        <span class="has-tip"
+                                              data-bs-toggle="tooltip"
+                                              data-bs-placement="bottom"
+                                              data-bs-title="Trust Seller {{ request.user.sellerprofile.seller_trust_score }}/100 ({{ s_class }})"
+                                              tabindex="0">
+                                            {% if s_class == 'A' %}
+                                                <img src="{% static 'images/badge/trust_seller_a.png' %}"
+                                                     alt="Trust Seller A"
+                                                     class="badge-icon">
+                                            {% elif s_class == 'B' %}
+                                                <img src="{% static 'images/badge/trust_seller_b.png' %}"
+                                                     alt="Trust Seller B"
+                                                     class="badge-icon">
+                                            {% elif s_class == 'C' %}
+                                                <img src="{% static 'images/badge/trust_seller_c.png' %}"
+                                                     alt="Trust Seller C"
+                                                     class="badge-icon">
+                                            {% else %}
+                                                <img src="{% static 'images/badge/trust_seller_d.png' %}"
+                                                     alt="Trust Seller D"
+                                                     class="badge-icon">
+                                            {% endif %}
+                                        </span>
+                                    {% endwith %}
+                                {% else %}
+                                    {% with b_class=prof.buyer_trust_class %}
+                                        <span class="has-tip"
+                                              data-bs-toggle="tooltip"
+                                              data-bs-placement="bottom"
+                                              data-bs-title="Trust Buyer {{ prof.buyer_trust_score }}/100 ({{ b_class }})"
+                                              tabindex="0">
+                                            {% if b_class == 'A' %}
+                                                <img src="{% static 'images/badge/trust_buyer_a.png' %}"
+                                                     alt="Trust Buyer A"
+                                                     class="badge-icon">
+                                            {% elif b_class == 'B' %}
+                                                <img src="{% static 'images/badge/trust_buyer_b.png' %}"
+                                                     alt="Trust Buyer B"
+                                                     class="badge-icon">
+                                            {% elif b_class == 'C' %}
+                                                <img src="{% static 'images/badge/trust_buyer_c.png' %}"
+                                                     alt="Trust Buyer C"
+                                                     class="badge-icon">
+                                            {% else %}
+                                                <img src="{% static 'images/badge/trust_buyer_d.png' %}"
+                                                     alt="Trust Buyer D"
+                                                     class="badge-icon">
+                                            {% endif %}
+                                        </span>
+                                    {% endwith %}
+                                {% endif %}
+
+                                {% if prof.has_kyc_badge %}
+                                    <span class="badge-icon badge-icon--kyc has-tip"
+                                          data-bs-toggle="tooltip"
+                                          data-bs-placement="bottom"
+                                          data-bs-title="KYC verificat"
+                                          tabindex="0">
+                                        <img src="{% static 'images/badge/kyc_verified.png' %}"
+                                             alt="KYC Verified badge"
+                                             loading="lazy">
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endwith %}
+                    </div>
+                </div>
+
+                {# Quick actions: Dashboard / Adaugă produs / Comenzi #}
+                <div class="d-grid gap-2">
+                    {% if request.user.is_seller %}
+                        <a href="{% url 'dashboard:seller_dashboard' %}"
+                           class="tf-btn btn-reset w-100">
+                            Panou vânzător
+                        </a>
+                        <a href="{% url 'catalog:product_create_wizard' %}"
+                           class="tf-btn btn-reset w-100"
+                           style="background:#E43131;border-color:#E43131;">
+                            Adaugă produs
+                        </a>
+                    {% else %}
+                        <a href="{% url 'dashboard:buyer_dashboard' %}"
+                           class="tf-btn btn-reset w-100">
+                            Dashboard cont
+                        </a>
+                        <a href="{% url 'catalog:product_create_wizard' %}"
+                           class="tf-btn btn-reset w-100"
+                           style="background:#E43131;border-color:#E43131;">
+                            Începe să vinzi pe Snobistic
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'orders:order_list' %}"
+                       class="tf-btn btn-outline-secondary w-100">
+                        Comenzile mele
+                    </a>
+                </div>
+            {% else %}
+                <div class="text-center mb-3">
+                    <div class="fw-semibold mb-1">Bun venit pe Snobistic</div>
+                    <p class="small text-muted mb-0">
+                        Autentifică-te sau creează-ți un cont pentru a cumpăra și vinde în siguranță.
+                    </p>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:login' %}"
+                       class="tf-btn btn-reset w-100">
+                        Autentificare
+                    </a>
+                    <a href="{% url 'accounts:register' %}"
+                       class="tf-btn btn-outline-secondary w-100">
+                        Creează cont
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {# ===== NAVIGARE PRINCIPALĂ (clonată din .box-nav-menu) ===== #}
+        <div class="px-4 py-3 border-bottom">
+            <div class="small text-uppercase text-muted mb-2">Navigare</div>
+            <nav id="wrapper-menu-navigation" class="mobile-main-nav"></nav>
+        </div>
+
+        {# ===== LINK-URI RAPIDE CONT / FAVORITE / COȘ ===== #}
+        <div class="px-4 py-3">
+            <div class="small text-uppercase text-muted mb-2">Cont &amp; comenzi</div>
+            <ul class="menu-list list-unstyled mb-0 d-flex flex-column gap-1">
+                {% if request.user.is_authenticated %}
+                    <li>
+                        <a href="{% url 'accounts:profile' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                            <span><i class="icon icon-user me-2"></i>Profil</span>
+                        </a>
+                    </li>
+                    {% if request.user.is_seller %}
+                        <li>
+                            <a href="{% url 'dashboard:wallet' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                                <span><i class="icon icon-wallet me-2"></i>Portofel</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+                <li>
+                    <a href="{% url 'catalog:favorites' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                        <span><i class="icon icon-heart me-2"></i>Favorite</span>
+                        <span class="badge rounded-pill bg-dark text-white">
+                            {{ favorites_count|default:0 }}
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'cart:cart' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                        <span><i class="icon icon-cart me-2"></i>Coș de cumpărături</span>
+                        <span class="badge rounded-pill bg-dark text-white">
+                            {{ cart_items_count|default:0 }}
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:profile_security' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                        <span><i class="icon icon-setting me-2"></i>Setări &amp; securitate</span>
+                    </a>
+                </li>
+                {% if request.user.is_authenticated %}
+                    <li>
+                        <form method="post"
+                              action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="btn btn-link sub-nav-link text-danger p-0">
+                                <i class="icon icon-logout me-2"></i>Deloghează-te
+                            </button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+

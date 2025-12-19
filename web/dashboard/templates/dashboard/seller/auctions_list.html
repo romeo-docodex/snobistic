@@ -1,0 +1,241 @@
+{# dashboard/seller/auctions_list.html #}
+{% extends "base.html" %}
+{% load static %}
+{% load tz %}
+
+{% block title %}Licitațiile mele – Panou Vânzător – Snobistic{% endblock %}
+
+{% block content %}
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Licitațiile mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'dashboard:seller_dashboard' %}">Panou vânzător</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Licitațiile mele</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# ==== Sidebar desktop – meniu vânzător ==== #}
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+
+          {# 1. Înapoi la dashboard utilizator #}
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              &larr; Înapoi la profil
+            </a>
+          </li>
+
+          {# 2. Panou vânzător #}
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Panou vânzător
+            </a>
+          </li>
+
+          {# 3. Produsele mele #}
+          <li>
+            <a href="{% url 'dashboard:products_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Produsele mele
+            </a>
+          </li>
+
+          {# 4. Licitațiile mele (pagina curentă) #}
+          <li>
+            <a href="{% url 'dashboard:auctions_list' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Licitațiile mele
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'dashboard:sold_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Articole vândute
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:wallet' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Wallet & încasări
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {# ==== Conținut principal – listă licitații ==== #}
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">
+          Licitațiile asociate produselor tale
+        </h6>
+        <p class="text-sm text-grey mb-4">
+          Vezi statusul licitațiilor, timpul rămas și prețurile curente pentru articolele tale.
+        </p>
+
+        <div class="widget-inner-address">
+          <div class="account-address-item">
+
+            {# Header acțiuni #}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+              <div>
+                <p class="text-sm mb-0 text-grey">
+                  Total licitații: <strong>{{ auctions|length }}</strong>
+                </p>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'dashboard:auctions_list' %}?export=csv"
+                   class="tf-btn btn-out-line-dark">
+                  <i class="fas fa-file-csv me-1"></i>
+                  Export CSV
+                </a>
+              </div>
+            </div>
+
+            {# Tabel licitații #}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Imagine</th>
+                    <th>Titlu</th>
+                    <th>Status validare</th>
+                    <th>Creat la</th>
+                    <th>Validat la</th>
+                    <th>Start licitație</th>
+                    <th>Timp rămas</th>
+                    <th>Preț actual</th>
+                    <th>Preț pornire</th>
+                    <th>Preț minim</th>
+                    <th>SKU</th>
+                    <th class="text-end">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% now "UTC" as now %}
+                  {% for a in auctions %}
+                  <tr>
+                    <td style="width: 80px;">
+                      {% if a.product.main_image %}
+                        <img src="{{ a.product.main_image.url }}"
+                             class="img-fluid rounded"
+                             alt="{{ a.product.title }}" />
+                      {% else %}
+                        <img src="{% static 'images/placeholder-sm.png' %}"
+                             class="img-fluid rounded"
+                             alt="Fără imagine" />
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'auctions:auction_detail' a.pk %}"
+                         class="link-primary text-sm fw-medium">
+                        {{ a.product.title }}
+                      </a>
+                    </td>
+                    <td>
+                      {% if a.is_active %}
+                        <span class="badge bg-success text-xs">Validat</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark text-xs">În validare</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {{ a.created_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {% if a.is_active %}
+                        {{ a.updated_at|date:"Y-m-d H:i" }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {{ a.start_time|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {% if a.end_time and a.end_time > now %}
+                        {{ a.end_time|timeuntil:now }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td class="text-sm">
+                      {{ a.current_price }} RON
+                    </td>
+                    <td class="text-sm">
+                      {{ a.start_price }} RON
+                    </td>
+                    <td class="text-sm">
+                      {{ a.min_price }} RON
+                    </td>
+                    <td class="text-xs">
+                      <code>{{ a.product.sku }}</code>
+                    </td>
+                    <td class="text-end text-nowrap">
+                      {% if not a.is_active %}
+                        {# Edit metadata licitație #}
+                        <a href="{% url 'auctions:step1_metadata' a.product.slug %}"
+                           class="btn btn-sm btn-outline-primary me-1">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        {# Activează / pornește licitația #}
+                        <a href="{% url 'auctions:create_auction' a.product.slug %}"
+                           class="btn btn-sm btn-outline-success me-1">
+                          <i class="fas fa-play"></i>
+                        </a>
+                        {# Ștergere licitație #}
+                        <form action="{% url 'auctions:delete' a.pk %}"
+                              method="post"
+                              class="d-inline">
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-danger"
+                                  onclick="return confirm('Ștergi această licitație?')">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </form>
+                      {% else %}
+                        <span class="text-muted text-xs">Licitație activă</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="12" class="text-center text-muted py-4">
+                      Nu ai nicio licitație postată în acest moment.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div> {# /account-address-item #}
+        </div> {# /widget-inner-address #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

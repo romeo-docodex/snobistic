@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Comandă reușită – Snobistic{% endblock %}
+
+{% block content %}
+  <div class="text-center my-5">
+    <h1>Comanda ta a fost plasată cu succes!</h1>
+    <p>Număr comandă: <strong>#{{ order.id }}</strong></p>
+    <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-primary">Vezi detaliile comenzii</a>
+    <a href="{% url 'catalog:product_list' %}" class="btn btn-link">Continuă cumpărăturile</a>
+  </div>
+{% endblock %}

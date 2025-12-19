@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Politica de retur – Snobistic{% endblock %}
+
+{% block meta_description %}
+Politica de retur Snobistic – află în ce condiții poți returna produsele cumpărate din Magazin sau prin Licitații.
+{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Politica de retur</h1>
+
+  <h2>1. Domeniu de aplicare</h2>
+  <p>Se aplică produselor cumpărate prin platforma Snobistic, atât Magazin, cât și Licitații, cu excepțiile prevăzute în prezenta politică.</p>
+
+  <h2>2. Termen de retur</h2>
+  <p>Pentru persoane fizice: termenul standard este de 14 zile calendaristice de la primirea coletului, cu excepțiile prevăzute de lege și de Termeni &amp; Condiții.</p>
+
+  <h2>3. Condiții de retur</h2>
+  <ul>
+    <li>Produsul să fie în aceeași stare în care a fost livrat.</li>
+    <li>Etichetele și sigiliile să fie, pe cât posibil, intacte.</li>
+    <li>Să fie însoțit de documentele de cumpărare.</li>
+  </ul>
+
+  <h2>4. Retur pentru produse neconforme</h2>
+  <p>Dacă produsul nu corespunde descrierii sau prezintă defecte majore nedeclarate, se pot aplica reguli speciale de retur și refund.</p>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
+{% endblock %}

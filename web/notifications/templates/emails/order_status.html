@@ -1,0 +1,21 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Statusul comenzii <strong>#{{ order.id }}</strong> a fost actualizat la <strong>{{ order.status }}</strong> pe {{ order.updated_at|date:"Y-m-d H:i" }}.</p>
+<table width="100%" style="border-collapse:collapse;">
+  <tr>
+    <th align="left">Produs</th><th align="center">Cantitate</th><th align="right">Subtotal</th>
+  </tr>
+  {% for item in order.items %}
+  <tr>
+    <td>{{ item.product.title }}</td>
+    <td align="center">{{ item.quantity }}</td>
+    <td align="right">{{ item.subtotal }} RON</td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td colspan="2"><strong>Total</strong></td>
+    <td align="right"><strong>{{ order.total }} RON</strong></td>
+  </tr>
+</table>
+<p><a href="{{ order_detail_url }}">Vezi detaliile comenzii</a></p>
+{% include "emails/partials/footer.html" %}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Codul tău de autentificare</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden;">
+    <tr>
+      <td style="padding: 24px 24px 12px 24px; text-align: center; background: #111;">
+        <h1 style="color:#ffffff; margin:0; font-size: 20px;">Snobistic</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px;">
+        <p style="margin: 0 0 12px 0;">
+          Bună, <strong>{{ user.first_name|default:user.email }}</strong>,
+        </p>
+
+        <p style="margin: 0 0 12px 0;">
+          Codul tău de autentificare cu doi factori este:
+        </p>
+
+        <p style="margin: 16px 0; font-size: 26px; font-weight: 700; letter-spacing: 4px; text-align:center;">
+          {{ code }}
+        </p>
+
+        <p style="margin: 0 0 12px 0; font-size: 13px; color:#777;">
+          Codul este valabil câteva minute. Dacă nu tu ai inițiat autentificarea, îți recomandăm să îți schimbi parola.
+        </p>
+
+        <p style="margin: 16px 0 0 0; font-size: 13px; color:#777;">
+          Cu drag,<br>
+          Echipa Snobistic
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

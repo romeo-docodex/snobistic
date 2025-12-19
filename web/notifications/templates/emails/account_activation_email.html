@@ -1,0 +1,10 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Îți mulțumim pentru înregistrare! Apasă butonul de mai jos pentru a-ți activa contul:</p>
+<p style="text-align:center;">
+  <a href="{{ activation_url }}" style="background:#007bff;color:#fff;padding:10px 20px;text-decoration:none;">
+    Activează contul
+  </a>
+</p>
+<p>Dacă nu ai cerut acest email, poți ignora mesajul.</p>
+{% include "emails/partials/footer.html" %}

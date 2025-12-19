@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Checkout – Snobistic{% endblock %}
+{% block content %}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Checkout</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Home</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Checkout</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container">
+    <form method="post" class="row">
+      {% csrf_token %}
+      <div class="col-xl-8">
+        <div class="tf-checkout-cart-main">
+          <div class="box-ip-checkout">
+            <div class="title text-lg fw-medium">Informații de facturare</div>
+            <div class="grid-2 mb_16">
+              <div class="tf-field style-2 style-3">
+                <input class="tf-field-input tf-input" id="firstname" placeholder=" " type="text" name="first_name" value="{{ request.user.first_name }}">
+                <label class="tf-field-label" for="firstname">Prenume</label>
+              </div>
+              <div class="tf-field style-2 style-3">
+                <input class="tf-field-input tf-input" id="lastname" placeholder=" " type="text" name="last_name" value="{{ request.user.last_name }}">
+                <label class="tf-field-label" for="lastname">Nume</label>
+              </div>
+            </div>
+
+            <fieldset class="tf-field style-2 style-3 mb_16">
+              {{ form.address }}
+            </fieldset>
+
+            <a href="{% url 'accounts:address_form' %}" class="text-sm link mb-3 d-inline-block">Adaugă sau modifică adresa</a>
+          </div>
+
+          <div class="box-ip-contact">
+            <div class="title">
+              <div class="text-lg fw-medium">Informații de contact</div>
+            </div>
+            <fieldset class="tf-field style-2 style-3">
+              <input class="tf-field-input tf-input" id="email" placeholder=" " type="email" name="email" value="{{ request.user.email }}">
+              <label class="tf-field-label" for="email">Email</label>
+            </fieldset>
+            <fieldset class="tf-field style-2 style-3 mt-3">
+              <input class="tf-field-input tf-input" id="phone" placeholder=" " type="text" name="phone" value="{{ request.user.profile.phone }}">
+              <label class="tf-field-label" for="phone">Telefon</label>
+            </fieldset>
+          </div>
+
+          <div class="box-ip-shipping">
+            <div class="title text-lg fw-medium">Metodă de livrare</div>
+            {% for choice in form.shipping_method %}
+            <fieldset class="mb_16">
+              <label class="check-ship">
+                {{ choice.tag }}
+                <span class="text text-sm"><span>{{ choice.choice_label }}</span></span>
+              </label>
+            </fieldset>
+            {% endfor %}
+          </div>
+
+          <div class="box-ip-payment">
+            <div class="title">
+              <div class="text-lg fw-medium mb_4">Metodă de plată</div>
+            </div>
+            {% for choice in form.payment_method %}
+            <fieldset class="mb_12">
+              <label class="check-payment">
+                {{ choice.tag }}
+                <span class="text-payment text-sm">{{ choice.choice_label }}</span>
+              </label>
+            </fieldset>
+            {% endfor %}
+            <p class="text-dark-6 text-sm">
+              Datele tale sunt protejate. Vezi <a href="{% url 'core:privacy' %}" class="fw-medium text-decoration-underline link text-sm">politica de confidențialitate</a>.
+            </p>
+          </div>
+          {% if wallet %}
+            <p class="text-dark-6 text-sm mt-2">
+              Sold disponibil în Wallet Snobistic:
+              <strong>{{ wallet.balance }} RON</strong>
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-xl-4">
+        <div class="tf-page-cart-sidebar">
+          <div class="cart-box order-box">
+            <div class="title text-lg fw-medium">Coșul tău</div>
+            <ul class="list-order-product">
+              {% for item in cart.items.all %}
+              <li class="order-item">
+                <figure class="img-product">
+                  <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
+                  <span class="quantity">{{ item.quantity }}</span>
+                </figure>
+                <div class="content">
+                  <div class="info">
+                    <p class="name text-sm fw-medium">{{ item.product.title }}</p>
+                    {% if item.product.sku %}<span class="variant">SKU: {{ item.product.sku }}</span>{% endif %}
+                  </div>
+                  <span class="price text-sm fw-medium">{{ item.get_cost }} RON</span>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            <ul class="list-total">
+              <li class="total-item d-flex justify-content-between text-sm">
+                <span>Subtotal:</span><span>{{ cart.get_subtotal }} RON</span>
+              </li>
+              {% if cart.coupon %}
+              <li class="total-item d-flex justify-content-between text-sm">
+                <span>Discount ({{ cart.coupon.code }}):</span><span>-{{ cart.coupon.discount }}%</span>
+              </li>
+              {% endif %}
+              {% if shipping_cost %}
+              <li class="total-item d-flex justify-content-between text-sm">
+                <span>Transport estimat:</span><span>{{ shipping_cost }} RON</span>
+              </li>
+              {% endif %}
+            </ul>
+            <div class="subtotal d-flex justify-content-between text-lg fw-medium">
+              <span>Total produse:</span>
+              <span class="total-price-order">
+                {{ cart.get_total_price }} RON
+                {% if shipping_cost %}
+                  + {{ shipping_cost }} RON transport
+                {% endif %}
+              </span>
+            </div>
+
+            {% if shipping_days_min and shipping_days_max %}
+              <p class="text-sm text-dark-4 mt-1">
+                Livrare estimată în {{ shipping_days_min }}–{{ shipping_days_max }} zile lucrătoare.
+              </p>
+            {% endif %}
+
+            <div class="check-agree mt-3">
+              {{ form.agree_terms }}
+              <label for="{{ form.agree_terms.id_for_label }}" class="label text-dark-4">
+                Sunt de acord cu
+                <a href="{% url 'core:terms' %}" class="text-dark-4 fw-medium text-underline link">termenii și condițiile</a>
+              </label>
+              {% if form.agree_terms.errors %}
+                <p class="text-danger text-sm mt-1">{{ form.agree_terms.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="btn-order mt-3">
+              <button type="submit" class="tf-btn btn-dark2 animate-btn w-100 text-transform-none">Plasează comanda</button>
+            </div>
+            <p class="mt-3 text-sm text-center text-dark-4">
+              <a href="{% url 'cart:cart' %}" class="text-decoration-underline">Revino la coș</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

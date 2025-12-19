@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Setări vânzător – Snobistic{% endblock %}
+
+{% block content %}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Setări vânzător</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# Sidebar account, aliniat cu celelalte pagini de profil #}
+      {% include "accounts/profile/_account_sidebar.html" with account_section="seller_settings" %}
+      
+      <div class="my-acount-content account-dashboard">
+        {% with seller=request.user.sellerprofile profile=request.user.profile %}
+
+        <div class="mb-4">
+          <h6 class="display-xs title-form mb-2">Centrul tău de vânzător</h6>
+          <p class="text-xs text-muted mb-0">
+            Aici gestionezi tot ce ține de <strong>statusul tău de vânzător</strong>,
+            <strong>detaliile de plată</strong> și <strong>locațiile de marfă / depozite</strong>.
+            Aceste date sunt folosite pentru calculul costurilor de transport și generarea documentelor de plată.
+          </p>
+        </div>
+
+        {# SECȚIUNEA 1 – Status vânzător (pe rând separat) #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-2">
+                Status vânzător
+              </p>
+
+              <h6 class="mb-3">
+                {% if seller %}
+                  {{ seller.get_seller_level_display }}
+                {% else %}
+                  Cont vânzător neconfigurat
+                {% endif %}
+              </h6>
+
+              {% if seller %}
+              <ul class="list-unstyled text-xs mb-3">
+                <li class="mb-1">
+                  <span class="text-muted">Tip vânzător</span><br>
+                  <span class="fw-semibold">
+                    {{ seller.get_seller_type_display }}
+                  </span>
+                </li>
+                <li class="mb-1">
+                  <span class="text-muted">Comision platformă</span><br>
+                  <span class="fw-semibold">
+                    {{ seller.seller_commission_rate }}%
+                  </span>
+                </li>
+                <li class="mb-1">
+                  <span class="text-muted">Trust score vânzător</span><br>
+                  <span class="fw-semibold">
+                    {{ seller.seller_trust_score }} / 100
+                  </span>
+                </li>
+              </ul>
+
+              {# Badge KYC #}
+              {% if seller.has_kyc_badge %}
+                <span class="badge rounded-pill bg-success text-white text-2xs px-3 py-2">
+                  KYC complet
+                </span>
+                <p class="text-2xs text-muted mt-2 mb-0">
+                  Identitatea ta a fost verificată. Beneficiezi de mai multă încredere și limite mai mari.
+                </p>
+              {% else %}
+                <span class="badge rounded-pill bg-warning text-dark text-2xs px-3 py-2">
+                  KYC incomplet
+                </span>
+                <p class="text-2xs text-muted mt-2 mb-0">
+                  Completează verificarea identității în centrul KYC pentru a crește încrederea
+                  și a debloca funcționalități avansate.
+                </p>
+              {% endif %}
+              {% else %}
+              <p class="text-xs text-muted mb-0">
+                Contul tău nu are încă un profil de vânzător configurat. Contactează suportul dacă apare această situație.
+              </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# SECȚIUNEA 2 – Detalii plăți & livrare (pe rând separat) #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                <div>
+                  <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                    Detalii plăți & livrare
+                  </p>
+                  <h6 class="mb-0">IBAN și opțiuni de livrare</h6>
+                </div>
+              </div>
+
+              <form method="post" class="form-edit-account" novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    {{ form.iban|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.seller_type|as_crispy_field }}
+                  </div>
+
+                  <div class="col-md-4">
+                    {{ form.accept_cod|as_crispy_field }}
+                  </div>
+                  <div class="col-md-4">
+                    {{ form.allow_local_pickup|as_crispy_field }}
+                  </div>
+                  <div class="col-md-4">
+                    {{ form.local_delivery_radius_km|as_crispy_field }}
+                  </div>
+
+                  <div class="col-md-6">
+                    {{ form.max_cod_value|as_crispy_field }}
+                  </div>
+                </div>
+
+                <button type="submit" class="tf-btn animate-btn mt-3">
+                  Salvează setările
+                </button>
+              </form>
+
+              <p class="text-2xs text-muted mt-3 mb-0">
+                IBAN-ul este folosit pentru plățile către tine, iar opțiunile de livrare
+                ne ajută să calculăm corect costurile de transport și să afișăm metodele potrivite în checkout.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {% endwith %}
+
+        {# SECȚIUNEA 3 – Locații marfă / depozite (tot o singură secțiune, cu 2 coloane) #}
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                Locații marfă / depozite
+              </p>
+              <h6 class="mb-3">Adaugă locație</h6>
+
+              <form method="post"
+                    action="{% url 'accounts:seller_location_add' %}"
+                    class="form-edit-account"
+                    novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                  <div class="col-6">
+                    {{ add_form.code|as_crispy_field }}
+                  </div>
+                  <div class="col-6">
+                    {{ add_form.label|as_crispy_field }}
+                  </div>
+                </div>
+
+                <div class="form-check mt-2 mb-3">
+                  {{ add_form.is_default }}
+                  <label class="form-check-label text-xs"
+                         for="{{ add_form.is_default.id_for_label }}">
+                    Setează ca locație implicită
+                  </label>
+                </div>
+
+                <button type="submit" class="tf-btn animate-btn">
+                  Adaugă locație
+                </button>
+
+                <p class="text-2xs text-muted mt-2 mb-0">
+                  Locația implicită va fi folosită pentru generarea codurilor SKU și pentru calculul
+                  distanțelor în livrare. Poți avea mai multe locații, dar doar una implicită.
+                </p>
+              </form>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                    Lista locațiilor
+                  </p>
+                  <h6 class="mb-0">Depozite și puncte de livrare</h6>
+                </div>
+              </div>
+
+              {% if locations %}
+                <ul class="list-group list-group-flush">
+                  {% for loc in locations %}
+                    <li class="list-group-item px-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                      <div class="mb-2 mb-md-0">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="badge rounded-pill bg-light text-dark text-2xs">
+                            {{ loc.code }}
+                          </span>
+                          <span class="fw-medium text-sm">
+                            {% if loc.label %}{{ loc.label }}{% else %}Fără etichetă{% endif %}
+                          </span>
+                          {% if loc.is_default %}
+                            <span class="badge rounded-pill bg-primary text-white text-2xs ms-1">
+                              Locație implicită
+                            </span>
+                          {% endif %}
+                        </div>
+                        <p class="text-2xs text-muted mb-0 mt-1">
+                          Prefix SKU: {{ loc.code }} · folosit pentru organizarea stocului și a documentelor de livrare.
+                        </p>
+                      </div>
+
+                      <div class="d-flex gap-2">
+                        <form method="post"
+                              action="{% url 'accounts:seller_location_default' pk=loc.pk %}">
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-secondary text-xs"
+                                  {% if loc.is_default %}disabled{% endif %}>
+                            Fă implicită
+                          </button>
+                        </form>
+
+                        <form method="post"
+                              action="{% url 'accounts:seller_location_delete' pk=loc.pk %}">
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-danger text-xs">
+                            Șterge
+                          </button>
+                        </form>
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-xs text-muted mb-0">
+                  Nu ai definit încă nicio locație. Adaugă cel puțin una pentru a putea
+                  lista produse cu SKU-uri corecte și pentru a automatiza livrarea.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+      </div> {# /.my-acount-content #}
+    </div> {# /.main-content-account #}
+
+  </div>
+</div>
+{% endblock %}

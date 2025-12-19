@@ -1,47 +1,27 @@
 from django.contrib import admin
 from django.urls import path, include
-from two_factor.urls import urlpatterns as tf_urls
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    # Admin
     path('admin/', admin.site.urls),
 
-    # Two-Factor Authentication (django-two-factor-auth)
-    path('', include(tf_urls)),
-
-    # Social & Account (django-allauth)
-    path('accounts/', include('allauth.urls')),
-
-    # Custom account views (register, profile, change-password etc.)
-    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
-
-    # Core (home, about, contact)
-    path('', include(('core.urls', 'core'), namespace='core')),
-
-    # Shop (catalog, favorites, search)
-    path('shop/', include(('shop.urls', 'shop'), namespace='shop')),
-
-    # Products
-    path('products/', include(('products.urls', 'products'), namespace='products')),
-
-    # Cart
-    path('cart/', include(('cart.urls', 'cart'), namespace='cart')),
-
-    # Orders & Returns
-    path('orders/', include(('orders.urls', 'orders'), namespace='orders')),
-
-    # Payments
-    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
-
-    # Auctions
-    path('auctions/', include(('auctions.urls', 'auctions'), namespace='auctions')),
-
-    # Chat/Inbox
-    path('chat/', include(('chat.urls', 'chat'), namespace='chat')),
-
-    # Support/Ticketing
-    path('support/', include(('support.urls', 'support'), namespace='support')),
-
-    # Wallet/Transactions
-    path('wallet/', include(('wallet.urls', 'wallet'), namespace='wallet')),
+    # Aplicații interne
+    path('', include('core.urls')),                              # homepage, despre-noi, contact etc.
+    path('cont/', include('accounts.urls')),                     # autentificare, profil, parole
+    path('magazin/', include('catalog.urls')),                   # listă produse, categorii, produs
+    path('cos/', include('cart.urls')),                          # coș de cumpărături
+    path('comenzi/', include('orders.urls')),                    # comenzi + retururi
+    path('licitatii/', include('auctions.urls')),                # licitații
+    path('autentificare-produs/', include('authenticator.urls')),# verificare autenticitate
+    path('mesaje/', include('messaging.urls')),                  # mesagerie între useri
+    path('panou/', include('dashboard.urls')),                   # dashboard vânzător/cumpărător
+    path('plati/', include('payments.urls')),                    # plăți, portofel
+    path('suport/', include('support.urls')),                    # suport & tichete
+    path('facturi/', include('invoices.urls')),                  # facturi
+    path('logistica/', include('logistics.urls', namespace='logistics')),
 ]
+
+# Servire fișiere media în dezvoltare
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

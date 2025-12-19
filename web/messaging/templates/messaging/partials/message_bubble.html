@@ -1,0 +1,20 @@
+{# messaging/templates/messaging/partials/message_bubble.html #}
+<div class="mb-2">
+  <div class="d-flex {% if msg.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+    {% if msg.sender == request.user %}
+      {% set bubble_classes = "bg-primary text-white" %}
+    {% endif %}
+    <div class="p-2 rounded {% if msg.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %}">
+      <small class="fw-bold">
+        {{ msg.sender.full_name|default:msg.sender.email }}
+      </small><br>
+      {{ msg.text|linebreaksbr }}
+      {% if msg.attachment %}
+        <div><a href="{{ msg.attachment.url }}" target="_blank">Anexă</a></div>
+      {% endif %}
+      <div class="text-end">
+        <small>{{ msg.sent_at|date:"H:i, d.m.Y" }}</small>
+      </div>
+    </div>
+  </div>
+</div>

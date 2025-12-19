@@ -1,29 +1,147 @@
 {% extends "base.html" %}
+{% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}Autentificare{% endblock %}
+{% block title %}Autentificare în cont – Snobistic{% endblock %}
+
+{# Nu afișăm navbar + footer pe pagina de login #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <h2>Login</h2>
-    {% include "components/alerts.html" %}
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label for="id_email" class="form-label">Email</label>
-        <input type="email" name="email" id="id_email" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label for="id_password" class="form-label">Parolă</label>
-        <input type="password" name="password" id="id_password" class="form-control" required>
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Autentifică-te</button>
-    </form>
-    <div class="mt-3 text-center">
-      <a href="{% url 'accounts:password_reset' %}">Ai uitat parola?</a><br>
-      <a href="{% url 'accounts:register' %}">Înregistrare</a>
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+
+    {# Logo centrat deasupra conținutului #}
+    <div class="container text-center my-4 pb-5">
+      <a href="{% url 'core:home' %}">
+        <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" style="height:56px;width:auto;">
+      </a>
     </div>
+
+    <div class="login-wrap">
+
+      {# ==== Col stânga: Login ==== #}
+      <div class="left">
+        <div class="heading">
+          <h4>Autentificare în cont</h4>
+          <p class="text-secondary small mt-1">
+            Autentifică-te cu adresa ta de email și parola setată la înregistrare.
+          </p>
+        </div>
+
+        {# Mesaje Django #}
+        {% if messages %}
+          <div class="mt-3 mb-2">
+            {% for m in messages %}
+              <div class="alert alert-{{ m.tags|default:'info' }} mb-1">
+                {{ m }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post"
+              novalidate
+              class="form-login"
+              autocomplete="off">
+          {% csrf_token %}
+
+          {# păstrăm redirect-ul după login (safe_next îl va valida) #}
+          {% if request.GET.next %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+          {% endif %}
+
+          {# Social sign-in – placeholder, de conectat când adaugi provideri (allauth etc.) #}
+          <div class="d-grid gap-2 mb-3">
+            <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
+              <img width="24" height="24"
+                   src="https://img.icons8.com/fluency/48/google-logo.png"
+                   alt="google-logo">
+              <span class="text text-button ms-2">Continuă cu Google</span>
+            </a>
+            <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
+              <img width="24" height="24"
+                   src="https://img.icons8.com/fluency/48/facebook-new.png"
+                   alt="facebook-logo">
+              <span class="text text-button ms-2">Continuă cu Facebook</span>
+            </a>
+          </div>
+
+          <div class="text-center mb-3">
+            <span class="text-secondary small">sau continuă cu email</span>
+          </div>
+
+          {# Honeypot anti-bot – ignorat de view, dar ajută un pic #}
+          <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+            <label>Lasă acest câmp gol</label>
+            <input type="text" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="wrap">
+
+            {# Erori globale (ex: credențiale invalide) #}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb-3">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            {# Email #}
+            <fieldset class="mb_20">
+              {{ form.username.errors }}
+              {{ form.username|as_crispy_field }}
+            </fieldset>
+
+            {# Parolă #}
+            <fieldset class="mb_12">
+              {{ form.password.errors }}
+              {{ form.password|as_crispy_field }}
+            </fieldset>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="tf-cart-checkbox">
+                <div class="tf-checkbox-wrapp">
+                  {{ form.remember_me.errors }}
+                  {{ form.remember_me }}
+                  <div><i class="icon-check"></i></div>
+                </div>
+                <label for="{{ form.remember_me.id_for_label }}">Ține-mă minte</label>
+              </div>
+
+              <a href="{% url 'accounts:password_reset' %}"
+                 class="font-2 text-button forget-password link">
+                Ai uitat parola?
+              </a>
+            </div>
+          </div>
+
+          <div class="button-submit mt-2">
+            <button class="tf-btn btn-fill w-100" type="submit" id="loginSubmit">
+              <span class="text text-button">Autentifică-te</span>
+            </button>
+          </div>
+
+          {# Mic mesaj de securitate #}
+          <p class="text-secondary small text-center mt-3 mb-0">
+            Nu împărtăși niciodată codurile sau parola cu altcineva.
+          </p>
+        </form>
+      </div>
+
+      {# ==== Col dreapta: Client nou / Register ==== #}
+      <div class="right">
+        <h4 class="mb_8">Nu ai încă un cont?</h4>
+        <p class="text-secondary">
+          Creează-ți un cont Snobistic și începe să vinzi sau să cumperi piese pre-loved,
+          outlet sau noi, cu protecția cumpărătorului și plăți prin escrow.
+        </p>
+        <a href="{% url 'accounts:register' %}" class="tf-btn btn-fill mt-2">
+          <span class="text text-button">Creează-ți un cont</span>
+        </a>
+      </div>
+
+    </div> {# /login-wrap #}
   </div>
-</div>
+</section>
 {% endblock %}

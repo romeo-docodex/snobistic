@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Mesagerie rapidă{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Mesagerie rapidă</h1>
+  <ul class="list-group">
+    {% for conv in conversations %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <a href="{% url 'messaging:conversation_detail' conv.pk %}">
+          {{ conv.get_other_participant(request.user).get_full_name }}
+        </a>
+        <span class="badge bg-secondary">
+          {{ conv.last_updated|naturaltime }}
+        </span>
+      </li>
+    {% empty %}
+      <li class="list-group-item">Nu ai conversații recente.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+<ul id="upload-list" class="list-group mb-3"></ul>
+<script>
+  document.querySelector('input[type=file]').addEventListener('change', function(e){
+    const list = document.getElementById('upload-list');
+    list.innerHTML = '';
+    Array.from(this.files).forEach(f => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = `${f.name} (${Math.round(f.size/1024)} KB)`;
+      list.appendChild(li);
+    });
+  });
+</script>

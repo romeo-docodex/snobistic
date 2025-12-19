@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Căutare „{{ search_term }}” – Snobistic{% endblock %}
+{% block content %}
+<h2>Căutare: “{{ search_term }}”</h2>
+<hr>
+{% if products %}
+  <div class="row g-3">
+    {% for product in products %}
+      <div class="col-6 col-md-4 col-xl-3">
+        {% include "catalog/partials/product_card.html" with product=product %}
+      </div>
+    {% endfor %}
+  </div>
+  {% include "catalog/partials/pagination.html" with page_obj=page_obj %}
+{% else %}
+  <p class="text-muted">Nu am găsit produse pentru termenul dat.</p>
+{% endif %}
+{% endblock %}

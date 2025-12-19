@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Autentifică produs{% endblock %}
+{% block content %}
+<div class="card mx-auto" style="max-width:600px;">
+  <div class="card-body">
+    <h1 class="card-title">Autentifică produsul tău</h1>
+    <p>Încarcă până la 5 imagini ale produsului pentru verificare.</p>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% include "authenticator/partials/form_errors.html" with form=form %}
+      <div class="mb-3">
+        {{ form.images.label_tag }}<br>
+        {{ form.images }}
+        <small class="form-text text-muted">{{ form.images.help_text }}</small>
+      </div>
+      {% if not request.user.is_authenticated %}
+      <div class="mb-3">
+        {{ form.email.label_tag }}
+        {{ form.email }}
+      </div>
+      {% endif %}
+      <button class="btn btn-primary" type="submit">Trimite pentru verificare</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -8,8 +8,5 @@ django-phonenumber-field[phonenumberslite]
 djangorestframework
 django-crispy-forms
 crispy-bootstrap5
-django-allauth
-django-otp
-django-two-factor-auth
+django-formtools
 requests
-jwt

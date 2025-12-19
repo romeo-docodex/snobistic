@@ -1,0 +1,111 @@
+# =========================
+# Snobistic (.gitignore)
+# Django (Python) + optional Flutter (mobile)
+# =========================
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE / Editors ---
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.ipynb_checkpoints/
+
+# --- Virtualenv / local env ---
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# --- Env files / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+private/
+
+# --- Django ---
+# local settings overrides (optional)
+local_settings.py
+settings_local.py
+
+# sqlite (if ever used locally)
+db.sqlite3
+db.sqlite3-journal
+
+# uploads & generated static
+media/
+staticfiles/
+
+# collectstatic output if you use a different folder name
+# static_collected/
+
+# logs
+*.log
+logs/
+
+# celery / beat (if used)
+celerybeat-schedule
+celerybeat.pid
+
+# --- Packaging / build artifacts ---
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# --- Coverage / reports ---
+.coverage
+coverage.xml
+htmlcov/
+reports/
+
+# --- Node / frontend tooling (if any) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# --- Docker (optional local) ---
+*.pid
+*.sock
+
+# =========================
+# Flutter (if mobile app is in same repo)
+# =========================
+# Flutter/Dart tool & build outputs
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# Android
+android/.gradle/
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/

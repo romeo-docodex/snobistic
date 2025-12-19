@@ -1,0 +1,17 @@
+{% if images %}
+  <div id="productCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for img in images %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          <img src="{{ img.image.url }}" class="d-block w-100">
+        </div>
+      {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+{% endif %}

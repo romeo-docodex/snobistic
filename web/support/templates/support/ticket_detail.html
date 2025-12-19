@@ -1,17 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Detalii tichet #{{ ticket.pk }}{% endblock %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
 {% block content %}
-<h2>Tichet #{{ ticket.pk }} – {{ ticket.subject }}</h2>
-<p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
-<p><strong>Data deschiderii:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
-<p><strong>Descriere:</strong></p>
-<p>{{ ticket.description|linebreaksbr }}</p>
+<h1>#{{ ticket.id }} – {{ ticket.subject }}</h1>
+<p>
+  Status: <strong>{{ ticket.get_status_display }}</strong> |
+  Prioritate: <strong>{{ ticket.get_priority_display }}</strong> |
+  Categorie: <strong>{{ ticket.get_category_display }}</strong>
+</p>
 
-{% if ticket.attachment %}
-  <p><strong>Fișier atașat:</strong>
-    <a href="{{ ticket.attachment.url }}" target="_blank">Descarcă</a>
-  </p>
+{% if ticket.order %}
+  <div class="alert alert-light border mb-3">
+    <p class="mb-1">
+      <strong>Comandă legată:</strong>
+      <a href="{% url 'orders:order_detail' ticket.order.id %}">
+        #{{ ticket.order.id }}
+      </a>
+      – total {{ ticket.order.total }} RON
+    </p>
+    <p class="mb-0 text-muted">
+      Status plată: {{ ticket.order.payment_status_label }} |
+      Livrare: {{ ticket.order.get_shipping_status_display }} |
+      Escrow: {{ ticket.order.escrow_status_label }}
+    </p>
+  </div>
 {% endif %}
 
-<a href="{% url 'support:ticket_list' %}" class="btn btn-secondary">Înapoi</a>
+<hr>
+<div class="mb-4">
+  {% for msg in messages %}
+    {% include "support/partials/message_bubble.html" with message=msg %}
+  {% endfor %}
+</div>
+
+<h4>Răspunde:</h4>
+<form method="post">
+  {% csrf_token %}
+  {% include "support/partials/form_errors.html" with form=msg_form %}
+  {{ msg_form.as_p }}
+  <button class="btn btn-success">Trimite</button>
+</form>
+
+{% if user.is_staff or user.has_perm "support.change_ticket" %}
+  <hr>
+  <a class="btn btn-warning" href="{% url 'support:ticket_update' ticket.id %}">
+    Editează Ticket
+  </a>
+{% endif %}
+<a class="btn btn-outline-secondary mt-3" href="{% url 'support:tickets_list' %}">
+  Înapoi la solicitări
+</a>
 {% endblock %}

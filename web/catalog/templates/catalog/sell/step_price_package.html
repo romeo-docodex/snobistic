@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Preț & colet{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Stiluri pentru butoanele de mărime colet (Mic / Mediu / Mare) */
+  .package-toggle .package-btn {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left !important;
+  }
+
+  .package-toggle .package-btn.active {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  .package-toggle .package-btn .package-title {
+    font-weight: 600;
+    display: block;
+  }
+
+  .package-toggle .package-btn .package-desc {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    display: block;
+  }
+</style>
+
+
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <h4>Preț & mărime colet</h4>
+          <p class="small text-secondary mb-0">
+            Alege prețul de vânzare și mărimea aproximativă a coletului.
+          </p>
+        </div>
+
+        <div class="wrap">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {# === PREȚ === #}
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.price.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.price }}
+              {% for error in form.price.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted mt-1">
+                Preț minim acceptat: <strong>10 RON</strong>. Vei vedea mai jos cât primești după comision.
+              </div>
+            </div>
+
+            {# === MĂRIME COLET CA BUTOANE (Mic / Mediu / Mare) === #}
+            {% with current_package=form.package_size.value %}
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                Mărimea coletului <span class="text-danger">*</span>
+              </label>
+              <div class="small text-secondary mb-2">
+                Alege varianta care se potrivește cel mai bine modului în care vei împacheta produsul.
+              </div>
+
+              <div class="d-flex flex-column gap-2 package-toggle">
+                {# Mic – valoare S #}
+                <div>
+                  <input
+                    type="radio"
+                    id="{{ form.package_size.id_for_label }}_S"
+                    name="{{ form.package_size.html_name }}"
+                    value="S"
+                    class="d-none"
+                    {% if current_package == "S" or not current_package %}checked{% endif %}
+                  >
+                  <label
+                    for="{{ form.package_size.id_for_label }}_S"
+                    class="tf-btn w-100 package-btn {% if current_package == 'S' or not current_package %}active{% endif %}"
+                  >
+                    <span class="package-title">Mic</span>
+                    <span class="package-desc">
+                      Articole care încap într-un plic mare (tricouri, topuri ușoare).
+                    </span>
+                  </label>
+                </div>
+
+                {# Mediu – valoare M #}
+                <div>
+                  <input
+                    type="radio"
+                    id="{{ form.package_size.id_for_label }}_M"
+                    name="{{ form.package_size.html_name }}"
+                    value="M"
+                    class="d-none"
+                    {% if current_package == "M" %}checked{% endif %}
+                  >
+                  <label
+                    for="{{ form.package_size.id_for_label }}_M"
+                    class="tf-btn w-100 package-btn {% if current_package == 'M' %}active{% endif %}"
+                  >
+                    <span class="package-title">Mediu</span>
+                    <span class="package-desc">
+                      Articole care încap într-o cutie de pantofi (pantofi, blugi, pulovere groase).
+                    </span>
+                  </label>
+                </div>
+
+                {# Mare – valoare L #}
+                <div>
+                  <input
+                    type="radio"
+                    id="{{ form.package_size.id_for_label }}_L"
+                    name="{{ form.package_size.html_name }}"
+                    value="L"
+                    class="d-none"
+                    {% if current_package == "L" %}checked{% endif %}
+                  >
+                  <label
+                    for="{{ form.package_size.id_for_label }}_L"
+                    class="tf-btn w-100 package-btn {% if current_package == 'L' %}active{% endif %}"
+                  >
+                    <span class="package-title">Mare</span>
+                    <span class="package-desc">
+                      Articole voluminoase sau mai multe piese împreună (paltoane, geci, seturi).
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {% for error in form.package_size.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endwith %}
+          </form>
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">Ce înseamnă mărimea coletului?</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1"><strong>Mic</strong> – articole care ar încăpea într-un plic mare (tricouri, topuri ușoare).</li>
+          <li class="mb-1"><strong>Mediu</strong> – articole care ar încăpea într-o cutie de pantofi (pantofi, blugi, pulovere groase).</li>
+          <li class="mb-1"><strong>Mare</strong> – articole care ar încăpea într-o cutie de mutare (paltoane groase, mai multe piese la un loc).</li>
+        </ul>
+
+        <h6 class="mb_8">Previzualizare preț</h6>
+        <ul class="text-secondary small mb-3">
+          {% if price_preview %}
+            <li class="mb-1"><strong>Preț afișat cumpărătorului:</strong> {{ price_preview }} RON</li>
+          {% endif %}
+          {% if commission_percent %}
+            <li class="mb-1"><strong>Comision Snobistic:</strong> {{ commission_percent }}%</li>
+          {% endif %}
+          {% if net_for_seller %}
+            <li class="mb-1"><strong>Tu primești (per produs):</strong> {{ net_for_seller|floatformat:2 }} RON</li>
+          {% endif %}
+        </ul>
+
+        <div class="button-submit d-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+          <button class="tf-btn btn-outline"
+                  name="wizard_goto_step"
+                  value="{{ wizard.steps.prev }}"
+                  type="submit"
+                  form="wizardForm">
+            <span class="text">Înapoi</span>
+          </button>
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const inputs = document.querySelectorAll('input[name="{{ form.package_size.html_name }}"]');
+    const buttons = document.querySelectorAll('.package-toggle .package-btn');
+
+    if (!inputs.length || !buttons.length) {
+      return;
+    }
+
+    function syncActive() {
+      const checked = document.querySelector('input[name="{{ form.package_size.html_name }}"]:checked');
+      if (!checked) return;
+
+      buttons.forEach(function (btn) {
+        btn.classList.remove('active');
+      });
+
+      const label = document.querySelector('label[for="' + checked.id + '"]');
+      if (label) {
+        label.classList.add('active');
+      }
+    }
+
+    inputs.forEach(function (input) {
+      input.addEventListener('change', syncActive);
+    });
+
+    // stare inițială
+    syncActive();
+  });
+</script>
+
+{% endblock %}

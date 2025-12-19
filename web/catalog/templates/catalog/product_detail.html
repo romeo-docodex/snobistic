@@ -1,0 +1,797 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ product.title }} – Snobistic{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb-sec">
+  <div class="container">
+    <div class="breadcrumb-wrap">
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'catalog:product_list' %}">Home</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        {% if product.category.parent %}
+          <a class="breadcrumb-item" href="{{ product.category.parent.get_absolute_url }}">{{ product.category.parent.name }}</a>
+          <div class="breadcrumb-item dot"><span></span></div>
+        {% endif %}
+        <a class="breadcrumb-item" href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">{{ product.title }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Breadcrumb -->
+
+<!-- Product Main -->
+<section class="flat-single-product">
+  <div class="tf-main-product section-image-zoom">
+    <div class="container">
+      <div class="row">
+
+        <!-- Product Images -->
+        <div class="col-md-6">
+          <div class="tf-product-media-wrap sticky-top">
+            <div class="product-thumbs-slider">
+              <div class="flat-wrap-media-product">
+                <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
+                  <div class="swiper-wrapper">
+
+                    <!-- main image -->
+                    <div class="swiper-slide">
+                      <a href="{{ product.main_image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                        <img class="tf-image-zoom lazyload"
+                             data-zoom="{{ product.main_image.url }}"
+                             data-src="{{ product.main_image.url }}"
+                             src="{{ product.main_image.url }}"
+                             alt="{{ product.title }}">
+                      </a>
+                    </div>
+
+                    <!-- extra images -->
+                    {% for img in product.images.all %}
+                    <div class="swiper-slide">
+                      <a href="{{ img.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                        <img class="tf-image-zoom lazyload"
+                             data-zoom="{{ img.image.url }}"
+                             data-src="{{ img.image.url }}"
+                             src="{{ img.image.url }}"
+                             alt="{{ img.alt_text|default:product.title }}">
+                      </a>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="swiper-button-next nav-swiper thumbs-next"></div>
+                <div class="swiper-button-prev nav-swiper thumbs-prev"></div>
+              </div>
+
+              <div dir="ltr" class="swiper tf-product-media-thumbs other-image-zoom" data-preview="4" data-direction="vertical">
+                <div class="swiper-wrapper stagger-wrap">
+                  <!-- thumbs main -->
+                  <div class="swiper-slide stagger-item">
+                    <div class="item">
+                      <img class="lazyload" data-src="{{ product.main_image.url }}" src="{{ product.main_image.url }}" alt="{{ product.title }}">
+                    </div>
+                  </div>
+                  <!-- thumbs extras -->
+                  {% for img in product.images.all %}
+                  <div class="swiper-slide stagger-item">
+                    <div class="item">
+                      <img class="lazyload" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- /Product Images -->
+
+        <!-- Product Info -->
+        <div class="col-md-6">
+          <div class="tf-zoom-main"></div>
+          <div class="tf-product-info-wrap other-image-zoom">
+            <div class="tf-product-info-list">
+
+              <!-- Heading -->
+              <div class="tf-product-heading">
+                <div class="row align-items-start">
+                  <div class="col-12">
+                    {% if product.brand %}
+                      <span class="brand-product">{{ product.brand.name }}</span>
+                    {% endif %}
+
+                    <h5 class="product-name fw-medium">{{ product.title }}</h5>
+
+                    <div class="product-price mt-3">
+                      <div class="display-sm price-new price-on-sale">
+                        {{ product.price }} RON
+                      </div>
+                    </div>
+
+                    <div class="product-stock mt-1">
+                      {% if product.is_active and not product.is_archived %}
+                        <span class="stock in-stock">În stoc</span>
+                      {% else %}
+                        <span class="stock out-stock">Stoc epuizat</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Variants -->
+              <div class="tf-product-variant">
+
+                {% if product.colors.all %}
+                <div class="variant-picker-item variant-color">
+                  <div class="variant-picker-label">
+                    Culori:
+                    <span class="variant-picker-label-value value-currentColor">
+                      {% firstof product.colors.first.name "—" %}
+                    </span>
+                  </div>
+                  <div class="variant-picker-values">
+                    {% for c in product.colors.all %}
+                      <div class="hover-tooltip tooltip-bot color-btn {% if forloop.first %}active{% endif %}">
+                        <span class="check-color" style="background: {{ c.hex_code|default:'#eee' }};"></span>
+                        <span class="tooltip">{{ c.name }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <div class="variant-picker-item variant-size">
+                  <div class="variant-picker-label">
+                    <div>Mărime:
+                      <span class="variant-picker-label-value value-currentSize">{{ product.size }}</span>
+                    </div>
+                    <a href="#sizeGuide" data-bs-toggle="modal" class="size-guide link">Ghid mărimi</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SKU & Categories -->
+              <ul class="tf-product-cate-sku text-md tf-product-heading">
+                <li class="item-cate-sku">
+                  <span class="label">SKU:</span>
+                  <span class="value">{{ product.sku }}</span>
+                </li>
+                <li class="item-cate-sku">
+                  <span class="label">Categorie:</span>
+                  <span class="value">{{ product.category.name }}</span>
+                </li>
+                {% if product.brand %}
+                <li class="item-cate-sku">
+                  <span class="label">Brand:</span>
+                  <span class="value">{{ product.brand.name }}</span>
+                </li>
+                {% endif %}
+                <li class="item-cate-sku">
+                  <span class="label">Condiție:</span>
+                  <span class="value">{{ product.get_condition_display }}</span>
+                </li>
+              </ul>
+
+              <!-- Vândut de -->
+              <div class="product-seller d-flex flex-column gap-1 tf-product-heading">
+                <span class="text-sm text-main-4 py-3">Vândut de:</span>
+
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar-seller rounded-circle overflow-hidden">
+                    {% if product.owner.profile and product.owner.profile.avatar %}
+                      <img src="{{ product.owner.profile.avatar.url }}"
+                          alt="{{ product.owner.full_name }}"
+                          width="30" height="30" class="img-fluid">
+                    {% else %}
+                      <img src="{% static 'images/placeholders/avatar-default.png' %}"
+                          alt="{{ product.owner.full_name|default:product.owner.email }}"
+                          width="30" height="30"
+                          class="img-fluid">
+                    {% endif %}
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    {# Nume vânzător #}
+                    <span class="fw-medium text-md">
+                      {{ product.owner.full_name|default:product.owner.email }}
+                    </span>
+
+                    {# TRUST SELLER BADGE – la fel ca în navbar #}
+                    {% with sp=product.owner.sellerprofile %}
+                      {% if sp %}
+                        <span
+                          class="ms-1 has-tip"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          data-bs-title="Trust Seller {{ sp.seller_trust_score }}/100 ({{ sp.seller_trust_class }})"
+                          aria-label="Trust Seller {{ sp.seller_trust_score }}/100 ({{ sp.seller_trust_class }})"
+                          tabindex="0">
+
+                          {% if sp.seller_trust_class == 'A' %}
+                            <img src="{% static 'images/badge/trust_seller_a.png' %}"
+                                alt="Trust Seller A"
+                                class="badge-icon">
+                          {% elif sp.seller_trust_class == 'B' %}
+                            <img src="{% static 'images/badge/trust_seller_b.png' %}"
+                                alt="Trust Seller B"
+                                class="badge-icon">
+                          {% elif sp.seller_trust_class == 'C' %}
+                            <img src="{% static 'images/badge/trust_seller_c.png' %}"
+                                alt="Trust Seller C"
+                                class="badge-icon">
+                          {% else %}
+                            <img src="{% static 'images/badge/trust_seller_d.png' %}"
+                                alt="Trust Seller D"
+                                class="badge-icon">
+                          {% endif %}
+                        </span>
+                      {% endif %}
+                    {% endwith %}
+
+                    {# KYC BADGE – la fel ca în navbar, dar pentru owner #}
+                    {% with prof=product.owner.profile %}
+                      {% if prof.has_kyc_badge %}
+                        <span
+                          class="badge-icon badge-icon--kyc ms-1 has-tip"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          data-bs-title="KYC verificat"
+                          aria-label="KYC verificat"
+                          tabindex="0">
+                          <img src="{% static 'images/badge/kyc_verified.png' %}"
+                              alt="KYC Verified badge"
+                              loading="lazy">
+                        </span>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- ATC -->
+              <div class="tf-product-total-quantity">
+                <form class="w-100" method="post" action="{% url 'cart:add' product.pk %}">
+                  {% csrf_token %}
+                  <div class="group-btn">
+                    <button class="tf-btn btn-primary w-100 animate-btn btn-add-to-cart"
+                            type="submit"
+                            {% if not product.is_active or product.is_archived %}disabled{% endif %}>
+                      Adaugă în coș
+                    </button>
+                  </div>
+                </form>
+
+                {% if is_owner and can_start_auction %}
+                  <a href="{% url 'auctions:create_auction' product_slug=product.slug %}"
+                     class="tf-btn btn-outline-primary w-100 mt-3">
+                    Pornește licitație pentru acest produs
+                  </a>
+                {% endif %}
+
+                {% if has_auction and auction %}
+                  <a href="{% url 'auctions:auction_detail' auction.pk %}"
+                     class="tf-btn btn-outline-secondary w-100 mt-2">
+                    Vezi licitația activă
+                  </a>
+                {% endif %}
+              </div>
+
+              <!-- Extras -->
+              <div class="tf-product-extra-link m-auto">
+                <a href="{% url 'catalog:toggle_favorite' product.pk %}"
+                   class="product-extra-icon link btn-add-wishlist"
+                   data-toggle-fav>
+                  <i class="icon add icon-heart"></i><span class="add">Adaugă la favorite</span>
+                  <i class="icon added icon-trash"></i><span class="added">Șterge de la favorite</span>
+                </a>
+                <a href="#compare" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-compare2"></i>Compară</a>
+                <a href="#askQuestion" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-ask"></i>Întreabă</a>
+                <a href="#shareSocial" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-share"></i>Share</a>
+              </div>
+
+              <!-- Trust badges -->
+              <div class="tf-product-trust-seal text-center">
+                <ul class="list-card">
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Visa.png" alt="Visa"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard.png" alt="Mastercard"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Stripe.png" alt="Stripe"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/PayPal.png" alt="PayPal"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/ApplePay.png" alt="Apple Pay"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/GooglePay.png" alt="Google Pay"></li>
+                </ul>
+              </div>
+
+              <!-- Livrare & transport (dinamic) -->
+              <div class="tf-product-delivery-return">
+                <div class="product-delivery">
+                  <div class="icon icon-car2"></div>
+                  {% with days=product.get_shipping_days_estimate %}
+                    {% if days.0 %}
+                      <p class="text-md">
+                        Livrare estimată:
+                        <span class="fw-medium">{{ days.0 }}–{{ days.1 }} zile</span>
+                      </p>
+                    {% else %}
+                      <p class="text-md">
+                        Livrare estimată:
+                        <span class="fw-medium">1–3 zile</span>
+                      </p>
+                    {% endif %}
+                  {% endwith %}
+                </div>
+                <div class="product-delivery">
+                  <div class="icon icon-shipping3"></div>
+                  {% with price=product.get_shipping_price_estimate %}
+                    {% if price %}
+                      <p class="text-md">
+                        Transport de la <span class="fw-medium">{{ price }} RON</span>
+                      </p>
+                    {% else %}
+                      <p class="text-md">
+                        Transportul se calculează în pagina de checkout.
+                      </p>
+                    {% endif %}
+                  {% endwith %}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- /Product Info -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky ATC -->
+  <div class="tf-sticky-btn-atc">
+    <div class="container">
+      <div class="tf-height-observer w-100 d-flex align-items-center">
+        <div class="tf-sticky-atc-product d-flex align-items-center">
+          <div class="tf-sticky-atc-img">
+            <img class="lazyload"
+                 data-src="{{ product.main_image.url }}"
+                 src="{{ product.main_image.url }}"
+                 alt="{{ product.title }}">
+          </div>
+          <div class="tf-sticky-atc-title fw-5 d-xl-block d-none">
+            {{ product.title }}
+          </div>
+        </div>
+
+        <div class="tf-sticky-atc-infos">
+          <form method="post"
+                action="{% url 'cart:add' product.pk %}"
+                class="d-flex align-items-center justify-content-end gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="quantity" value="1">
+
+            <div class="tf-sticky-atc-variant-price text-center">
+              <p>
+                {% if product.brand %}{{ product.brand.name }} – {% endif %}
+                {{ product.size }} – {{ product.price }} RON
+              </p>
+            </div>
+
+            <div class="tf-sticky-atc-btns">
+              <button class="tf-btn btn-primary animate-btn btn-add-to-cart d-inline-flex justify-content-center"
+                      type="submit"
+                      {% if not product.is_active or product.is_archived %}disabled{% endif %}>
+                Adaugă în coș
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- /Sticky ATC -->
+
+</section>
+<!-- /Product Main -->
+
+<!-- Product Description -->
+<section class="flat-spacing pt-0">
+  <div class="container">
+
+    <!-- Descriptions -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#description" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="description" role="button">
+        <span>Descriere</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="description" class="collapse">
+        <div class="accordion-body widget-desc">
+          {% if product.description %}
+            <p class="item">{{ product.description|linebreaks }}</p>
+          {% endif %}
+
+          {% if product.compositions.all %}
+            <div class="item">
+              <p class="fw-medium title">Compoziție</p>
+              <ul>
+                {% for comp in product.compositions.all %}
+                  <li>{{ comp.material.name }} {{ comp.percent }}%</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% elif product.material %}
+            <div class="item">
+              <p class="fw-medium title">Material principal</p>
+              <ul><li>{{ product.material.name }}</li></ul>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#addInformation" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="addInformation" role="button">
+        <span>Informații suplimentare</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="addInformation" class="collapse">
+        <div class="accordion-body">
+          <table class="tb-info-product text-md">
+            <tbody>
+              {% if product.material or product.compositions.all %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Material</th>
+                <td class="tb-attr-value">
+                  {% if product.compositions.all %}
+                    <p>
+                      {% for comp in product.compositions.all %}
+                        {{ comp.material.name }} {{ comp.percent }}%{% if not forloop.last %}, {% endif %}
+                      {% endfor %}
+                    </p>
+                  {% else %}
+                    <p>{{ product.material.name }}</p>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endif %}
+
+              {% if product.colors.all %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Culoare</th>
+                <td class="tb-attr-value">
+                  <p>
+                    {% for c in product.colors.all %}
+                      {{ c.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {% if product.brand %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Brand</th>
+                <td class="tb-attr-value"><p>{{ product.brand.name }}</p></td>
+              </tr>
+              {% endif %}
+
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Mărime</th>
+                <td class="tb-attr-value"><p>{{ product.size }}</p></td>
+              </tr>
+
+              {% if product.fit %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Croi</th>
+                <td class="tb-attr-value"><p>{{ product.get_fit_display }}</p></td>
+              </tr>
+              {% endif %}
+
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Gen</th>
+                <td class="tb-attr-value"><p>{{ product.get_gender_display }}</p></td>
+              </tr>
+
+              {% with p=product %}
+              {% if p.shoulders or p.bust or p.waist or p.hips or p.length or p.sleeve or p.inseam or p.outseam or p.shoulders_cm or p.bust_cm or p.waist_cm or p.hips_cm or p.length_cm or p.sleeve_cm or p.inseam_cm or p.outseam_cm %}
+                <tr class="tb-attr-item">
+                  <th class="tb-attr-label">Măsuri</th>
+                  <td class="tb-attr-value">
+                    <p class="mb-0">
+                      {% if p.shoulders %}Umeri: {{ p.shoulders }}{% if p.shoulders_cm %} ({{ p.shoulders_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.bust %}Bust: {{ p.bust }}{% if p.bust_cm %} ({{ p.bust_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.waist %}Talie: {{ p.waist }}{% if p.waist_cm %} ({{ p.waist_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.hips %}Șold: {{ p.hips }}{% if p.hips_cm %} ({{ p.hips_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.length %}Lungime: {{ p.length }}{% if p.length_cm %} ({{ p.length_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.sleeve %}Mâneca: {{ p.sleeve }}{% if p.sleeve_cm %} ({{ p.sleeve_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.inseam %}Crac interior: {{ p.inseam }}{% if p.inseam_cm %} ({{ p.inseam_cm }} cm){% endif %}<br>{% endif %}
+                      {% if p.outseam %}Crac exterior: {{ p.outseam }}{% if p.outseam_cm %} ({{ p.outseam_cm }} cm){% endif %}{% endif %}
+                    </p>
+                  </td>
+                </tr>
+              {% endif %}
+              {% endwith %}
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seller Info (în loc de Reviews) -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#reviews" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="reviews" role="button">
+        <span>Informații vânzător</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="reviews" class="collapse">
+        <div class="accordion-body wd-customer-review">
+          <div class="review-heading">
+            <h6 class="title">Despre vânzător</h6>
+          </div>
+          <div class="seller-info">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="avatar-seller rounded-circle overflow-hidden">
+                {% if product.owner.profile and product.owner.profile.avatar %}
+                  <img src="{{ product.owner.profile.avatar.url }}"
+                       alt="{{ product.owner.full_name }}"
+                       width="60" height="60" class="img-fluid">
+                {% else %}
+                  <img src="{% static 'images/placeholders/avatar-default.png' %}"
+                       alt="{{ product.owner.full_name|default:product.owner.email }}"
+                       width="60" height="60" class="img-fluid">
+                {% endif %}
+              </div>
+              <div>
+                <div class="fw-medium text-md mb-1">
+                  {{ product.owner.full_name|default:product.owner.email }}
+                </div>
+                {% with sp=product.owner.sellerprofile %}
+                  {% if sp %}
+                    <div class="text-sm text-main-4 mb-1">
+                      {{ sp.get_seller_type_display }} · {{ sp.get_seller_level_display }}
+                      {% if sp.has_kyc_badge %}
+                        <span class="badge bg-success ms-1">KYC</span>
+                      {% endif %}
+                    </div>
+                    <div class="text-sm text-main-4">
+                      Trust score: {{ sp.seller_trust_score }}/100
+                      <span class="hover-tooltip"
+                            data-bs-toggle="tooltip"
+                            title="A = foarte de încredere, D = risc ridicat.">
+                        (Clasă {{ sp.seller_trust_class }})
+                        <span class="tooltip">Scor calculat automat din istoricul de vânzări.</span>
+                      </span>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+
+            {% with sp=product.owner.sellerprofile %}
+            <ul class="list-unstyled text-sm text-main-4 mb-0">
+              <li>
+                <strong>Membru din:</strong>
+                {{ product.owner.date_joined|date:"d.m.Y" }}
+              </li>
+              {% if sp and sp.default_location %}
+              <li>
+                <strong>Locație principală:</strong>
+                {{ sp.default_location.label|default:sp.default_location.code }}
+              </li>
+              {% endif %}
+              <li>
+                <strong>Anunțuri postate:</strong>
+                {{ product.owner.products.all|length }}
+              </li>
+            </ul>
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<!-- /Product Description -->
+
+<!-- People Also Bought -->
+{% if related_products %}
+<section>
+  <div class="container">
+    <div class="flat-title wow fadeInUp">
+      <h4 class="title">Au cumpărat și</h4>
+    </div>
+    <div class="fl-control-sw2 wrap-pos-nav sw-over-product wow fadeInUp">
+      <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+        "slidesPerView": 2,
+        "spaceBetween": 12,
+        "speed": 800,
+        "observer": true,
+        "observeParents": true,
+        "slidesPerGroup": 2,
+        "navigation": {
+          "clickable": true,
+          "nextEl": ".nav-next-bought",
+          "prevEl": ".nav-prev-bought"
+        },
+        "pagination": { "el": ".sw-pagination-bought", "clickable": true },
+        "breakpoints": {
+          "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
+          "1200": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 4}
+        }
+      }'>
+        <div class="swiper-wrapper">
+          {% for p in related_products %}
+          <div class="swiper-slide">
+            <div class="card-product style-2 card-product-size">
+              <div class="card-product-wrapper">
+                <a href="{{ p.get_absolute_url }}" class="product-img">
+                  <img class="img-product lazyload" data-src="{{ p.main_image.url }}" src="{{ p.main_image.url }}" alt="{{ p.title }}">
+                  <img class="img-hover lazyload" data-src="{{ p.main_image.url }}" src="{{ p.main_image.url }}" alt="{{ p.title }}">
+                </a>
+                <ul class="list-product-btn">
+                  <li>
+                    <form method="post" action="{% url 'cart:add' p.pk %}">{% csrf_token %}
+                      <button class="box-icon hover-tooltip" type="submit">
+                        <span class="icon icon-cart2"></span><span class="tooltip">Adaugă</span>
+                      </button>
+                    </form>
+                  </li>
+                  <li class="wishlist">
+                    <a href="{% url 'catalog:toggle_favorite' p.pk %}" class="box-icon hover-tooltip" data-toggle-fav>
+                      <span class="icon icon-heart2"></span><span class="tooltip">Favorite</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ p.get_absolute_url }}" class="box-icon quickview hover-tooltip">
+                      <span class="icon icon-view"></span><span class="tooltip">Detalii</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div class="card-product-info">
+                <a href="{{ p.get_absolute_url }}" class="name-product link fw-medium text-md">{{ p.title }}</a>
+                <p class="price-wrap fw-medium">
+                  <span class="price-new">{{ p.price }} RON</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex d-xl-none sw-dot-default sw-pagination-bought justify-content-center"></div>
+      </div>
+      <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-bought"></div>
+      <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-bought"></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+<!-- /People Also Bought -->
+
+<!-- Recently Viewed -->
+{% if recently_viewed %}
+<section class="flat-spacing">
+  <div class="container">
+    <div class="flat-title wow fadeInUp">
+      <h4 class="title">Văzute recent</h4>
+    </div>
+    <div class="fl-control-sw2 wrap-pos-nav sw-over-product wow fadeInUp">
+      <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+        "slidesPerView": 2,
+        "spaceBetween": 12,
+        "speed": 800,
+        "observer": true,
+        "observeParents": true,
+        "slidesPerGroup": 2,
+        "navigation": {
+          "clickable": true,
+          "nextEl": ".nav-next-viewed",
+          "prevEl": ".nav-prev-viewed"
+        },
+        "pagination": { "el": ".sw-pagination-viewed", "clickable": true },
+        "breakpoints": {
+          "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
+          "1200": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 4}
+        }
+      }'>
+        <div class="swiper-wrapper">
+          {% for p in recently_viewed %}
+          <div class="swiper-slide">
+            <div class="card-product style-2 card-product-size">
+              <div class="card-product-wrapper">
+                <a href="{{ p.get_absolute_url }}" class="product-img">
+                  <img class="img-product lazyload" data-src="{{ p.main_image.url }}" src="{{ p.main_image.url }}" alt="{{ p.title }}">
+                  <img class="img-hover lazyload" data-src="{{ p.main_image.url }}" src="{{ p.main_image.url }}" alt="{{ p.title }}">
+                </a>
+                <ul class="list-product-btn">
+                  <li>
+                    <form method="post" action="{% url 'cart:add' p.pk %}">{% csrf_token %}
+                      <button class="box-icon hover-tooltip" type="submit">
+                        <span class="icon icon-cart2"></span><span class="tooltip">Adaugă</span>
+                      </button>
+                    </form>
+                  </li>
+                  <li class="wishlist">
+                    <a href="{% url 'catalog:toggle_favorite' p.pk %}" class="box-icon hover-tooltip" data-toggle-fav>
+                      <span class="icon icon-heart2"></span><span class="tooltip">Favorite</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{{ p.get_absolute_url }}" class="box-icon quickview hover-tooltip">
+                      <span class="icon icon-view"></span><span class="tooltip">Detalii</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div class="card-product-info">
+                <a href="{{ p.get_absolute_url }}" class="name-product link fw-medium text-md">{{ p.title }}</a>
+                <p class="price-wrap fw-medium">
+                  <span class="price-new">{{ p.price }} RON</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex d-xl-none sw-dot-default sw-pagination-viewed justify-content-center"></div>
+      </div>
+      <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-viewed"></div>
+      <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-viewed"></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+<!-- /Recently Viewed -->
+
+<!-- === INIT SWIPER PENTRU GALLERY === -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Swiper === 'undefined') {
+      console.warn('Swiper JS nu este încărcat.');
+      return;
+    }
+
+    // Thumbs
+    var thumbsSwiper = new Swiper('.tf-product-media-thumbs', {
+      spaceBetween: 8,
+      slidesPerView: 4,
+      direction: 'vertical',
+      watchSlidesProgress: true,
+      watchSlidesVisibility: true,
+      freeMode: true,
+      breakpoints: {
+        0: {
+          direction: 'horizontal'
+        },
+        768: {
+          direction: 'vertical'
+        }
+      }
+    });
+
+    // Main gallery
+    var mainSwiper = new Swiper('#gallery-swiper-started', {
+      spaceBetween: 10,
+      navigation: {
+        nextEl: '.thumbs-next',
+        prevEl: '.thumbs-prev',
+      },
+      thumbs: {
+        swiper: thumbsSwiper
+      }
+    });
+  });
+</script>
+<!-- /INIT SWIPER -->
+
+{% endblock %}

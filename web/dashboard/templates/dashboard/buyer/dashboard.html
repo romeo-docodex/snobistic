@@ -1,0 +1,68 @@
+{# templates/dashboard/buyer/dashboard.html #}
+{% extends "base.html" %}
+
+{% block title %}Dashboard Cumpărător – Snobistic{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">
+    Bine ai revenit, {{ request.user.first_name }}!
+  </h1>
+
+  <div class="row g-4 mb-4">
+    <!-- Card: Comenzi plasate -->
+    <div class="col-sm-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ orders_count }}</h2>
+          <p class="mb-3">Comenzile mele</p>
+          <a href="{% url 'dashboard:orders_list' %}" class="btn btn-primary btn-sm">
+            Vezi toate comenzile
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Favorite -->
+    <div class="col-sm-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ favorites_count }}</h2>
+          <p class="mb-3">Articole favorite</p>
+          <p class="small text-muted mb-0">
+            Poți salva produsele preferate în wishlist pentru mai târziu.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Dimensiuni -->
+    <div class="col-sm-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body text-center">
+          <h2 class="display-6">
+            {% if has_dimensions %}✔{% else %}✖{% endif %}
+          </h2>
+          <p class="mb-3">Dimensiuni salvate</p>
+          <p class="small text-muted mb-0">
+            {% if has_dimensions %}
+              Ai dimensiunile salvate în profil. Vânzătorii pot oferi potriviri mai bune.
+            {% else %}
+              Nu ai completat încă dimensiunile. Actualizează-ți profilul pentru recomandări mai bune.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'dashboard:orders_list' %}" class="btn btn-outline-primary">
+      Vezi comenzile
+    </a>
+    <a href="{% url 'dashboard:chat_quick' %}" class="btn btn-outline-secondary">
+      Mesaje recente
+    </a>
+  </div>
+</div>
+{% endblock %}

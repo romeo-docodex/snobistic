@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Plată eșuată – Snobistic{% endblock %}
+
+{% block content %}
+  <div class="text-center my-5">
+    <h1>Plata nu a fost procesată</h1>
+    <p>Dacă a apărut o eroare, încearcă din nou sau contactează suportul nostru.</p>
+    <a href="{% url 'cart:checkout' %}" class="btn btn-primary">Reîncearcă plata</a>
+    <a href="{% url 'cart:cart' %}" class="btn btn-link">Revino la Coș</a>
+  </div>
+{% endblock %}

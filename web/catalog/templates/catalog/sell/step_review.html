@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Confirmare{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <h4>Confirmă listarea</h4>
+          <p class="small text-secondary mb-0">
+            Verifică informațiile produsului înainte să îl publici. Le vei putea edita și după listare.
+          </p>
+        </div>
+
+        <div class="wrap">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          {% with td=review.title_desc cb=review.category_brand sd=review.size_details pp=review.price_package %}
+          <div class="mb-4">
+            <h6 class="mb-2">Produs</h6>
+            <p class="small mb-1">
+              <strong>{{ td.title }}</strong>
+            </p>
+            <p class="small text-muted mb-1">
+              {% if cb.gender == "F" %}Femei{% elif cb.gender == "M" %}Bărbați{% endif %}
+              •
+              {% if cb.subcategory %}
+                {{ cb.subcategory }}
+              {% elif cb.category %}
+                {{ cb.category }}
+              {% endif %}
+            </p>
+            <p class="small text-muted mb-0">
+              Brand:
+              {% if cb.brand %}
+                {{ cb.brand }}
+              {% elif cb.brand_other %}
+                {{ cb.brand_other }}
+              {% else %}
+                —
+              {% endif %}
+            </p>
+          </div>
+
+          <div class="mb-4">
+            <h6 class="mb-2">Mărime & stare</h6>
+            <p class="small text-muted mb-1">
+              Mărime:
+              {% if sd.size_other_label %}
+                {{ sd.size }} ({{ sd.size_other_label }})
+              {% else %}
+                {{ sd.size }}
+              {% endif %}
+            </p>
+            <p class="small text-muted mb-1">
+              Stare:
+              {% if sd.condition == "NEW_TAG" %}
+                Nou cu etichetă
+              {% elif sd.condition == "NEW_NO_TAG" %}
+                Nou fără etichetă
+              {% elif sd.condition == "VERY_GOOD" %}
+                Stare foarte bună
+              {% elif sd.condition == "GOOD" %}
+                Stare bună
+              {% else %}
+                —
+              {% endif %}
+            </p>
+            {% if sd.condition_notes %}
+              <p class="small text-muted mb-0">
+                Detalii stare: {{ sd.condition_notes }}
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <h6 class="mb-2">Material & culori</h6>
+            <p class="small text-muted mb-1">
+              Material:
+              {% if sd.material %}
+                {{ sd.material }}
+              {% else %}
+                —
+              {% endif %}
+            </p>
+            <p class="small text-muted mb-0">
+              Culori:
+              {% if sd.colors %}
+                {% for c in sd.colors %}
+                  {{ c.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              {% else %}
+                —
+              {% endif %}
+            </p>
+          </div>
+
+          <div class="mb-4">
+            <h6 class="mb-2">Sustenabilitate</h6>
+            {% if sd.sustainability_none %}
+              <p class="small text-muted mb-0">
+                Nici una dintre opțiunile de sustenabilitate nu se aplică acestui produs.
+              </p>
+            {% elif sd.sustainability_tags %}
+              <p class="small text-muted mb-0">
+                Etichete sustenabilitate:
+                {% for tag in sd.sustainability_tags %}
+                  {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+            {% else %}
+              <p class="small text-muted mb-0">Nu ai selectat încă nicio opțiune de sustenabilitate.</p>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <h6 class="mb-2">Preț & colet</h6>
+            <p class="small text-muted mb-1">
+              Preț: {{ pp.price }} RON
+              • Cantitate: {{ pp.quantity }}
+            </p>
+            <p class="small text-muted mb-0">
+              Colet:
+              {% if pp.package_size == "S" %}
+                Mic – plic mare
+              {% elif pp.package_size == "M" %}
+                Mediu – cutie de pantofi
+              {% elif pp.package_size == "L" %}
+                Mare – cutie de mutare
+              {% else %}
+                Nespecificat
+              {% endif %}
+            </p>
+          </div>
+          {% endwith %}
+
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            <div class="mb-3">
+              <div class="form-check">
+                {{ form.confirm }}
+                <label class="form-check-label ms-1">
+                  {{ form.confirm.label }}
+                </label>
+              </div>
+              {% for error in form.confirm.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">După publicare</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1">Poți edita produsul din <strong>Articolele mele</strong>.</li>
+          <li class="mb-1">Îl poți dezactiva temporar dacă nu mai este disponibil.</li>
+          <li class="mb-1">Vei vedea clar cât încasezi după comision pentru fiecare vânzare.</li>
+        </ul>
+
+        <div class="button-submit d-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+          <button class="tf-btn btn-outline"
+                  name="wizard_goto_step"
+                  value="{{ wizard.steps.prev }}"
+                  type="submit"
+                  form="wizardForm">
+            <span class="text">Înapoi</span>
+          </button>
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">
+              {% if editing %}Salvează modificările{% else %}Publică produsul{% endif %}
+            </span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+{% endblock %}

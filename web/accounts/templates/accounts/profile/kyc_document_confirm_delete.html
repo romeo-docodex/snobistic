@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Ștergere document KYC – Snobistic{% endblock %}
+
+{% block content %}
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Ștergere document KYC</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'accounts:kyc_center' %}">KYC</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Confirmare ștergere</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="main-content-account">
+      <div class="my-acount-content account-dashboard">
+
+        <div class="row justify-content-center">
+          <div class="col-lg-7 col-md-9">
+            <div class="p-3 p-md-4 rounded-4 border bg-body">
+              <h6 class="display-xs title-form mb-3">Ești sigur că vrei să ștergi acest document?</h6>
+
+              <div class="mb-3 text-xs">
+                <p class="mb-1">
+                  <span class="text-muted">Tip document:</span><br>
+                  <strong>{{ document.get_document_type_display }}</strong>
+                </p>
+                <p class="mb-1">
+                  <span class="text-muted">Status curent:</span><br>
+                  <strong>{{ document.get_status_display }}</strong>
+                </p>
+                <p class="mb-0 text-muted text-2xs">
+                  Documentul a fost încărcat la {{ document.created_at|date:"d.m.Y H:i" }}.
+                </p>
+              </div>
+
+              <div class="alert alert-warning text-xs mb-3" role="alert">
+                Odată șters, acest document nu mai poate fi recuperat.
+                Dacă este necesar pentru verificare, va trebui să îl încarci din nou.
+              </div>
+
+              <form method="post" class="d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" class="tf-btn animate-btn flex-grow-1">
+                  Da, șterge documentul
+                </button>
+                <a href="{% url 'accounts:kyc_center' %}"
+                   class="btn btn-outline-secondary flex-grow-1">
+                  Anulează
+                </a>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div> {# /.my-acount-content #}
+    </div> {# /.main-content-account #}
+  </div>
+</div>
+
+{% endblock %}

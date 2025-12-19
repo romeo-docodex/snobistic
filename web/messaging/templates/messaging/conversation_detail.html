@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Conversatie{% endblock %}
+{% block content %}
+<a href="{% url 'messaging:conversation_list' %}" class="btn btn-link">&larr; Înapoi la Mesaje</a>
+<h2 class="mb-3">
+  Conversație cu
+  {% for user in conversation.participants.all %}
+    {% if user != request.user %}{{ user.get_full_name|default:user.email }}{% endif %}
+  {% endfor %}
+</h2>
+<div class="border rounded p-3 mb-3" style="height:400px; overflow-y:auto;">
+  {% for msg in messages %}
+    {% include "messaging/partials/message_bubble.html" with msg=msg %}
+  {% endfor %}
+</div>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="mb-2">
+    {{ form.text }}
+    {% if form.attachment %}
+      {{ form.attachment }}
+    {% endif %}
+  </div>
+  <button class="btn btn-primary">Trimite</button>
+</form>
+{% endblock %}

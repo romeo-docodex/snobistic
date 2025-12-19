@@ -1,7 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Despre – Snobistic{% endblock %}
+{% block title %}Despre Snobistic – Marketplace de fashion autentic{% endblock %}
+
+{% block meta_description %}
+Află povestea Snobistic: marketplace de fashion autentic, cu verificare produse, scor de seriozitate și protecție pentru cumpărători și vânzători.
+{% endblock %}
+
 {% block content %}
-<h1>Despre Snobistic</h1>
-<p>Snobistic este platforma de top pentru achiziții și licitații de modă. Misiunea noastră este ...</p>
-<!-- Adaugă aici conținut relevant: echipă, valori, istoric -->
+  <h1 class="mb-4">Despre Snobistic</h1>
+
+  <p>Snobistic este platforma unde luxul întâlnește pasiunea pentru modă autentică. Ne dedicăm să aducem în fața cumpărătorilor cele mai exclusive piese – de la articole noi, outlet sau vintage “pre-loved”.</p>
+
+  <h2>Misiunea noastră</h2>
+  <ul>
+    <li>Garantăm autenticitatea fiecărui produs prin certificate digitale.</li>
+    <li>Oferim un mediu sigur pentru cumpărători și vânzători.</li>
+    <li>Susținem sustenabilitatea prin pre-loved & circular fashion.</li>
+  </ul>
+
+  <h2>Echipa</h2>
+  <p>Suntem o echipă de entuziaști fashion, tehnologie și logistică, uniți de dorința de a oferi cea mai bună experiență premium online.</p>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
 {% endblock %}

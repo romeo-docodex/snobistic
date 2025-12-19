@@ -1,78 +1,330 @@
 {% extends "base.html" %}
-{% load tz %}
-{% block title %}Licitație – {{ auction.product.name }}{% endblock %}
+{% load static %}
+{% block title %}{{ auction.product.title }} – Licitație{% endblock %}
+
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'auctions:auction_list' %}">Licitații</a></li>
-    <li class="breadcrumb-item active">{{ auction.product.name }}</li>
-  </ol>
-</nav>
-
-<div class="row">
-  <div class="col-md-6">
-    {% if auction.product.images.exists %}
-      <img src="{{ auction.product.images.first.image.url }}" class="img-fluid" alt="{{ auction.product.name }}">
-    {% endif %}
-    <p class="mt-2"><strong>Start:</strong> {{ auction.start_time|date:"d.m.Y H:i" }}</p>
-    <p><strong>Încheiere:</strong> {{ auction.end_time|date:"d.m.Y H:i" }}</p>
-    <p><strong>Timp rămas:</strong> <span id="countdown"></span></p>
-  </div>
-  <div class="col-md-6">
-    <h3>{{ auction.product.name }}</h3>
-    <p class="h4 text-primary">{{ auction.highest_bid.amount if auction.highest_bid else auction.starting_price }} RON</p>
-    <p>{{ auction.product.description|linebreaks }}</p>
-
-    {% if can_bid %}
-      <a href="{% url 'auctions:place_bid' auction.product.slug %}" class="btn btn-success mb-3">Plasează ofertă</a>
-    {% else %}
-      <button class="btn btn-secondary mb-3" disabled>Licitație închisă</button>
-    {% endif %}
-
-    {% if user.is_staff %}
-      <a href="{% url 'auctions:close_auction' auction.product.slug %}" class="btn btn-danger">Închide manual</a>
-    {% endif %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-sec">
+  <div class="container">
+    <div class="breadcrumb-wrap">
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'auctions:auction_list' %}">Licitații</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        {% if auction.product.category.parent %}
+          <a class="breadcrumb-item" href="{{ auction.product.category.parent.get_absolute_url }}">{{ auction.product.category.parent.name }}</a>
+          <div class="breadcrumb-item dot"><span></span></div>
+        {% endif %}
+        <a class="breadcrumb-item" href="{{ auction.product.category.get_absolute_url }}">{{ auction.product.category.name }}</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">{{ auction.product.title }}</div>
+      </div>
+      <div class="breadcrumb-prev-next">
+        <a href="{% url 'auctions:auction_list' %}" class="breadcrumb-back"><i class="icon icon-shop"></i></a>
+      </div>
+    </div>
   </div>
 </div>
 
-<hr>
-<h4>Istoric evenimente</h4>
-<ul class="list-group">
-  {% for ev in history %}
-    <li class="list-group-item">
-      {{ ev.created_at|localtime|date:"d.m.Y H:i" }} – {{ ev.event }}
-      {% if ev.user %} (<em>{{ ev.user.email }}</em>){% endif %}
-    </li>
-  {% empty %}
-    <li class="list-group-item text-muted">Fără evenimente</li>
-  {% endfor %}
-</ul>
+<!-- Main -->
+<section class="flat-single-product">
+  <div class="tf-main-product section-image-zoom">
+    <div class="container">
+      <div class="row">
 
-<hr>
-<h4>Ofertă nouă</h4>
-<form method="post" action="{% url 'auctions:place_bid' auction.product.slug %}">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-primary" {% if not can_bid %}disabled{% endif %}>Trimite ofertă</button>
-</form>
+        <!-- Media -->
+        <div class="col-md-6">
+          <div class="tf-product-media-wrap sticky-top">
+            <div class="product-thumbs-slider">
+              <div class="flat-wrap-media-product">
+                <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
+                  <div class="swiper-wrapper">
+                    {% with cover=auction.images.first %}
+                      <div class="swiper-slide">
+                        <a href="{{ cover.image.url|default:auction.product.main_image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                          <img class="tf-image-zoom lazyload"
+                               data-zoom="{{ cover.image.url|default:auction.product.main_image.url }}"
+                               data-src="{{ cover.image.url|default:auction.product.main_image.url }}"
+                               src="{{ cover.image.url|default:auction.product.main_image.url }}"
+                               alt="{{ auction.product.title }}">
+                        </a>
+                      </div>
+                    {% endwith %}
+                    {% for img in auction.images.all %}
+                      <div class="swiper-slide">
+                        <a href="{{ img.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                          <img class="tf-image-zoom lazyload" data-zoom="{{ img.image.url }}" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ auction.product.title }}">
+                        </a>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="swiper-button-next nav-swiper thumbs-next"></div>
+                <div class="swiper-button-prev nav-swiper thumbs-prev"></div>
+              </div>
 
-<script>
-  // Countdown JS
-  const endTime = new Date("{{ auction.end_time|date:'Y-m-d H:i:s' }}").getTime();
-  const cdElem = document.getElementById('countdown');
-  const x = setInterval(function() {
-    const now = new Date().getTime();
-    const diff = endTime - now;
-    if (diff < 0) {
-      clearInterval(x);
-      cdElem.innerText = '00:00:00';
-    } else {
-      const h = String(Math.floor(diff/(1000*60*60))).padStart(2,'0');
-      const m = String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
-      const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-      cdElem.innerText = `${h}:${m}:${s}`;
-    }
-  },1000);
-</script>
+              <div dir="ltr" class="swiper tf-product-media-thumbs other-image-zoom" data-preview="4" data-direction="vertical">
+                <div class="swiper-wrapper stagger-wrap">
+                  {% with cover=auction.images.first %}
+                    <div class="swiper-slide stagger-item">
+                      <div class="item">
+                        <img class="lazyload" data-src="{{ cover.image.url|default:auction.product.main_image.url }}" src="{{ cover.image.url|default:auction.product.main_image.url }}" alt="{{ auction.product.title }}">
+                      </div>
+                    </div>
+                  {% endwith %}
+                  {% for img in auction.images.all %}
+                    <div class="swiper-slide stagger-item">
+                      <div class="item">
+                        <img class="lazyload" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ auction.product.title }}">
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- /Media -->
+
+        <!-- Info -->
+        <div class="col-md-6">
+          <div class="tf-zoom-main"></div>
+          <div class="tf-product-info-wrap other-image-zoom">
+            <div class="tf-product-info-list">
+
+              <div class="tf-product-heading">
+                {% if auction.product.brand %}
+                  <span class="brand-product">{{ auction.product.brand.name }}</span>
+                {% endif %}
+                <h5 class="product-name fw-medium">{{ auction.product.title }}</h5>
+
+                <div class="product-price">
+                  <div class="display-sm price-new">{{ auction.current_price }} RON</div>
+                  {% if auction.start_price and auction.current_price != auction.start_price %}
+                    <div class="display-sm price-old">{{ auction.start_price }} RON</div>
+                  {% endif %}
+                  {% if auction.min_price %}
+                    <span class="badge-sale">Rezervă: {{ auction.min_price }} RON</span>
+                  {% endif %}
+                </div>
+
+                <div class="product-stock">
+                  {% if auction.is_active %}
+                    <span class="stock in-stock">Licitație activă</span>
+                    <span class="text-dark ms-2">Se încheie în: {{ auction.end_time|timeuntil }}</span>
+                  {% else %}
+                    <span class="stock out-stock">Încheiată</span>
+                    <span class="text-dark ms-2">Acum {{ auction.end_time|timesince }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="product-progress-sale">
+                  <div class="title-hurry-up">
+                    <span class="text-primary fw-medium">OFERTĂ</span>
+                    {{ auction.bids.count }} {% if auction.bids.count == 1 %}ofertă{% else %}oferte{% endif %} plasate
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attributes -->
+              <div class="tf-product-variant">
+                {% if auction.size %}
+                  <div class="variant-picker-item variant-size">
+                    <div class="variant-picker-label">
+                      <div>Mărime:<span class="variant-picker-label-value value-currentSize">{{ auction.size }}</span></div>
+                      <a href="#sizeGuide" data-bs-toggle="modal" class="size-guide link">Ghid mărimi</a>
+                    </div>
+                    <div class="variant-picker-values">
+                      <span class="size-btn active">{{ auction.size }}</span>
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if auction.materials.all %}
+                  <div class="variant-picker-item">
+                    <div class="variant-picker-label">Materiale:</div>
+                    <div class="variant-picker-values d-flex flex-wrap gap-2">
+                      {% for m in auction.materials.all %}
+                        <span class="badge bg-light text-dark border">{{ m.name }}</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Bid box -->
+              <div class="tf-product-total-quantity">
+                {% if auction.is_active %}
+                  {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'auctions:place_bid' auction.pk %}" class="group-btn">
+                      {% csrf_token %}
+                      <div class="w-100">
+                        {% if bid_form.non_field_errors %}<div class="text-danger small mb-1">{{ bid_form.non_field_errors }}</div>{% endif %}
+                        <label class="form-label mb-1">{{ bid_form.amount.label|default:"Sumă ofertă" }}</label>
+                        <div class="d-flex gap-2 align-items-start">
+                          {{ bid_form.amount }}
+                          <button type="submit" class="tf-btn btn-primary animate-btn">Plasează oferta</button>
+                        </div>
+                        {% if bid_form.amount.errors %}<div class="text-danger small mt-1">{{ bid_form.amount.errors|join:", " }}</div>{% endif %}
+                        <div class="text-sm text-main-4 mt-1">Minim: {{ auction.current_price }} RON</div>
+                      </div>
+                    </form>
+                  {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="tf-btn btn-primary w-100 animate-btn">
+                      Autentifică-te pentru a licita
+                    </a>
+                  {% endif %}
+                {% else %}
+                  <div class="alert alert-secondary">Licitația este încheiată.</div>
+                {% endif %}
+
+                {% if user.is_authenticated and user == auction.creator and auction.is_active %}
+                  <a href="{% url 'auctions:close_auction' auction.product.slug %}" class="tf-btn btn-dark2 w-100 mt-2">Închide licitația</a>
+                {% endif %}
+              </div>
+
+              <!-- Meta -->
+              <ul class="tf-product-cate-sku text-md">
+                <li class="item-cate-sku"><span class="label">SKU:</span><span class="value">{{ auction.product.sku }}</span></li>
+                <li class="item-cate-sku"><span class="label">Categorie:</span><span class="value">{{ auction.product.category.name }}</span></li>
+                <li class="item-cate-sku"><span class="label">Condiție:</span><span class="value">{{ auction.product.get_condition_display }}</span></li>
+              </ul>
+
+              <!-- Trust -->
+              <div class="tf-product-trust-seal text-center">
+                <p class="text-md text-dark-2 text-seal fw-medium">Plată sigură:</p>
+                <ul class="list-card">
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Visa.png" alt="Visa"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard.png" alt="Mastercard"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Stripe.png" alt="Stripe"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/PayPal.png" alt="PayPal"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/ApplePay.png" alt="Apple Pay"></li>
+                  <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/GooglePay.png" alt="Google Pay"></li>
+                </ul>
+              </div>
+
+              <div class="tf-product-delivery-return">
+                <div class="product-delivery">
+                  <div class="icon icon-car2"></div>
+                  <p class="text-md">Livrare estimată: <span class="fw-medium">1–3 zile</span></p>
+                </div>
+                <div class="product-delivery">
+                  <div class="icon icon-shipping3"></div>
+                  <p class="text-md">Transport gratuit la <span class="fw-medium">comenzi &gt; 700 RON</span></p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- /Info -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky bid bar -->
+  <div class="tf-sticky-btn-atc">
+    <div class="container">
+      <div class="tf-height-observer w-100 d-flex align-items-center">
+        <div class="tf-sticky-atc-product d-flex align-items-center">
+          <div class="tf-sticky-atc-img">
+            <img class="lazyload"
+                 data-src="{{ auction.images.first.image.url|default:auction.product.main_image.url }}"
+                 src="{{ auction.images.first.image.url|default:auction.product.main_image.url }}"
+                 alt="{{ auction.product.title }}">
+          </div>
+          <div class="tf-sticky-atc-title fw-5 d-xl-block d-none">{{ auction.product.title }}</div>
+        </div>
+        <div class="tf-sticky-atc-infos">
+          {% if auction.is_active %}
+            <form method="post" action="{% url 'auctions:place_bid' auction.pk %}">
+              {% csrf_token %}
+              <div class="tf-sticky-atc-variant-price text-center tf-select">
+                <select disabled>
+                  <option selected>Preț curent: {{ auction.current_price }} RON — Se încheie în {{ auction.end_time|timeuntil }}</option>
+                </select>
+              </div>
+              <div class="tf-sticky-atc-btns">
+                <div class="tf-product-info-quantity">
+                  <!-- dummy to keep spacing consistent -->
+                  <div class="wg-quantity invisible">
+                    <button class="btn-quantity minus-btn" type="button">-</button>
+                    <input class="quantity-product font-4" type="text" value="1">
+                    <button class="btn-quantity plus-btn" type="button">+</button>
+                  </div>
+                </div>
+                {{ bid_form.amount }}
+                <button class="tf-btn animate-btn d-inline-flex justify-content-center" type="submit">Plasează oferta</button>
+              </div>
+            </form>
+          {% else %}
+            <div class="text-sm">Licitația este încheiată.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Description / Bids -->
+<section class="flat-spacing pt-0">
+  <div class="container">
+
+    <!-- Descriere -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#description" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="description" role="button">
+        <span>Descriere</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="description" class="collapse">
+        <div class="accordion-body widget-desc">
+          {% if auction.description %}
+            <p class="item">{{ auction.description|linebreaks }}</p>
+          {% elif auction.product.description %}
+            <p class="item">{{ auction.product.description|linebreaks }}</p>
+          {% endif %}
+
+          {% if auction.dimensions %}
+            <div class="item">
+              <p class="fw-medium title">Măsuri</p>
+              <ul>
+                {% for k,v in auction.dimensions.items %}
+                  <li>{{ k }}: {{ v }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Oferte recente -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#bids" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="bids" role="button">
+        <span>Oferte recente</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="bids" class="collapse">
+        <div class="accordion-body">
+          {% if auction.bids.all %}
+            <ul class="list-unstyled">
+              {% for b in auction.bids.all|slice:":10" %}
+                <li class="py-2 d-flex justify-content-between border-bottom">
+                  <span>{{ b.user }}</span>
+                  <span><strong>{{ b.amount }} RON</strong> · <small class="text-muted">{{ b.placed_at|timesince }} în urmă</small></span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">Încă nu există oferte. Fii primul!</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
 {% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Retururi – Snobistic{% endblock %}
+
+{% block content %}
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Retururi</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        {% if is_seller %}
+          <a class="breadcrumb-item" href="{% url 'dashboard:seller_dashboard' %}">Panou Vânzător</a>
+        {% else %}
+          <div class="breadcrumb-item current">Cont</div>
+        {% endif %}
+        <div class="breadcrumb-item current">Retururi</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <!-- sidebar-account (mobil) -->
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      <!-- Sidebar desktop -->
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'orders:order_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Comenzile mele
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'catalog:favorites' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Favorite
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:address_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Adrese
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_data' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Date personale
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_dimensions' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Măsurători
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:profile_security' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Securitate
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:logout' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Deloghează-te
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Content -->
+      <div class="my-acount-content account-address">
+        <h6 class="title-account">
+          {% if is_seller %}
+            Retururi pentru produsele mele
+          {% else %}
+            Cererile mele de retur
+          {% endif %}
+        </h6>
+
+        <div class="widget-inner-address">
+          <div class="account-address-item">
+            {% if returns %}
+              <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-xs text-uppercase text-muted">ID</th>
+                      <th class="text-xs text-uppercase text-muted">Comandă</th>
+                      {% if is_seller %}
+                        <th class="text-xs text-uppercase text-muted">Cumpărător</th>
+                      {% endif %}
+                      <th class="text-xs text-uppercase text-muted">Data</th>
+                      <th class="text-xs text-uppercase text-muted">Status</th>
+                      <th class="text-xs text-uppercase text-muted">Motiv</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for rr in returns %}
+                      <tr>
+                        <td class="text-sm fw-medium">#{{ rr.id }}</td>
+                        <td class="text-sm">
+                          <a href="{% url 'orders:order_detail' rr.order.id %}"
+                             class="link text-sm fw-medium">
+                            #{{ rr.order.id }}
+                          </a>
+                          <div class="text-xxs text-grey">
+                            Total comandă: {{ rr.order.total }} RON
+                          </div>
+                        </td>
+                        {% if is_seller %}
+                          <td class="text-sm">
+                            {{ rr.buyer.full_name|default:rr.buyer.email }}
+                          </td>
+                        {% endif %}
+                        <td class="text-sm">
+                          {{ rr.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="text-sm">
+                          {% if rr.status == 'approved' %}
+                            <span class="badge bg-success text-xxs">Aprobat</span>
+                          {% elif rr.status == 'rejected' %}
+                            <span class="badge bg-danger text-xxs">Respins</span>
+                          {% else %}
+                            <span class="badge bg-secondary text-xxs">În așteptare</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-sm">
+                          {{ rr.reason|truncatechars:80 }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4">
+                <p class="text-md mb-1">
+                  Nu există cereri de retur.
+                </p>
+                <p class="text-xxs text-grey mb-3">
+                  Retururile inițiate vor apărea aici, împreună cu statusul lor.
+                </p>
+                <a href="{% url 'orders:order_list' %}" class="tf-btn btn-out-line-dark-2">
+                  Vezi comenzi
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div><!-- /my-acount-content -->
+    </div><!-- /main-content-account -->
+  </div>
+</div>
+{% endblock %}

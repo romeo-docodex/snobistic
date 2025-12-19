@@ -1,0 +1,5 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Mai ai <strong>{{ days_left }} zile</strong> pentru a solicita returul comenzii #{{ order.id }}.</p>
+<p><a href="{{ return_request_url }}">Solicită retur acum</a></p>
+{% include "emails/partials/footer.html" %}

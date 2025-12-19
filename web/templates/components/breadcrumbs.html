@@ -1,0 +1,14 @@
+{# templates/components/breadcrumbs.html #}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% for label, url in crumbs %}
+      {% if url %}
+        <li class="breadcrumb-item">
+          <a href="{% url url %}">{{ label }}</a>
+        </li>
+      {% else %}
+        <li class="breadcrumb-item active" aria-current="page">{{ label }}</li>
+      {% endif %}
+    {% endfor %}
+  </ol>
+</nav>

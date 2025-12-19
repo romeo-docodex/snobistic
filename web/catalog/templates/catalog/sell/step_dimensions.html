@@ -1,0 +1,82 @@
+{# templates/catalog/sell/step_dimensions.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Adaugă produs — Dimensiuni{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-2">
+            Pasul 5 din 8
+          </div>
+          <h4>Dimensiunile articolului</h4>
+          {% if form.measurement_profile %}
+            <p class="mt-2 text-muted">
+              Completează dimensiunile relevante pentru tipul de produs selectat.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="right">
+        <form method="post">
+          {% csrf_token %}
+          {{ wizard.management_form }}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="row">
+            {% for field in form %}
+              {# HiddenInput-urile vor fi randate ca <input type="hidden">, fără label #}
+              {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                  </label>
+                  {{ field }}
+                  {% if field.errors %}
+                    <div class="invalid-feedback d-block">
+                      {{ field.errors|striptags }}
+                    </div>
+                  {% endif %}
+                  {% if field.help_text %}
+                    <small class="form-text text-muted">
+                      {{ field.help_text }}
+                    </small>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button name="wizard_goto_step"
+                    value="{{ wizard.steps.prev }}"
+                    class="btn btn-outline-secondary">
+              Înapoi
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Continuă
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

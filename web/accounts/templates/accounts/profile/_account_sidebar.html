@@ -1,0 +1,103 @@
+{# templates/accounts/profile/_account_sidebar.html #}
+
+{% with account_section|default:"dashboard" as account_section %}
+<div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+  <ul class="my-account-nav">
+
+    {# Dashboard #}
+    <li>
+      <a href="{% url 'accounts:profile' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dashboard' %}active{% endif %}">
+        Dashboard
+      </a>
+    </li>
+
+    {# Comenzi #}
+    <li>
+      <a href="{% url 'orders:order_list' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
+        Comenzile mele
+      </a>
+    </li>
+
+    {# Favorite #}
+    <li>
+      <a href="{% url 'catalog:favorites' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'favorites' %}active{% endif %}">
+        Favorite
+      </a>
+    </li>
+
+    {# Adrese #}
+    <li>
+      <a href="{% url 'accounts:address_list' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'addresses' %}active{% endif %}">
+        Adrese
+      </a>
+    </li>
+
+    {# Date personale #}
+    <li>
+      <a href="{% url 'accounts:profile_data' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'profile_data' %}active{% endif %}">
+        Date personale
+      </a>
+    </li>
+
+    {# Măsurători #}
+    <li>
+      <a href="{% url 'accounts:profile_dimensions' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dimensions' %}active{% endif %}">
+        Măsurători
+      </a>
+    </li>
+
+    {# Securitate & 2FA #}
+    <li>
+      <a href="{% url 'accounts:profile_security' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'security' %}active{% endif %}">
+        Securitate & 2FA
+      </a>
+    </li>
+
+    {# KYC #}
+    <li>
+      <a href="{% url 'accounts:kyc_center' %}"
+         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'kyc' %}active{% endif %}">
+        Verificare identitate (KYC)
+      </a>
+    </li>
+
+    {# Secțiune vânzător #}
+    {% if request.user.is_seller %}
+      <li class="border-top">
+        <span class="text-xxs text-uppercase text-muted d-block mb-1">
+          Vânzător
+        </span>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:seller_dashboard' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_dashboard' %}active{% endif %}">
+          Panou vânzător
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'accounts:seller_settings' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_settings' %}active{% endif %}">
+          Setări vânzător
+        </a>
+      </li>
+    {% endif %}
+
+    {# Delogare #}
+    <li class="border-top">
+      <a href="{% url 'accounts:logout' %}"
+         class="text-sm link fw-medium my-account-nav-item">
+        Deloghează-te
+      </a>
+    </li>
+  </ul>
+</div>
+{% endwith %}

@@ -1,0 +1,22 @@
+{# messaging/templates/messaging/partials/conversation_row.html #}
+<li class="list-group-item">
+  <a href="{% url 'messaging:conversation_detail' conv.pk %}"
+     class="d-flex justify-content-between text-decoration-none align-items-center">
+    <span>
+      {% for u in conv.participants.all %}
+        {% if u != request.user %}
+          {{ u.full_name|default:u.email }}
+        {% endif %}
+      {% endfor %}
+      <br>
+      <small class="text-muted">
+        {{ conv.last_updated|timesince }} în urmă
+      </small>
+    </span>
+    {% with unread=conv.messages.exclude(sender=request.user).count %}
+      {% if unread %}
+        <span class="badge bg-primary">{{ unread }}</span>
+      {% endif %}
+    {% endwith %}
+  </a>
+</li>

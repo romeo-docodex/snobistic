@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Măsurători – Snobistic{% endblock %}
+
+{% block content %}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Măsurătorile mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {% include "accounts/profile/_account_sidebar.html" with account_section="dimensions" %}
+
+      <div class="my-acount-content account-dashboard">
+
+        <!-- Intro + badge status -->
+        <div class="mb-4">
+          <h6 class="display-xs title-form mb-2">Profil de mărimi & recomandări</h6>
+
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 p-3 p-md-4 rounded-4 border bg-light">
+            <div class="me-md-4">
+              <p class="text-sm mb-1 fw-medium">
+                Completează-ți dimensiunile astfel încât să vezi haine care ți se potrivesc mai bine.
+              </p>
+              <p class="text-xs text-muted mb-0">
+                Folosim aceste măsurători pentru recomandări de mărime și filtrare mai precisă în catalog.
+              </p>
+            </div>
+            <div class="text-md-end">
+              {% if dimensions_complete %}
+                <span class="badge rounded-pill px-3 py-2 bg-success text-white text-xs fw-semibold">
+                  Profil mărimi: complet
+                </span>
+                <p class="text-2xs text-muted mt-1 mb-0">
+                  Poți reveni oricând să actualizezi măsurătorile dacă se schimbă.
+                </p>
+              {% else %}
+                <span class="badge rounded-pill px-3 py-2 bg-warning text-dark text-xs fw-semibold">
+                  Profil mărimi: incomplet
+                </span>
+                <p class="text-2xs text-muted mt-1 mb-0">
+                  Completează câmpurile principale (înălțime, umeri, bust, talie, șold, lungime, crac interior)
+                  pentru recomandări mai bune.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <form method="post" class="form-edit-account" novalidate>
+              {% csrf_token %}
+
+              <h6 class="display-xs title-form mb-3">Măsurătorile mele</h6>
+
+              <p class="text-xs text-muted mb-4">
+                Recomandare: măsoară-te în centimetri, în lenjerie sau haine subțiri. Greutatea este opțională,
+                dar ajută la estimarea tiparului și a recomandărilor de mărime.
+              </p>
+
+              <!-- Date generale -->
+              <div class="mb-4">
+                <p class="text-sm fw-medium mb-2">Date generale</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    {{ form.height_cm|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.weight_kg|as_crispy_field }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Partea superioară a corpului -->
+              <div class="mb-4">
+                <p class="text-sm fw-medium mb-2">Partea superioară</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    {{ form.shoulders|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.bust|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.waist|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.sleeve|as_crispy_field }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Partea inferioară a corpului -->
+              <div class="mb-4">
+                <p class="text-sm fw-medium mb-2">Partea inferioară</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    {{ form.hips|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.length|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.inseam|as_crispy_field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ form.outseam|as_crispy_field }}
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="tf-btn animate-btn">
+                Salvează
+              </button>
+            </form>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-sm fw-medium mb-2">Cum să te măsori corect</p>
+              <p class="text-xs text-muted mb-3">
+                Folosește un centimetru de croitorie, stai drept lângă un perete și roagă pe cineva de încredere
+                să te ajute pentru cele mai precise măsurători.
+              </p>
+
+              <ul class="list-unstyled text-xs text-muted mb-3">
+                <li class="mb-1">• Umeri: dintr-un capăt al umărului în celălalt, pe spate.</li>
+                <li class="mb-1">• Bust: în jurul pieptului, prin punctul cel mai proeminent.</li>
+                <li class="mb-1">• Talie: în cea mai îngustă parte a trunchiului.</li>
+                <li class="mb-1">• Șold: în zona cea mai lată a șoldurilor.</li>
+                <li class="mb-1">• Crac interior: de la zona inghinală până la gleznă.</li>
+              </ul>
+
+              <div class="text-center">
+                <img src="{% static 'images/account/measurements-guide.svg' %}"
+                     alt="Ghid măsurători corp"
+                     class="img-fluid mb-2">
+                <a href="#" class="link text-xs">
+                  Vezi ghidul complet de măsurare
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- /.my-acount-content -->
+    </div>
+  </div>
+</div>
+{% endblock %}

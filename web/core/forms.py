@@ -1,21 +1,47 @@
 from django import forms
+from .models import ContactMessage
 
-class ContactForm(forms.Form):
-    name = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nume'}),
-        label="Nume"
+
+class ContactForm(forms.ModelForm):
+    # honeypot simplu – câmp ascuns, trebuie să rămână gol
+    honeypot = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput
     )
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
-        label="Email"
+
+    # consimțământ GDPR
+    consent = forms.BooleanField(
+        required=True,
+        label="Sunt de acord ca datele mele să fie prelucrate pentru a primi un răspuns la mesaj."
     )
-    subject = forms.CharField(
-        max_length=150,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Subiect'}),
-        label="Subiect"
-    )
-    message = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Mesajul tău'}),
-        label="Mesaj"
-    )
+
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'subject', 'message', 'consent', 'honeypot']
+
+        labels = {
+            'name': 'Nume',
+            'email': 'Email',
+            'subject': 'Subiect',
+            'message': 'Mesaj',
+        }
+
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Numele tău',
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ex: nume@exemplu.com',
+            }),
+            'subject': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Subiectul mesajului',
+            }),
+            'message': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Scrie mesajul tău aici...',
+            }),
+        }

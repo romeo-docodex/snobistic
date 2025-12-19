@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Activare cont – Snobistic{% endblock %}
+
+{# Ascundem header/footer ca la login/register #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+
+    {# Logo centrat deasupra conținutului #}
+    <div class="container text-center my-4 pb-5">
+      <a href="{% url 'core:home' %}">
+        <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" style="height:56px;width:auto;">
+      </a>
+    </div>
+
+    <div class="login-wrap">
+
+      {# ==== LEFT: mesaj principal + buton acțiune ==== #}
+      <div class="left">
+        <div class="heading">
+          <h4 class="mb_8">Activare cont</h4>
+        </div>
+
+        <div class="wrap">
+          {% if success %}
+            <div class="alert alert-success mb-3">
+              Contul tău a fost activat cu succes. Te poți autentifica în siguranță.
+            </div>
+
+            <p class="text-secondary small mb-4">
+              Autentificarea îți permite să urmărești comenzile, să salvezi produse la favorite
+              și să participi la licitații pe Snobistic.
+            </p>
+
+            <a href="{% url 'accounts:login' %}" class="tf-btn btn-fill w-100 mb-2">
+              <span class="text text-button">Autentifică-te în cont</span>
+            </a>
+
+            <a href="{% url 'core:home' %}" class="font-2 text-button link d-inline-block mt-2">
+              &larr; Înapoi la pagina principală
+            </a>
+          {% else %}
+            <div class="alert alert-danger mb-3">
+              Linkul de activare este invalid sau a expirat.
+            </div>
+
+            <p class="text-secondary small mb-4">
+              Se poate întâmpla dacă ai folosit un link mai vechi sau dacă ai dat deja click pe el.
+              Poți cere un nou email de activare și să încerci din nou.
+            </p>
+
+            <a href="{% url 'accounts:registration_email_sent' %}" class="tf-btn btn-fill w-100 mb-2">
+              <span class="text text-button">Cere retrimiterea emailului de activare</span>
+            </a>
+
+            <a href="{% url 'accounts:login' %}" class="font-2 text-button link d-inline-block mt-2">
+              &larr; Înapoi la autentificare
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ==== RIGHT: context / informații suplimentare ==== #}
+      <div class="right">
+        {% if success %}
+          <h4 class="mb_8">Contul tău este gata 🎉</h4>
+          <p class="text-secondary">
+            Acum îți poți personaliza profilul, adăuga adrese de livrare și începe să explorezi
+            produsele listate pe Snobistic.
+          </p>
+          <ul class="text-secondary mb-3">
+            <li>Adaugă produse la favorite pentru a le găsi rapid.</li>
+            <li>Plasează comenzi în siguranță prin sistemul nostru de checkout.</li>
+            <li>Participă la licitații pentru piese rare sau colecționabile.</li>
+          </ul>
+          <p class="text-secondary small">
+            Oricând ai nevoie de ajutor, ne poți contacta prin pagina de suport sau contact.
+          </p>
+        {% else %}
+          <h4 class="mb_8">De ce nu merge linkul?</h4>
+          <p class="text-secondary">
+            Linkurile de activare au o valabilitate limitată și pot fi folosite o singură dată.
+            Dacă ai deschis deja linkul sau a trecut prea mult timp, acesta poate expira.
+          </p>
+          <ul class="text-secondary mb-3">
+            <li>Verifică dacă nu ai un email mai nou de activare în inbox.</li>
+            <li>Asigură-te că ai copiat corect linkul din email (dacă l-ai deschis în browser).</li>
+            <li>Folosește butonul din stânga pentru a cere un nou email de activare.</li>
+          </ul>
+          <p class="text-secondary small">
+            Dacă problema persistă, scrie-ne prin pagina de contact și vom verifica manual situația contului tău.
+          </p>
+        {% endif %}
+      </div>
+
+    </div> {# /login-wrap #}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ invoice.invoice_number }} – {{ platform_name }}</title>
+  <style>
+    /* Layout simplu A4 pentru WeasyPrint */
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      color: #111827;
+    }
+
+    h1, h2, h3, h4, h5 {
+      margin: 0;
+      padding: 0;
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #111827;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .text-muted {
+      color: #6b7280;
+    }
+
+    .small {
+      font-size: 11px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .parties {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .party {
+      flex: 1;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .row-3 {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      margin-bottom: 20px;
+    }
+
+    .row-3 > div {
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      text-align: left;
+      font-size: 11px;
+      background: #f9fafb;
+    }
+
+    td.text-right, th.text-right {
+      text-align: right;
+    }
+
+    .totals-row {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="invoice-header">
+    <div class="brand-block">
+      <div class="brand-logo">SN</div>
+      <div>
+        <div class="small text-muted">Factura</div>
+        <h1 style="font-size: 18px; margin-top: 2px;">
+          #{{ invoice.invoice_number }}
+        </h1>
+        <div class="small text-muted mt-8">
+          Comanda #{{ order.id }}
+          ·
+          {% if order.order_type == 'auction_win' %}
+            Licitație
+          {% else %}
+            Magazin
+          {% endif %}
+          · {{ invoice.get_invoice_type_display }}
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: right;">
+      <div class="small text-muted">Total</div>
+      <div style="font-size: 18px; font-weight: 600;">
+        {{ invoice.total_amount }} {{ invoice.currency }}
+      </div>
+      <div class="small text-muted mt-8">
+        Emisă la {{ invoice.issued_at|date:"Y-m-d" }} {{ invoice.issued_at|date:"H:i" }}
+      </div>
+      <div class="small text-muted mt-8">
+        Status: {{ invoice.get_status_display }}
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBTITLE / TIP FACTURĂ -->
+  <div class="small text-muted" style="margin-bottom: 16px;">
+    {% if invoice.invoice_type == 'product' %}
+      Factură pentru valoarea produselor din comanda #{{ order.id }}.
+    {% elif invoice.invoice_type == 'shipping' %}
+      Factură pentru costul de transport al comenzii #{{ order.id }}.
+    {% elif invoice.invoice_type == 'commission' %}
+      Factură de comision emisă de platforma {{ platform_name }} către vânzător.
+    {% elif invoice.invoice_type == 'return' %}
+      Factură aferentă unui retur (diferențe / regularizări) pentru comanda #{{ order.id }}.
+    {% endif %}
+  </div>
+
+  <!-- PARTIES -->
+  <div class="parties">
+    <div class="party">
+      <div class="section-title">Cumpărător</div>
+      <div style="font-weight: 600;">
+        {{ invoice.buyer.get_full_name|default:invoice.buyer.email }}
+      </div>
+      <div class="small text-muted">
+        {{ invoice.buyer.email }}
+      </div>
+      {# aici ulterior poți injecta adresă / CNP / firmă din profil #}
+    </div>
+
+    <div class="party">
+      <div class="section-title">Vânzător / Emitent</div>
+      {% if invoice.seller %}
+        <div style="font-weight: 600;">
+          {{ invoice.seller.get_full_name|default:invoice.seller.email }}
+        </div>
+        <div class="small text-muted">
+          {{ invoice.seller.email }}
+        </div>
+        <div class="small text-muted mt-8">
+          Factură emisă în numele vânzătorului.
+        </div>
+      {% else %}
+        <div style="font-weight: 600;">
+          {{ platform_name }} Platform
+        </div>
+        <div class="small text-muted">
+          CUI: {{ company_vat }}
+        </div>
+        <div class="small text-muted mt-8">
+          Factură pentru servicii de comision &amp; intermediere.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ORDER INFO -->
+  <div class="row-3">
+    <div>
+      <div class="section-title">Comandă</div>
+      <div style="font-weight: 600;">#{{ order.id }}</div>
+      <div class="small text-muted">
+        {{ order.created_at|date:"Y-m-d H:i" }}
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Plată</div>
+      <div style="font-weight: 600;">
+        {{ order.payment_status_label }}
+      </div>
+      {% if order.latest_payment %}
+        <div class="small text-muted">
+          {{ order.latest_payment.get_provider_display }}
+          · P#{{ order.latest_payment.id }}
+        </div>
+      {% endif %}
+    </div>
+    <div>
+      <div class="section-title">Escrow</div>
+      <div style="font-weight: 600;">
+        {{ order.escrow_status_label }}
+      </div>
+    </div>
+  </div>
+
+  <!-- SUME -->
+  <div class="mt-16">
+    <div class="section-title">Detalii sumă</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Descriere</th>
+          <th class="text-right" style="width: 150px;">Valoare</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            {% if invoice.invoice_type == 'product' %}
+              Valoare produse din comanda #{{ order.id }}
+            {% elif invoice.invoice_type == 'shipping' %}
+              Cost de transport pentru comanda #{{ order.id }}
+            {% elif invoice.invoice_type == 'commission' %}
+              Comision platformă {{ platform_name }} aferent comenzii #{{ order.id }}
+            {% elif invoice.invoice_type == 'return' %}
+              Regularizare / retur aferent comenzii #{{ order.id }}
+            {% else %}
+              Bază impozabilă
+            {% endif %}
+          </td>
+          <td class="text-right">
+            {{ invoice.net_amount }} {{ invoice.currency }}
+          </td>
+        </tr>
+        <tr>
+          <td>TVA ({{ invoice.vat_percent }}%)</td>
+          <td class="text-right">
+            {{ invoice.vat_amount }} {{ invoice.currency }}
+          </td>
+        </tr>
+        <tr class="totals-row">
+          <td>Total de plată</td>
+          <td class="text-right">
+            {{ invoice.total_amount }} {{ invoice.currency }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FOOTNOTE -->
+  <div class="small text-muted mt-16">
+    Document generat automat din platforma {{ platform_name }}.
+    Lipsa semnăturii și a ștampilei nu afectează valabilitatea facturii.
+  </div>
+
+</body>
+</html>

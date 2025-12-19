@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Confirmare plată{% endblock %}
+{% block content %}
+<h1>Procesăm plata…</h1>
+<p>Te rugăm să aștepți, redirecționăm către procesatorul de plăți.</p>
+<div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
+<script>
+  setTimeout(function(){
+    window.location.href = "{{ payment_gateway_url }}";
+  }, 2000);
+</script>
+{% endblock %}

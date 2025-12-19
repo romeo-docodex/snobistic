@@ -1,10 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Plată reușită{% endblock %}
+
+{% block title %}Plată reușită – Comanda #{{ order.id }}{% endblock %}
+
 {% block content %}
-<div class="text-center">
-  <h2 class="text-success">Plată efectuată cu succes!</h2>
-  <p>Referință plată: <code>{{ payment.processor_payment_id }}</code></p>
-  <p>Sumă: <strong>{{ payment.amount }} EUR</strong></p>
-  <a href="{% url 'orders:order_detail' payment.order.id %}" class="btn btn-primary">Vezi detalii comandă</a>
-</div>
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
+
+        <div class="card shadow-sm border-success">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="me-3">
+                <span class="badge bg-success rounded-pill me-2">
+                  ✓
+                </span>
+              </div>
+              <div>
+                <h1 class="h4 mb-0">Plata a fost procesată cu succes</h1>
+                <p class="text-muted mb-0">
+                  Comanda #{{ order.id }} – total {{ order.total }} {{ order.payments.first.currency|default:"RON" }}
+                </p>
+              </div>
+            </div>
+
+            <hr>
+
+            <dl class="row mb-3">
+              <dt class="col-sm-4">Status comandă</dt>
+              <dd class="col-sm-8">
+                {{ order.payment_status_label }}
+                <span class="text-muted">(escrow: {{ order.escrow_status_label }})</span>
+              </dd>
+
+              {% if payment %}
+                <dt class="col-sm-4">Metodă plată</dt>
+                <dd class="col-sm-8">
+                  {{ payment.get_provider_display }}
+                  {% if payment.provider == "stripe" %}
+                    <span class="badge bg-light text-dark ms-1">Stripe</span>
+                  {% elif payment.provider == "wallet" %}
+                    <span class="badge bg-light text-dark ms-1">Wallet</span>
+                  {% endif %}
+                </dd>
+
+                <dt class="col-sm-4">ID payment</dt>
+                <dd class="col-sm-8">
+                  #{{ payment.id }}
+                  {% if payment.stripe_payment_intent_id %}
+                    <small class="text-muted d-block">
+                      PI: {{ payment.stripe_payment_intent_id }}
+                    </small>
+                  {% endif %}
+                </dd>
+              {% endif %}
+            </dl>
+
+            <p class="mb-3">
+              Vei primi un email cu detaliile comenzii și link pentru a urmări livrarea
+              imediat ce vânzătorul generează AWB-ul.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{% url 'dashboard:orders_list' %}" class="btn btn-primary">
+                Vezi comenzile mele
+              </a>
+              <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">
+                Înapoi la magazin
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}

@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Date personale – Snobistic{% endblock %}
+
+{% block content %}
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Date personale</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Contul meu</div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /Title Page -->
+
+<!-- Main Content -->
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <!-- sidebar-account -->
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+    <!-- /sidebar-account -->
+
+    <!-- Account -->
+    <div class="main-content-account">
+      <!-- Sidebar desktop -->
+      {% include "accounts/profile/_account_sidebar.html" with account_section="profile_data" %}
+
+      <div class="my-acount-content account-dashboard">
+
+        {# === AVATAR + FORM DATE PERSONALE / FACTURARE === #}
+        <div class="row g-4">
+
+          <!-- Col avatar -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body text-center">
+                <div class="mb-3">
+                  <div class="avatar-seller rounded-circle overflow-hidden mx-auto"
+                       style="width: 96px; height: 96px;">
+                    <img src="{{ request.user.profile.avatar_url }}"
+                         alt="{{ request.user.get_full_name|default:request.user.email }}"
+                         class="img-fluid w-100 h-100"
+                         style="object-fit: cover;">
+                  </div>
+                </div>
+                <p class="text-sm text-muted mb-1">
+                  Aceasta este poza ta de profil.
+                </p>
+                <p class="text-xs text-muted mb-0">
+                  Va fi afișată în zona de cont și lângă produsele listate ca vânzător.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col form date personale -->
+          <div class="col-lg-8">
+            <form method="post"
+                  enctype="multipart/form-data"
+                  class="form-edit-account"
+                  novalidate>
+              {% csrf_token %}
+              {{ form.non_field_errors }}
+
+              <h6 class="display-xs title-form mb-1">Date personale & facturare</h6>
+              <p class="text-sm text-muted mb-3">
+                Aceste date vor apărea pe facturile emise în numele tău.
+              </p>
+
+              <div class="form-name">
+                {# Nume + Prenume #}
+                <div class="tf-field style-2 style-3">
+                  {{ form.first_name.label_tag }}
+                  {{ form.first_name }}
+                </div>
+                <div class="tf-field style-2 style-3">
+                  {{ form.last_name.label_tag }}
+                  {{ form.last_name }}
+                </div>
+
+                {# Email doar afișat, nu editabil #}
+                <div class="tf-field style-2 style-3">
+                  <label class="form-label">Email</label>
+                  <input type="email"
+                         class="form-control"
+                         value="{{ request.user.email }}"
+                         disabled>
+                  <p class="text-xs text-muted mb-0 mt-1">
+                    Pentru schimbarea adresei de email, contactează echipa de suport.
+                  </p>
+                </div>
+
+                {# Telefon #}
+                <div class="tf-field style-2 style-3">
+                  {{ form.phone.label_tag }}
+                  {{ form.phone }}
+                </div>
+
+                {# Data nașterii #}
+                <div class="tf-field style-2 style-3">
+                  {{ form.date_of_birth.label_tag }}
+                  {{ form.date_of_birth }}
+                </div>
+
+                {# Tip persoană: PF / PJ #}
+                <div class="tf-field style-2 style-3">
+                  <label class="form-label d-block">Tip persoană</label>
+                  <div class="form-check form-switch d-flex align-items-center gap-2">
+                    {{ form.is_company }}
+                    <label class="form-check-label" for="{{ form.is_company.id_for_label }}">
+                      Persoană juridică (PJ)
+                    </label>
+                  </div>
+                  <p class="text-xs text-muted mb-0 mt-1">
+                    Debifează pentru persoană fizică (PF). Dacă ești PJ, completează și câmpurile de firmă.
+                  </p>
+                </div>
+
+                {# === Detalii firmă (doar dacă ești PJ, dar câmpurile sunt opționale) === #}
+                <h6 class="display-xs mt-3">Detalii firmă</h6>
+
+                <div class="tf-field style-2 style-3">
+                  {{ form.company_name.label_tag }}
+                  {{ form.company_name }}
+                </div>
+
+                <div class="tf-field style-2 style-3">
+                  {{ form.company_address.label_tag }}
+                  {{ form.company_address }}
+                </div>
+
+                <div class="tf-field style-2 style-3">
+                  {{ form.company_vat.label_tag }}
+                  {{ form.company_vat }}
+                  <p class="text-xs text-muted mb-0 mt-1">
+                    Pentru persoane juridice, vom folosi acest CUI în documentele fiscale.
+                  </p>
+                </div>
+
+                <div class="tf-field style-2 style-3">
+                  <label class="form-label d-block">
+                    {{ form.vat_payer.label }}
+                  </label>
+                  <div class="form-check form-switch d-flex align-items-center gap-2">
+                    {{ form.vat_payer }}
+                    <label class="form-check-label" for="{{ form.vat_payer.id_for_label }}">
+                      Firma este plătitoare de TVA
+                    </label>
+                  </div>
+                  <p class="text-xs text-muted mb-0 mt-1">
+                    Bifează dacă firma ta este înregistrată ca plătitoare de TVA.
+                  </p>
+                </div>
+
+                {# IBAN – din SellerProfile, dacă ești vânzător #}
+                <div class="tf-field style-2 style-3">
+                  {{ form.iban.label_tag }}
+                  {{ form.iban }}
+                  <p class="text-xs text-muted mb-0 mt-1">
+                    IBAN folosit pentru plăți către tine ca vânzător (dacă ai cont de vânzător activ).
+                  </p>
+                </div>
+
+                {# Avatar upload #}
+                <div class="tf-field style-2 style-3">
+                  {{ form.avatar.label_tag }}
+                  {{ form.avatar }}
+                </div>
+              </div>
+
+              <button type="submit" class="tf-btn animate-btn mt-2">
+                Salvează schimbările
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        {# === PREFERINȚE DE COMUNICARE (formular separat) === #}
+        <h6 class="display-xs title-form">Preferințe de comunicare</h6>
+        <form method="post" class="form-edit-account" novalidate>
+          {% csrf_token %}
+
+          <div class="pref-list">
+
+            <!-- Newsletter -->
+            <div class="pref-row">
+              <div class="pref-toggle">
+                {{ prefs_form.newsletter }}
+                <label
+                  for="{{ prefs_form.newsletter.id_for_label }}"
+                  class="tf-btn btn-out-line-dark text-start pref-btn">
+                  Primește newsletter
+                </label>
+              </div>
+              <p class="text-sm text-muted mb-0">
+                Îți trimitem noutăți, lansări și articole editoriale (1–2 pe săptămână).
+              </p>
+            </div>
+
+            <!-- Marketing -->
+            <div class="pref-row">
+              <div class="pref-toggle">
+                {{ prefs_form.marketing }}
+                <label
+                  for="{{ prefs_form.marketing.id_for_label }}"
+                  class="tf-btn btn-out-line-dark text-start pref-btn">
+                  Marketing & oferte
+                </label>
+              </div>
+              <p class="text-sm text-muted mb-0">
+                Discounturi personalizate, campanii și recomandări pe email.
+              </p>
+            </div>
+
+            <!-- SMS -->
+            <div class="pref-row">
+              <div class="pref-toggle">
+                {{ prefs_form.sms_notifications }}
+                <label
+                  for="{{ prefs_form.sms_notifications.id_for_label }}"
+                  class="tf-btn btn-out-line-dark text-start pref-btn">
+                  Notificări SMS
+                </label>
+              </div>
+              <p class="text-sm text-muted mb-0">
+                SMS doar pentru alerte importante (ex: livrare, starea comenzii).
+              </p>
+            </div>
+
+          </div>
+
+          <button type="submit" name="save_prefs" class="tf-btn btn-out-line-dark mt-3">
+            Salvează preferințele
+          </button>
+        </form>
+      </div>
+    </div>
+    <!-- /Account -->
+  </div>
+</div>
+<!-- /Main Content -->
+
+<style>
+  /* ascunde checkbox-urile, păstrăm doar butoanele (label-urile) */
+  .pref-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
+  .pref-list { display: flex; flex-direction: column; gap: 14px; }
+  .pref-row { display: flex; flex-direction: column; gap: 6px; }
+  .pref-btn { display: block; }
+</style>
+
+<script>
+  // Syncronizare UI pentru preferințele de comunicare
+  (function () {
+    function sync(input, label) {
+      if (input.checked) {
+        label.classList.add('animate-btn');
+        label.classList.remove('btn-out-line-dark');
+        label.setAttribute('aria-pressed', 'true');
+      } else {
+        label.classList.remove('animate-btn');
+        label.classList.add('btn-out-line-dark');
+        label.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    document.querySelectorAll('.pref-toggle').forEach(function (wrap) {
+      var input = wrap.querySelector('input[type="checkbox"]');
+      var label = wrap.querySelector('label[for="'+ (input ? input.id : '') +'"]');
+      if (!input || !label) return;
+
+      // la încărcare
+      sync(input, label);
+
+      // la schimbare
+      input.addEventListener('change', function () { sync(input, label); });
+
+      // suport tastatură pe label (Enter/Space)
+      label.setAttribute('role', 'button');
+      label.setAttribute('tabindex', '0');
+      label.addEventListener('keydown', function (e) {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          input.click();
+        }
+      });
+    });
+  })();
+</script>
+
+{% endblock %}

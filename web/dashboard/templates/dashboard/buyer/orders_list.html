@@ -1,0 +1,199 @@
+{# dashboard/buyer/orders_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Comenzile mele – Snobistic{% endblock %}
+
+{% block content %}
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Comenzile mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Comenzile mele</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# ==== Sidebar cont ==== #}
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Profil
+            </a>
+          </li>
+
+          {% if request.user.is_seller %}
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Panou vânzător
+            </a>
+          </li>
+          {% endif %}
+
+          <li>
+            <a href="{% url 'orders:order_list' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Comenzile mele
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'catalog:favorites' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Favorite
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'accounts:profile_dimensions' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Măsurători
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'accounts:profile_security' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Setări
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'accounts:logout' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Deloghează-te
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {# ==== Conținut principal – Comenzile mele ==== #}
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">
+          Comenzile mele
+        </h6>
+        <p class="text-sm text-grey mb-4">
+          Toate comenzile plasate pe Snobistic. Poți verifica statusul de plată,
+          livrare și detaliile fiecărei comenzi.
+        </p>
+
+        <div class="widget-inner-address">
+          <div class="account-address-item">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID comandă</th>
+                    <th>Data</th>
+                    <th>Produse</th>
+                    <th class="text-end">Total comandă</th>
+                    <th>Status plată</th>
+                    <th>Status escrow</th>
+                    <th>Status livrare</th>
+                    <th class="text-end">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% if orders %}
+                  {% for order in orders %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'orders:order_detail' order.pk %}">
+                          #{{ order.id }}
+                        </a>
+                      </td>
+
+                      <td class="small">
+                        {{ order.created_at|date:"Y-m-d H:i" }}
+                      </td>
+
+                      <td class="small">
+                        {% for item in order.items.all %}
+                          <div>
+                            {{ item.product.title }} × {{ item.quantity }}
+                            <span class="text-muted">({{ item.product.sku }})</span>
+                          </div>
+                        {% endfor %}
+                      </td>
+
+                      <td class="text-end">
+                        {{ order.total }} RON
+                      </td>
+
+                      <td class="small">
+                        {% if order.payment_status == 'paid' %}
+                          <span class="badge bg-success">{{ order.payment_status_label }}</span>
+                        {% else %}
+                          <span class="badge bg-warning text-dark">{{ order.payment_status_label }}</span>
+                        {% endif %}
+                        {% if order.latest_payment %}
+                          <br>
+                          <small class="text-muted">
+                            {{ order.latest_payment.get_provider_display }}
+                            (P#{{ order.latest_payment.id }})
+                          </small>
+                        {% endif %}
+                      </td>
+
+                      <td class="small">
+                        {% if order.escrow_status == 'held' %}
+                          <span class="badge bg-info text-dark">{{ order.escrow_status_label }}</span>
+                        {% elif order.escrow_status == 'released' %}
+                          <span class="badge bg-success">{{ order.escrow_status_label }}</span>
+                        {% elif order.escrow_status == 'disputed' %}
+                          <span class="badge bg-danger">{{ order.escrow_status_label }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ order.escrow_status_label }}</span>
+                        {% endif %}
+                      </td>
+
+                      <td class="small">
+                        {{ order.get_shipping_status_display }}
+                      </td>
+
+                      <td class="text-end">
+                        <a href="{% url 'orders:order_detail' order.pk %}"
+                           class="btn btn-sm btn-primary">
+                          Detalii
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                      Nu ai încă comenzi plasate.
+                    </td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div> {# /account-address-item #}
+        </div> {# /widget-inner-address #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

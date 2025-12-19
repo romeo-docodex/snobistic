@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Confirmă ștergerea contului – Snobistic{% endblock %}
+
+{% block content %}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Confirmă ștergerea contului</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {% include "accounts/profile/_account_sidebar.html" with account_section="security" %}
+
+      <div class="my-acount-content account-dashboard">
+        <form method="post" class="form-edit-account" novalidate>
+          {% csrf_token %}
+          <h6 class="display-xs title-form">Introdu codul primit pe email</h6>
+          <div class="form-name">
+            {{ form.code|as_crispy_field }}
+            <div class="form-check mb-3">
+              {{ form.confirm_delete }}
+              <label class="form-check-label" for="{{ form.confirm_delete.id_for_label }}">
+                Înțeleg că această acțiune este ireversibilă.
+              </label>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="tf-btn animate-btn">Șterge contul</button>
+            <a href="{% url 'accounts:profile_security' %}" class="tf-btn btn-out-line-dark">Anulează</a>
+          </div>
+          <p class="text-sm text-grey mt-3">
+            Nu ai primit codul? Revino la <a href="{% url 'accounts:profile_security' %}">Securitate</a> și apasă „Trimite codul și continuă”.
+          </p>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

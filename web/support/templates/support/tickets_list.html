@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Ticket-uri{% endblock %}
+{% block content %}
+<h1>Solicitările mele</h1>
+<a class="btn btn-primary mb-3" href="{% url 'support:ticket_create' %}">Creează Ticket Nou</a>
+<table class="table">
+  <thead><tr><th>ID</th><th>Subiect</th><th>Data</th><th>Status</th><th>Prioritate</th><th>Acțiuni</th></tr></thead>
+  <tbody>
+    {% for tic in tickets %}
+      {% include "support/partials/ticket_row.html" with ticket=tic %}
+    {% empty %}
+      <tr><td colspan="6">Nu ai solicitări.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

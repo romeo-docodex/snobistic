@@ -1,0 +1,249 @@
+{# dashboard/seller/sold_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Articole vândute – Panou Vânzător – Snobistic{% endblock %}
+
+{% block content %}
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Articole vândute</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'dashboard:seller_dashboard' %}">Panou vânzător</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Articole vândute</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# ==== Sidebar desktop – meniu vânzător ==== #}
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+
+          {# 1. Înapoi la dashboard utilizator #}
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              &larr; Înapoi la profil
+            </a>
+          </li>
+
+          {# 2. Panou vânzător #}
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Panou vânzător
+            </a>
+          </li>
+
+          {# 3. Produsele mele #}
+          <li>
+            <a href="{% url 'dashboard:products_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Produsele mele
+            </a>
+          </li>
+
+          {# 4. Licitațiile mele #}
+          <li>
+            <a href="{% url 'dashboard:auctions_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Licitațiile mele
+            </a>
+          </li>
+
+          {# 5. Articole vândute (pagina curentă) #}
+          <li>
+            <a href="{% url 'dashboard:sold_list' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Articole vândute
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'dashboard:wallet' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Wallet & încasări
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {# ==== Conținut principal – tabel articole vândute ==== #}
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">
+          Articole vândute în comenzile cumpărătorilor
+        </h6>
+        <p class="text-sm text-grey mb-4">
+          Vezi statusul de plată, escrow și livrare pentru comenzile în care apar produsele tale
+          și gestionează AWB-urile și facturile de comision per articol.
+        </p>
+
+        <div class="widget-inner-address">
+          <div class="account-address-item">
+
+            {# Header info #}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+              <div>
+                <p class="text-sm mb-0 text-grey">
+                  Total comenzi cu articole vândute: <strong>{{ sold_orders|length }}</strong>
+                </p>
+              </div>
+              <div>
+                <a href="{% url 'dashboard:seller_dashboard' %}"
+                   class="tf-btn btn-out-line-dark">
+                  &larr; Înapoi la panou vânzător
+                </a>
+              </div>
+            </div>
+
+            {# Tabel comenzi + articole seller #}
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID comandă</th>
+                    <th>Data</th>
+                    <th>Articole (ale tale)</th>
+                    <th>Cumpărător</th>
+                    <th class="text-end">Total comandă</th>
+                    <th>Status plată</th>
+                    <th>Status escrow</th>
+                    <th>Status livrare</th>
+                    <th class="text-end">Detalii</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% if sold_orders %}
+                  {% for order in sold_orders %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'orders:order_detail' order.pk %}">
+                          #{{ order.id }}
+                        </a>
+                      </td>
+
+                      <td class="small">
+                        {{ order.created_at|date:"Y-m-d H:i" }}
+                      </td>
+
+                      {# ——— ARTICOLE ALE SELLER-ULUI, CU ACȚIUNI PE FIECARE ITEM ——— #}
+                      <td class="small">
+                        {% for item in order.items.all %}
+                          <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div>
+                              {{ item.product.title }} × {{ item.quantity }}
+                              <span class="text-muted">({{ item.product.sku }})</span>
+                              <br>
+                              <small class="text-muted">
+                                Preț linie: {{ item.subtotal }} RON
+                              </small>
+                            </div>
+                            <div class="btn-group btn-group-sm ms-2">
+                              <a href="{% url 'dashboard:generate_awb' order.id item.id %}"
+                                 class="btn btn-outline-secondary"
+                                 title="Generează AWB">
+                                AWB
+                              </a>
+                              <a href="{% url 'dashboard:download_awb' order.id item.id %}"
+                                 class="btn btn-outline-secondary"
+                                 title="Descarcă AWB">
+                                <i class="fas fa-download"></i>
+                              </a>
+                              <a href="{% url 'dashboard:download_commission_invoice' order.id item.id %}"
+                                 class="btn btn-outline-secondary"
+                                 title="Factură comision">
+                                Factură
+                              </a>
+                            </div>
+                          </div>
+                        {% empty %}
+                          <span class="text-muted">—</span>
+                        {% endfor %}
+                      </td>
+
+                      <td class="small">
+                        {% with b=order.buyer %}
+                          {{ b.full_name|default:b.email }}
+                        {% endwith %}
+                      </td>
+
+                      <td class="text-end">
+                        {{ order.total }} RON
+                      </td>
+
+                      <td class="small">
+                        {% if order.payment_status == 'paid' %}
+                          <span class="badge bg-success">{{ order.payment_status_label }}</span>
+                        {% else %}
+                          <span class="badge bg-warning text-dark">{{ order.payment_status_label }}</span>
+                        {% endif %}
+                        {% if order.latest_payment %}
+                          <br>
+                          <small class="text-muted">
+                            {{ order.latest_payment.get_provider_display }}
+                            (P#{{ order.latest_payment.id }})
+                          </small>
+                        {% endif %}
+                      </td>
+
+                      <td class="small">
+                        {% if order.escrow_status == 'held' %}
+                          <span class="badge bg-info text-dark">{{ order.escrow_status_label }}</span>
+                        {% elif order.escrow_status == 'released' %}
+                          <span class="badge bg-success">{{ order.escrow_status_label }}</span>
+                        {% elif order.escrow_status == 'disputed' %}
+                          <span class="badge bg-danger">{{ order.escrow_status_label }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ order.escrow_status_label }}</span>
+                        {% endif %}
+                      </td>
+
+                      <td class="small">
+                        {{ order.get_shipping_status_display }}
+                      </td>
+
+                      <td class="text-end">
+                        <a href="{% url 'orders:order_detail' order.pk %}"
+                           class="btn btn-sm btn-primary">
+                          Detalii comandă
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                      Nu ai încă articole vândute.
+                    </td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+          </div> {# /account-address-item #}
+        </div> {# /widget-inner-address #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

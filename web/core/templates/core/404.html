@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Pagina nu a fost găsită – Snobistic{% endblock %}
+{% block content %}
+  <div class="text-center py-5">
+    <h1 class="display-1">404</h1>
+    <p class="lead">Ne pare rău, pagina căutată nu a fost găsită.</p>
+    <a href="{% url 'core:home' %}" class="btn btn-primary">Înapoi la Acasă</a>
+  </div>
+{% endblock %}

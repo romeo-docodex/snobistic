@@ -1,0 +1,7 @@
+<p><strong>Subtotal:</strong> {{ cart.get_subtotal|floatformat:2 }} RON</p>
+{% if cart.coupon %}
+  <p>Discount ({{ cart.coupon.code }}): -{{ cart.coupon.discount }}%</p>
+{% endif %}
+<p><strong>Total:</strong> {{ cart.get_total_price|floatformat:2 }} RON</p>
+<a href="{% url 'cart:checkout' %}" class="btn btn-success">Finalizare comandă</a>
+<a href="{% url 'catalog:product_list' %}" class="btn btn-link">Continuă cumpărăturile</a>

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Politica de Confidențialitate – Snobistic{% endblock %}
+
+{% block meta_description %}
+Politica de confidențialitate Snobistic – află ce date colectăm, cum le folosim și ce drepturi ai asupra datelor tale personale.
+{% endblock %}
+
+{% block content %}
+  {% include "components/breadcrumbs.html" with crumbs=[('Home','core:home'),('Privacy',None)] %}
+  <h1>Politica de Confidențialitate</h1>
+
+  <p>La Snobistic, protejăm datele tale personale cu cea mai mare grijă. Această politică explică ce colectăm și cum folosim informațiile.</p>
+
+  <h2>Colectare date</h2>
+  <ul>
+    <li>Datele contului: e-mail, nume, adresă etc.</li>
+    <li>Informații tranzacționale: istoricul comenzilor și plăților.</li>
+    <li>Preferințe de marketing și cookie-uri.</li>
+  </ul>
+
+  <h2>Utilizare</h2>
+  <p>Datele sunt folosite pentru a procesa comenzile, a contacta clienții și a oferi oferte personalizate.</p>
+
+  <h2>Securitate</h2>
+  <p>Urmăm standarde internaționale (SSL, criptare) pentru protecția datelor.</p>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
+{% endblock %}

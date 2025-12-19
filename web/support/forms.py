@@ -1,41 +1,52 @@
+# support/forms.py
 from django import forms
-from .models import SupportTicket
+from django.db.models import Q
+
+from .models import Ticket, TicketMessage
+from orders.models import Order
 
 
-class SupportTicketForm(forms.ModelForm):
+class TicketForm(forms.ModelForm):
     class Meta:
-        model = SupportTicket
-        fields = ['subject', 'description', 'attachment']
+        model = Ticket
+        fields = ["subject", "description", "priority", "category", "order"]
         widgets = {
-            'subject': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Titlul cererii'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 5,
-                'placeholder': 'Descrie problema ta...'
-            }),
-            'attachment': forms.ClearableFileInput(attrs={
-                'class': 'form-control'
-            }),
+            "description": forms.Textarea(attrs={"rows": 4}),
         }
         labels = {
-            'subject': 'Subiect',
-            'description': 'Descriere',
-            'attachment': 'Fișier atașat (opțional)',
+            "subject": "Subiect",
+            "description": "Descriere",
+            "priority": "Prioritate",
+            "category": "Categorie",
+            "order": "Comandă (opțional)",
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # order este opțional
+        self.fields["order"].required = False
 
-class SupportTicketUpdateForm(forms.ModelForm):
+        if user is not None:
+            # Comenzi unde user-ul este buyer SAU are produse ca seller
+            qs = Order.objects.filter(
+                Q(buyer=user) | Q(items__product__owner=user)
+            ).distinct()
+            self.fields["order"].queryset = qs
+
+
+class TicketMessageForm(forms.ModelForm):
     class Meta:
-        model = SupportTicket
-        fields = ['status', 'assigned_to']
+        model = TicketMessage
+        fields = ["text"]
         widgets = {
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'assigned_to': forms.Select(attrs={'class': 'form-select'}),
+            "text": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Scrie răspuns…"}
+            )
         }
-        labels = {
-            'status': 'Status',
-            'assigned_to': 'Atribuit către',
-        }
+        labels = {"text": ""}
+
+
+class TicketUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ["status", "priority", "category", "order", "return_request"]

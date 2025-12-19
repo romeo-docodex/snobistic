@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Mesaje{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Mesaje</h1>
+  <a href="{% url 'messaging:start_conversation' %}" class="btn btn-primary">Începe conversație nouă</a>
+</div>
+
+{% if start_form %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">Începe o conversație nouă</h5>
+      <form method="post" action="{% url 'messaging:start_conversation' %}">
+        {% csrf_token %}
+        {{ start_form.non_field_errors }}
+        <div class="mb-2">
+          {{ start_form.recipient_email.label_tag }}
+          {{ start_form.recipient_email }}
+          {% for e in start_form.recipient_email.errors %}
+            <div class="text-danger small">{{ e }}</div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary">Pornește conversația</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+<ul class="list-group">
+  {% for conv in conversations %}
+    {% include "messaging/partials/conversation_row.html" with conv=conv %}
+  {% empty %}
+    <li class="list-group-item">Nu ai conversații.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

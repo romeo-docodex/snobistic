@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Mărime & detalii{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Ascunde săgețile la input-urile numerice Bootstrap (.form-control) */
+
+  /* Chrome, Edge, Safari */
+  input.form-control[type="number"]::-webkit-outer-spin-button,
+  input.form-control[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  input.form-control[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  .input-group-text {
+    background: transparent;
+    font-size: 12px;
+  }
+</style>
+
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <h4>Mărime, măsurători, stare & detalii</h4>
+          <p class="small text-secondary mb-0">
+            Completează mărimea, câteva măsurători esențiale, starea produsului, materialul și culoarea de bază.
+          </p>
+        </div>
+
+        <div class="wrap">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            <!-- Mărime & stare -->
+            <div class="mb-4">
+              <h6 class="mb-2">Mărime & stare</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="body-text-1 mb-1 d-block">
+                    {{ form.size.label }} <span class="text-danger">*</span>
+                  </label>
+                  {{ form.size }}
+                  {% for error in form.size.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                <div class="col-md-6">
+                  <label class="body-text-1 mb-1 d-block">
+                    {{ form.condition.label }} <span class="text-danger">*</span>
+                  </label>
+                  {{ form.condition }}
+                  {% for error in form.condition.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <label class="body-text-1 mb-1 d-block">
+                  {{ form.condition_notes.label }}
+                </label>
+                {{ form.condition_notes }}
+                {% for error in form.condition_notes.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Material & culori -->
+            <div class="mb-4">
+              <h6 class="mb-2">Material & culori</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="body-text-1 mb-1 d-block">
+                    {{ form.material.label }}
+                  </label>
+                  {{ form.material }}
+                  {% for error in form.material.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <!-- CULOARE cu cub colorat (culoare de bază) -->
+                <div class="col-md-6">
+                  <label class="body-text-1 mb-1 d-block">
+                    {{ form.colors.label }}
+                  </label>
+
+                  <select
+                      name="{{ form.colors.html_name }}"
+                      id="{{ form.colors.id_for_label }}"
+                      class="form-select js-color-select">
+                    <option value="">
+                      ---------
+                    </option>
+
+                    {% with current_value=form.colors.value|stringformat:"s" %}
+                      {% for color in form.fields.colors.queryset %}
+                        <option
+                          value="{{ color.pk }}"
+                          data-hex="{{ color.hex_code }}"
+                          {% if current_value == color.pk|stringformat:"s" %}selected{% endif %}
+                        >
+                          {{ color.name }}
+                        </option>
+                      {% endfor %}
+                    {% endwith %}
+                  </select>
+
+                  {% for error in form.colors.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text small text-muted mt-1">
+                    Alege <strong>culoarea de bază</strong> (folosită în filtre).
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">De ce contează măsurătorile?</h4>
+        <p class="small text-secondary mb-3">
+          Măsurătorile clare ajută cumpărătorul să decidă mai repede și reduc drastic retururile.
+        </p>
+        <div class="button-submit d-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+          <button class="tf-btn btn-outline"
+                  name="wizard_goto_step"
+                  value="{{ wizard.steps.prev }}"
+                  type="submit"
+                  form="wizardForm">
+            <span class="text">Înapoi</span>
+          </button>
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // === CULOARE cu Select2 ===
+    if (!window.jQuery || !jQuery.fn.select2) {
+      console.warn('Select2 nu este încărcat.');
+    } else {
+      function formatColorOption (state) {
+        if (!state.id) {
+          return state.text;
+        }
+
+        var hex = $(state.element).data('hex');
+        var text = state.text || '';
+
+        if (!hex) {
+          return text;
+        }
+
+        var $container = $(
+          '<span class="snobistic-color-option">' +
+            '<span class="snobistic-color-swatch"></span>' +
+            '<span class="snobistic-color-label"></span>' +
+          '</span>'
+        );
+        $container.find('.snobistic-color-swatch').css({
+          display: 'inline-block',
+          width: '14px',
+          height: '14px',
+          'border-radius': '4px',
+          'margin-right': '8px',
+          'vertical-align': 'middle',
+          'background-color': hex,
+          'border': '1px solid rgba(0,0,0,0.1)'
+        });
+        $container.find('.snobistic-color-label').text(text);
+
+        return $container;
+      }
+
+      $('.js-color-select').select2({
+        width: '100%',
+        templateResult: formatColorOption,
+        templateSelection: formatColorOption,
+        minimumResultsForSearch: -1
+      });
+    }
+  });
+</script>
+
+{% endblock %}

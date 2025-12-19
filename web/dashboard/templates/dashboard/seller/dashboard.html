@@ -1,0 +1,425 @@
+{# templates/dashboard/seller/dashboard.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Panou Vânzător – Snobistic{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Spacing & styling doar pentru acest dashboard vânzător */
+
+  .seller-dashboard-meta {
+    margin-bottom: 3rem; /* spațiu între blocul de level/KYC/trust și restul */
+  }
+
+  /* Toate cardurile de pe pagină (inclusiv Nivel / KYC / Trust, statistici, grafice) */
+  .account-address-item.dashboard-card {
+    padding: 1.5rem 1.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background-color: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  /* Cardurile speciale de sus folosesc și această clasă, dar stilul e deja setat mai sus */
+  .seller-dashboard-card {
+    /* alias pentru claritate; moștenește stilul din .account-address-item.dashboard-card */
+  }
+
+  /* Spațiu între cardurile verticale de meta (Nivel / KYC / Trust) */
+  .seller-dashboard-card + .seller-dashboard-card {
+    margin-top: 1.5rem;
+  }
+
+  /* Fonturi puțin mai mari în carduri */
+  .account-address-item.dashboard-card .title {
+    margin-bottom: 0.9rem;
+    font-size: 0.98rem;  /* ușor mai mare decât text-sm */
+  }
+
+  .account-address-item.dashboard-card p,
+  .account-address-item.dashboard-card li {
+    font-size: 0.85rem;  /* mai mare decât text-xxs din tema de bază */
+  }
+
+  .account-address-item.dashboard-card .text-xxs {
+    font-size: 0.8rem;
+  }
+
+  .seller-dashboard-section-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+  }
+
+  @media (min-width: 992px) {
+    .account-address-item.dashboard-card {
+      padding: 1.75rem 2rem;
+    }
+    .seller-dashboard-meta {
+      margin-bottom: 3.5rem;
+    }
+  }
+
+  /* Un pic mai mult spațiu general între blocurile de jos */
+  .seller-dashboard-stats {
+    margin-bottom: 3rem;
+  }
+
+  .seller-dashboard-charts {
+    margin-top: 1.5rem;
+  }
+</style>
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Panou Vânzător</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Panou vânzător</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none mb-3">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# ==== Sidebar desktop – meniu vânzător ==== #}
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+
+          {# 1. Înapoi la dashboard utilizator #}
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              &larr; Înapoi la profil
+            </a>
+          </li>
+
+          {# 2. Panou vânzător (pagina curentă) #}
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Panou vânzător
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'dashboard:products_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Produsele mele
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:auctions_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Licitațiile mele
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:sold_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Articole vândute
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:wallet' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Wallet & încasări
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {# ==== Conținut principal – overview vânzător ==== #}
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">
+          Salut, {{ request.user.first_name|default:request.user.email }} 👋
+        </h6>
+        <p class="text-sm text-grey mb-5">
+          Ai la îndemână toate statisticile importante pentru activitatea ta de vânzător pe Snobistic.
+        </p>
+
+        <div class="widget-inner-address">
+
+          {% if seller %}
+          <div class="seller-dashboard-meta">
+
+            <div class="seller-dashboard-section-title">
+              Profil & încredere vânzător
+            </div>
+
+            {# 1. Nivel vânzător + progress bar #}
+            <div class="account-address-item dashboard-card seller-dashboard-card">
+              <p class="title text-sm fw-medium">Nivel vânzător</p>
+
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="badge rounded-pill bg-dark text-white text-xxs px-3 py-1">
+                  {{ seller.get_seller_level_display }}
+                </span>
+                {% if seller.seller_commission_rate %}
+                  <span class="badge rounded-pill bg-light text-xxs px-3 py-1">
+                    Comision: {{ seller.seller_commission_rate }}%
+                  </span>
+                {% endif %}
+              </div>
+
+              <p class="text-xxs text-grey mb-3">
+                Nivelul tău se bazează pe volumul total de vânzări nete procesate prin Snobistic.
+              </p>
+
+              {% if level_progress is not None %}
+              <div class="mb-2">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-xxs text-grey">
+                    Progres către nivelul următor
+                    {% if next_level_label %} ({{ next_level_label }}){% endif %}
+                  </span>
+                  <span class="text-xxs text-grey">
+                    {{ level_progress }}%
+                  </span>
+                </div>
+
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar"
+                       role="progressbar"
+                       style="width: {{ level_progress }}%;"
+                       aria-valuenow="{{ level_progress }}"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                  </div>
+                </div>
+
+                <p class="text-xxs text-grey mt-2 mb-0">
+                  Volum vânzări net: {{ lifetime_sales_net|default:"0.00" }} RON
+                </p>
+              </div>
+              {% endif %}
+
+              <p class="text-xxs text-grey mt-3 mb-0">
+                Crește nivelul listând produse de calitate, menținând un flux constant de vânzări
+                și evitând anulările sau retururile din vina ta.
+              </p>
+            </div>
+
+            {# 2. Status KYC #}
+            <div class="account-address-item dashboard-card seller-dashboard-card">
+              <p class="title text-sm fw-medium">Status KYC</p>
+
+              <div class="mb-3">
+                <span class="badge rounded-pill
+                             {% if has_kyc_badge %}
+                               bg-success
+                             {% elif profile and profile.kyc_status == 'IN_REVIEW' %}
+                               bg-warning
+                             {% elif profile and profile.kyc_status == 'REJECTED' %}
+                               bg-danger
+                             {% else %}
+                               bg-light
+                             {% endif %}
+                             text-xxs px-3 py-1">
+                  {% if profile %}
+                    {{ profile.get_kyc_status_display }}
+                  {% else %}
+                    Necunoscut
+                  {% endif %}
+                </span>
+              </div>
+
+              <p class="text-xxs text-grey mb-3">
+                KYC (Know Your Customer) ajută la protejarea cumpărătorilor și la creșterea încrederii
+                în contul tău de vânzător.
+              </p>
+
+              <div class="d-flex flex-column flex-sm-row gap-2 mb-2">
+                <a href="{% url 'accounts:profile_data' %}"
+                   class="tf-btn btn-out-line-dark w-100">
+                  Completează datele de profil
+                </a>
+                <a href="{% url 'authenticator:authenticate_history' %}"
+                   class="text-xxs text-grey text-decoration-underline w-100 w-sm-auto">
+                  Vezi cererile și certificatele tale
+                </a>
+              </div>
+
+              <p class="text-xxs text-grey mt-2 mb-0">
+                Un KYC aprobat îți poate îmbunătăți atât vizibilitatea, cât și trust score-ul.
+              </p>
+            </div>
+
+            {# 3. Trust score + tips #}
+            <div class="account-address-item dashboard-card seller-dashboard-card">
+              <p class="title text-sm fw-medium">Trust score vânzător</p>
+
+              <p class="h5 mb-2">
+                {{ seller_trust_score }}/100
+                {% if seller_trust_class %}
+                  <span class="text-xxs text-grey">
+                    · Clasă {{ seller_trust_class }}
+                  </span>
+                {% endif %}
+              </p>
+
+              <p class="text-xxs text-grey mb-3">
+                Scorul reflectă istoricul tău de livrare, retururi și incidente raportate de cumpărători.
+              </p>
+
+              <ul class="text-xxs text-grey mb-3 ps-3">
+                <li>Finalizează KYC și menține datele de profil actualizate.</li>
+                <li>Activează autentificarea în doi pași (2FA) pentru mai multă siguranță.</li>
+                <li>Respectă termenele de livrare și descrierile produselor.</li>
+                <li>Răspunde politicos și rapid la mesajele cumpărătorilor.</li>
+              </ul>
+
+              <div class="d-flex flex-column flex-sm-row gap-2">
+                <a href="{% url 'accounts:profile_security' %}"
+                   class="tf-btn btn-out-line-dark w-100">
+                  Activează / gestionează 2FA
+                </a>
+                <a href="{% url 'dashboard:sold_list' %}"
+                   class="text-xxs text-grey text-decoration-underline w-100 w-sm-auto">
+                  Vezi comenzile tale vândute
+                </a>
+              </div>
+            </div>
+
+          </div>
+          {% endif %}
+
+          {# ---- Statistici rapide (4 carduri) ---- #}
+          <div class="row g-4 seller-dashboard-stats">
+            <!-- Produse postate -->
+            <div class="col-12">
+              <div class="account-address-item dashboard-card h-100">
+                <p class="title text-sm fw-medium mb-2">Produse postate</p>
+                <p class="h3 mb-3">{{ total_products }}</p>
+                <p class="text-xxs text-grey mb-3">
+                  Articole listate în magazinul tău.
+                </p>
+                <div class="box-btn d-flex flex-column gap-2">
+                  <a href="{% url 'dashboard:products_list' %}"
+                     class="tf-btn btn-out-line-dark w-100">
+                    Vezi produsele
+                  </a>
+                  <a href="{% url 'dashboard:products_list' %}?export=csv"
+                     class="text-xxs text-grey text-decoration-underline">
+                    Exportă listă produse (CSV)
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Licitații active -->
+            <div class="col-12">
+              <div class="account-address-item dashboard-card h-100">
+                <p class="title text-sm fw-medium mb-2">Licitații active</p>
+                <p class="h3 mb-3">{{ active_auctions }}</p>
+                <p class="text-xxs text-grey mb-3">
+                  Licitații care rulează în acest moment.
+                </p>
+                <div class="box-btn">
+                  <a href="{% url 'dashboard:auctions_list' %}"
+                     class="tf-btn btn-out-line-dark w-100">
+                    Gestionează licitațiile
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Produse vândute -->
+            <div class="col-12">
+              <div class="account-address-item dashboard-card h-100">
+                <p class="title text-sm fw-medium mb-2">Produse vândute</p>
+                <p class="h3 mb-3">{{ sold_products }}</p>
+                <p class="text-xxs text-grey mb-3">
+                  Numărul de comenzi plătite cu articolele tale.
+                </p>
+                <div class="box-btn">
+                  <a href="{% url 'dashboard:sold_list' %}"
+                     class="tf-btn btn-out-line-dark w-100">
+                    Vezi articolele vândute
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wallet -->
+            <div class="col-12">
+              <div class="account-address-item dashboard-card h-100">
+                <p class="title text-sm fw-medium mb-2">Sold Wallet</p>
+                <p class="h3 mb-3">{{ wallet_balance }} RON</p>
+                <p class="text-xxs text-grey mb-3">
+                  Bani disponibili pentru retragere sau cumpărături.
+                </p>
+                <div class="box-btn">
+                  <a href="{% url 'dashboard:wallet' %}"
+                     class="tf-btn btn-out-line-dark w-100">
+                    Deschide Wallet
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# ---- Grafice activitate (ultimele 6 luni) ---- #}
+          <div class="row g-4 seller-dashboard-charts">
+            <div class="col-md-6">
+              <div class="account-address-item dashboard-card">
+                <p class="title text-md fw-medium mb-3">
+                  Vânzări lunare (ultimele 6 luni)
+                </p>
+                <div class="info-detail">
+                  <p class="text-xxs text-grey mb-3">
+                    Numărul de comenzi plătite în care apar produse listate de tine.
+                  </p>
+                  <canvas id="ordersChart"
+                          height="200"
+                          data-labels="{{ chart_months|join:',' }}"
+                          data-values="{{ chart_orders|join:',' }}">
+                  </canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="account-address-item dashboard-card">
+                <p class="title text-md fw-medium mb-3">
+                  Produse adăugate (ultimele 6 luni)
+                </p>
+                <div class="info-detail">
+                  <p class="text-xxs text-grey mb-3">
+                    Câte produse noi ai publicat în fiecare lună.
+                  </p>
+                  <canvas id="productsChart"
+                          height="200"
+                          data-labels="{{ chart_months|join:',' }}"
+                          data-values="{{ chart_products|join:',' }}">
+                  </canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div> {# /widget-inner-address #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

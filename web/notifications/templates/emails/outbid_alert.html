@@ -1,0 +1,9 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Ai fost depășit la licitația <strong>{{ auction.product.title }}</strong>. Ultima ta ofertă: <strong>{{ user_bid }} RON</strong>.</p>
+<p style="text-align:center;">
+  <a href="{{ auction_detail_url }}" style="background:#dc3545;color:#fff;padding:10px 20px;text-decoration:none;">
+    Oferă din nou
+  </a>
+</p>
+{% include "emails/partials/footer.html" %}

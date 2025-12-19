@@ -1,0 +1,11 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Felicitări! Ai câștigat licitația pentru <strong>{{ auction.product.title }}</strong> cu prețul <strong>{{ auction.current_price }} RON</strong>.</p>
+<p>Finalizează plata în următoarele {{ payment_deadline_days }} zile:</p>
+<p style="text-align:center;">
+  <a href="{{ payment_url }}" style="background:#ffc107;color:#000;padding:10px 20px;text-decoration:none;">
+    Finalizează plata
+  </a>
+</p>
+<p><a href="{{ auction_detail_url }}">Vezi licitația</a></p>
+{% include "emails/partials/footer.html" %}

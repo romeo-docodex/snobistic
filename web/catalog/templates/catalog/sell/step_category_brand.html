@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Categorie & brand{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Stiluri pentru butoanele de gen */
+  .gender-toggle .gender-btn {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    text-align: center;
+    cursor: pointer;
+  }
+  .gender-toggle .gender-btn.active {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+</style>
+
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap">
+
+      <div class="left">
+        <div class="heading">
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <h4>Gen, categorie & brand</h4>
+          <p class="small text-secondary mb-0">
+            Alege genul, categoria principală, subcategoria și brandul produsului.
+          </p>
+        </div>
+
+        <div class="wrap">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {# ==== GEN CA DOUĂ BUTOANE (Femei / Bărbați) ==== #}
+            {% with current_gender=form.gender.value %}
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.gender.label }} <span class="text-danger">*</span>
+              </label>
+
+              <div class="d-flex gap-2 gender-toggle">
+                {# Femei #}
+                <input
+                  type="radio"
+                  id="{{ form.gender.id_for_label }}_F"
+                  name="{{ form.gender.html_name }}"
+                  value="F"
+                  class="d-none"
+                  {% if current_gender == "F" or not current_gender %}checked{% endif %}
+                >
+                <label
+                  for="{{ form.gender.id_for_label }}_F"
+                  class="tf-btn w-100 gender-btn {% if current_gender == 'F' or not current_gender %}active{% endif %}"
+                >
+                  Femei
+                </label>
+
+                {# Bărbați #}
+                <input
+                  type="radio"
+                  id="{{ form.gender.id_for_label }}_M"
+                  name="{{ form.gender.html_name }}"
+                  value="M"
+                  class="d-none"
+                  {% if current_gender == "M" %}checked{% endif %}
+                >
+                <label
+                  for="{{ form.gender.id_for_label }}_M"
+                  class="tf-btn w-100 gender-btn {% if current_gender == 'M' %}active{% endif %}"
+                >
+                  Bărbați
+                </label>
+              </div>
+
+              {% for error in form.gender.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endwith %}
+
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.category.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.category }}
+              {% for error in form.category.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3" id="subcategory-wrapper">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.subcategory.label }}
+              </label>
+              {{ form.subcategory }}
+              {% for error in form.subcategory.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.brand.label }}
+              </label>
+              {{ form.brand }}
+              {% for error in form.brand.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.brand_other.label }}
+              </label>
+              {{ form.brand_other }}
+              {% for error in form.brand_other.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted mt-1">
+                Dacă brandul nu există în listă, îl poți scrie aici (noi îl vom încadra în grupul corect).
+              </div>
+            </div>
+          </form>
+
+          {# ====== BUTOANE PE MOBILE ====== #}
+          <div class="button-submit d-flex gap-2 mt-3 d-md-none">
+            <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+              <span class="text">Renunță</span>
+            </a>
+            <button class="tf-btn btn-outline"
+                    name="wizard_goto_step"
+                    value="{{ wizard.steps.prev }}"
+                    type="submit"
+                    form="wizardForm">
+              <span class="text">Înapoi</span>
+            </button>
+            <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+              <span class="text text-button">Continuă</span>
+            </button>
+          </div>
+          {# ====== END: butoane mobile ====== #}
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">Exemple de categorii</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1"><strong>Îmbrăcăminte</strong> – rochii, fuste, pulovere, bluze, cămăși, pantaloni, blugi.</li>
+          <li class="mb-1"><strong>Încălțăminte</strong> – sneakers, pantofi cu toc, balerini, sandale, cizme, ghete.</li>
+          <li class="mb-1"><strong>Accesorii</strong> – genți, curele, portofele, bijuterii, eșarfe, pălării.</li>
+        </ul>
+
+        {# ====== BUTOANE DOAR DESKTOP / TABLETĂ ====== #}
+        <div class="button-submit d-none d-md-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+          <button class="tf-btn btn-outline"
+                  name="wizard_goto_step"
+                  value="{{ wizard.steps.prev }}"
+                  type="submit"
+                  form="wizardForm">
+            <span class="text">Înapoi</span>
+          </button>
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+    const subcategorySelect = document.getElementById('{{ form.subcategory.id_for_label }}');
+    const genderInputs = document.querySelectorAll('input[name="{{ form.gender.html_name }}"]');
+    const subcategoryWrapper = document.getElementById('subcategory-wrapper');
+
+    if (!categorySelect || !subcategorySelect) {
+      console.warn('Category/Subcategory select not found');
+      return;
+    }
+
+    const initialCategory = categorySelect.value || '';
+    const initialSubcategory = subcategorySelect.value || '';
+
+    function hideSub() {
+      if (subcategoryWrapper) {
+        subcategoryWrapper.style.display = 'none';
+      }
+    }
+
+    function showSub() {
+      if (subcategoryWrapper) {
+        subcategoryWrapper.style.display = 'block';
+      }
+    }
+
+    function getSelectedGender() {
+      const checked = document.querySelector('input[name="{{ form.gender.html_name }}"]:checked');
+      return checked ? checked.value : '';
+    }
+
+    function resetSubcategories() {
+      subcategorySelect.innerHTML = '';
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '— Alege subcategoria —';
+      subcategorySelect.appendChild(placeholder);
+
+      hideSub();
+    }
+
+    function loadSubcategories(parentId, preselectValue) {
+      resetSubcategories();
+
+      if (!parentId) {
+        return;
+      }
+
+      const gender = getSelectedGender();
+      const url = "{% url 'catalog:ajax_subcategories' %}?parent_id=" + parentId +
+                  (gender ? "&gender=" + encodeURIComponent(gender) : "");
+
+      fetch(url, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          (data.results || []).forEach(function (item) {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.name;
+            subcategorySelect.appendChild(opt);
+          });
+
+          if (preselectValue) {
+            subcategorySelect.value = String(preselectValue);
+          }
+
+          if ((data.results || []).length > 0) {
+            showSub();
+          } else {
+            hideSub();
+          }
+        })
+        .catch(err => {
+          console.error('Eroare la încărcarea subcategoriilor:', err);
+        });
+    }
+
+    categorySelect.addEventListener('change', function () {
+      const categoryId = this.value || '';
+      if (categoryId) {
+        loadSubcategories(categoryId, null);
+      } else {
+        resetSubcategories();
+      }
+    });
+
+    if (genderInputs.length) {
+      genderInputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+          const categoryId = categorySelect.value || '';
+          if (categoryId) {
+            loadSubcategories(categoryId, null);
+          } else {
+            resetSubcategories();
+          }
+        });
+      });
+    }
+
+    if (initialCategory) {
+      loadSubcategories(initialCategory, initialSubcategory);
+    } else {
+      resetSubcategories();
+    }
+
+    // Toggle vizual pentru butoanele de gen (Femei / Bărbați)
+    const genderButtons = document.querySelectorAll('.gender-btn');
+
+    if (genderButtons.length) {
+      genderButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          genderButtons.forEach(function (b) {
+            b.classList.remove('active');
+          });
+          this.classList.add('active');
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}

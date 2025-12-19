@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Creează Ticket{% endblock %}
+{% block content %}
+<h1>Creează un tichet de suport</h1>
+<form method="post">
+  {% csrf_token %}
+  {% include "support/partials/form_errors.html" with form=form %}
+  {{ form.as_p }}
+  <button class="btn btn-primary">Trimite solicitare</button>
+  <a class="btn btn-outline-secondary" href="{% url 'support:tickets_list' %}">Anulează</a>
+</form>
+{% endblock %}

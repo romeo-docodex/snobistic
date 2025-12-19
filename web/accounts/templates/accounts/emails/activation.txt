@@ -1,0 +1,11 @@
+Bună, {{ user.first_name|default:user.email }}
+
+Îți mulțumim că te-ai înregistrat pe {{ site_name }}.
+
+Pentru a-ți activa contul, accesează link-ul de mai jos:
+{{ activate_url }}
+
+Dacă nu tu ai creat acest cont, poți ignora acest email.
+
+Cu drag,
+Echipa {{ site_name }}

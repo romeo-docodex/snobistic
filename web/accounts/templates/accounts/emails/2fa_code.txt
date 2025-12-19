@@ -1,0 +1,8 @@
+Bună, {{ user.first_name|default:user.email }}
+
+Codul tău de autentificare cu doi factori este: {{ code }}
+
+Codul este valabil câteva minute. Dacă nu tu ai inițiat autentificarea, îți recomandăm să îți schimbi parola.
+
+Cu drag,
+Echipa Snobistic

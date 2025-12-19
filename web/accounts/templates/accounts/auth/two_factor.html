@@ -1,18 +1,122 @@
 {% extends "base.html" %}
+{% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}Two-Factor Authentication{% endblock %}
+{% block title %}Autentificare în doi pași – Snobistic{% endblock %}
+
+{# Nu afișăm navbar + footer pe pagina de 2FA #}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <h2>Verificare în doi pași</h2>
-    {% include "components/alerts.html" %}
-    <form method="post">
-      {% csrf_token %}
-      {{ form|crispy }}
-      <button type="submit" class="btn btn-primary w-100">Verifică-mi codul</button>
-    </form>
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+
+    {# Logo centrat deasupra conținutului #}
+    <div class="container text-center my-4 pb-5">
+      <a href="{% url 'core:home' %}">
+        <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" style="height:56px;width:auto;">
+      </a>
+    </div>
+
+    <div class="login-wrap">
+
+      {# ==== Col stânga: 2FA code ==== #}
+      <div class="left">
+        <div class="heading">
+          <h4>Autentificare în doi pași</h4>
+          <p class="text-secondary small mt-1">
+            Introdu codul de autentificare primit în aplicația 2FA, pe email sau prin SMS
+            (în funcție de metoda pe care ai activat-o).
+          </p>
+        </div>
+
+        {# Mesaje Django #}
+        {% if messages %}
+          <div class="mt-3 mb-2">
+            {% for m in messages %}
+              <div class="alert alert-{{ m.tags|default:'info' }} mb-1">
+                {{ m }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post"
+              novalidate
+              class="form-login"
+              autocomplete="off">
+          {% csrf_token %}
+
+          <div class="wrap">
+
+            {# Erori globale (ex: cod invalid) #}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb-3">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            {# Câmp cod 2FA / backup #}
+            <fieldset class="mb_20">
+              {{ form.code.errors }}
+              {{ form.code|as_crispy_field }}
+              <p class="text-secondary small mt-1 mb-0">
+                Poți introduce atât un cod temporar (6 cifre) din aplicația de autentificare,
+                cât și unul dintre codurile tale de rezervă.
+              </p>
+            </fieldset>
+
+            {# Remember this device #}
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="tf-cart-checkbox">
+                <div class="tf-checkbox-wrapp">
+                  <input type="checkbox"
+                         name="remember_device"
+                         id="remember_device"
+                         class="form-check-input">
+                  <div><i class="icon-check"></i></div>
+                </div>
+                <label for="remember_device">Ține minte acest dispozitiv pentru 30 de zile</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-submit mt-2">
+            <button class="tf-btn btn-fill w-100" type="submit" id="twoFactorSubmit">
+              <span class="text text-button">Confirmă codul</span>
+            </button>
+          </div>
+
+          {# Mic mesaj de securitate #}
+          <p class="text-secondary small text-center mt-3 mb-0">
+            Nu împărtăși niciodată codurile sau parola cu altcineva. Dacă bănuiești o tentativă de fraudă,
+            oprește-te și schimbă-ți parola.
+          </p>
+        </form>
+      </div>
+
+      {# ==== Col dreapta: Info 2FA ==== #}
+      <div class="right">
+        <h4 class="mb_8">De ce îți cerem acest cod?</h4>
+        <p class="text-secondary">
+          Autentificarea în doi pași (2FA) adaugă un strat suplimentar de securitate peste parolă.
+          Chiar dacă cineva îți află parola, nu se poate conecta fără acest cod temporar.
+        </p>
+        <p class="text-secondary mb-2">
+          Dacă nu primești codul:
+        </p>
+        <ul class="text-secondary small ps-3 mb-2">
+          <li>Verifică folderul Spam / Promotions din email.</li>
+          <li>Asigură-te că ora și data dispozitivului sunt corecte.</li>
+          <li>Reîncearcă autentificarea și generează un cod nou.</li>
+        </ul>
+        <p class="text-secondary small mb-0">
+          Dacă problema persistă, contactează echipa de suport Snobistic din secțiunea „Ajutor” a site-ului.
+        </p>
+      </div>
+
+    </div> {# /login-wrap #}
   </div>
-</div>
+</section>
 {% endblock %}

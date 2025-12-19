@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Live Chat{% endblock %}
+{% block content %}
+<h1>Live Chat</h1>
+<p>Ești pe locul <strong>#{{ position }}</strong> în coadă.</p>
+<p>Timp estimat: ~{{ eta }} minute.</p>
+<a class="btn btn-secondary" href="{% url 'support:tickets_list' %}">Trimite un ticket</a>
+{% endblock %}

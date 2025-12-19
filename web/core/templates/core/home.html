@@ -1,34 +1,1181 @@
 {% extends "base.html" %}
-{% block title %}Acasă – Snobistic{% endblock %}
+{% load static %}
+
+{% block title %}Snobistic – Marketplace fashion autentic, licitații & escrow{% endblock %}
+
+{% block meta_description %}
+Cumpără și vinde haine, încălțăminte și accesorii autentice pe Snobistic. Magazin, licitații, autentificare produse și plăți în siguranță, toate într-un singur loc.
+{% endblock %}
+
 {% block content %}
-<h1>Welcome to Snobistic</h1>
 
-<h3>Produse recomandate</h3>
-<div class="row">
-  {% for p in featured_products %}
-    <div class="col-md-3 mb-4">
-      {% include "shop/partials/card_product.html" with product=p %}
-    </div>
-  {% empty %}
-    <p>Nu există produse de afișat.</p>
-  {% endfor %}
-</div>
-
-<h3>Licitații în desfășurare</h3>
-<div class="row">
-  {% for a in ongoing_auctions %}
-    <div class="col-md-3 mb-4">
-      <div class="card">
-        <img src="{{ a.product.images.first.image.url }}" class="card-img-top" alt="{{ a.product.name }}">
-        <div class="card-body">
-          <h5 class="card-title">{{ a.product.name }}</h5>
-          <p class="card-text">Preț de pornire: {{ a.starting_price }} RON</p>
-          <a href="{% url 'auctions:auction_detail' a.pk %}" class="btn btn-primary">Vezi licitație</a>
+<!-- Slider -->
+<section class="tf-slideshow slider-viewport slider-fashion-1 slider-default">
+    <div dir="ltr" class="swiper tf-sw-slideshow slider-effect-fade" data-effect="fade" data-preview="1"
+        data-tablet="1" data-mobile="1" data-centered="false" data-space="0" data-space-mb="0" data-loop="true"
+        data-auto-play="false" data-speed="800">
+        <div class="swiper-wrapper">
+            <!-- slide 1 -->
+            <div class="swiper-slide">
+                <div class="slider-wrap bg-type-1">
+                    <div class="image">
+                        <img src="{% static 'images/hero/hero.png' %}"
+                             data-src="{% static 'images/hero/hero.png' %}"
+                             alt="slider" class="lazyload">
+                    </div>
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-12 col-12 col-sm-6">
+                                    <div class="content-slider">
+                                        <div class="box-title-slider">
+                                            <h2 class="heading fw-medium fade-item fade-item-1 text-dark-5">
+                                                Vinde & cumpără<br> fashion autentic
+                                            </h2>
+                                            <p class="sub text-md fade-item fade-item-2 text-dark-5">
+                                                Magazin, Licitații, Autentificare produs și Escrow — totul într-un singur loc.
+                                            </p>
+                                        </div>
+                                        <div class="box-btn-slider fade-item fade-item-3">
+                                            <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-dark2 animate-btn">
+                                                Deschide Magazinul
+                                                <i class="icon icon-arr-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- slide 2 -->
+            <div class="swiper-slide">
+                <div class="slider-wrap bg-type-2">
+                    <div class="image">
+                        <img src="https://themesflat.co/html/vineta/images/slider/fashion/slider-fashion-2.png"
+                             data-src="https://themesflat.co/html/vineta/images/slider/fashion/slider-fashion-2.png"
+                             alt="slider" class="lazyload">
+                    </div>
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-12 col-12 col-sm-6">
+                                    <div class="content-slider">
+                                        <div class="box-title-slider">
+                                            <h2 class="heading fw-medium fade-item fade-item-1 text-dark-5">
+                                                Licitații pentru<br> piese rare
+                                            </h2>
+                                            <p class="sub text-md fade-item fade-item-2 text-dark-5">
+                                                Bidează în siguranță. Piese verificate, escrow și payout rapid.
+                                            </p>
+                                        </div>
+                                        <div class="box-btn-slider fade-item fade-item-3">
+                                            <a href="{% url 'auctions:auction_list' %}" class="tf-btn animate-btn btn-dark2">
+                                                Vezi Licitațiile
+                                                <i class="icon icon-arr-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- slide 3 -->
+            <div class="swiper-slide">
+                <div class="slider-wrap bg-type-3">
+                    <div class="image">
+                        <img src="https://themesflat.co/html/vineta/images/slider/fashion/slider-fashion-3.png"
+                             data-src="https://themesflat.co/html/vineta/images/slider/fashion/slider-fashion-3.png"
+                             alt="slider" class="lazyload">
+                    </div>
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-5 offset-lg-7 col-sm-6 offset-sm-6 offset-3 col-12">
+                                    <div class="content-slider">
+                                        <div class="box-title-slider">
+                                            <h2 class="heading fw-medium fade-item fade-item-1 text-dark-5">
+                                                New • Outlet • Pre-Loved
+                                            </h2>
+                                            <p class="sub text-md fade-item fade-item-2 text-dark-5">
+                                                Alege exact ce ți se potrivește — mărimi, dimensiuni, materiale și stil.
+                                            </p>
+                                        </div>
+                                        <div class="box-btn-slider fade-item fade-item-3">
+                                            <a href="{% url 'catalog:product_list' %}" class="tf-btn animate-btn btn-dark2">
+                                                Cumpără acum
+                                                <i class="icon icon-arr-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        <div class="wrap-pagination">
+            <div class="container">
+                <div class="sw-dots sw-pagination-slider justify-content-center"></div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /Slider -->
+
+<!-- Collection -->
+<div class="pt-24">
+    <div class="container">
+        <div class="fl-control-sw2">
+            <div dir="ltr" class="swiper tf-swiper wow fadeInUp" data-swiper='{
+                "slidesPerView": 1,
+                "spaceBetween": 12,
+                "speed": 800,
+                "observer": true,
+                "observeParents": true,
+                "slidesPerGroup": 1,
+                "navigation": {
+                    "clickable": true,
+                    "nextEl": ".nav-next-cls",
+                    "prevEl": ".nav-prev-cls"
+                },
+                "pagination": { "el": ".sw-pagination-cls", "clickable": true },
+                "breakpoints": {
+                "575": { "slidesPerView": 2, "spaceBetween": 12 ,"slidesPerGroup": 2 },
+                "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
+                "1200": { "slidesPerView": 3, "spaceBetween": 24, "slidesPerGroup": 3}
+                }
+            }'>
+                <div class="swiper-wrapper">
+
+                    {% for category in homepage_categories %}
+                        <div class="swiper-slide">
+                            <div class="wg-cls style-abs asp-1 hover-img">
+                                <a href="{% url 'catalog:product_list' %}?category={{ category.slug }}"
+                                   class="image img-style d-block">
+                                    {% if category.cover_image %}
+                                        <img src="{{ category.cover_image.url }}"
+                                             data-src="{{ category.cover_image.url }}"
+                                             alt="{{ category.name }}"
+                                             class="lazyload">
+                                    {% else %}
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/top.jpg"
+                                             data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/top.jpg"
+                                             alt="{{ category.name }}"
+                                             class="lazyload">
+                                    {% endif %}
+                                </a>
+                                <div class="cls-btn text-center">
+                                    <a href="{% url 'catalog:product_list' %}?category={{ category.slug }}"
+                                       class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                        {{ category.name }}
+                                        <i class="icon icon-arrow-top-left"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="swiper-slide">
+                            <div class="wg-cls style-abs asp-1 hover-img">
+                                <a href="{% url 'catalog:product_list' %}" class="image img-style d-block">
+                                    <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/top.jpg"
+                                         data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/top.jpg"
+                                         alt="Snobistic" class="lazyload">
+                                </a>
+                                <div class="cls-btn text-center">
+                                    <a href="{% url 'catalog:product_list' %}"
+                                       class="tf-btn btn-cls btn-white hover-dark hover-icon-2">
+                                        Descoperă colecțiile
+                                        <i class="icon icon-arrow-top-left"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                </div>
+                <div class="d-flex d-xl-none sw-dot-default sw-pagination-cls justify-content-center"></div>
+            </div>
+            <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-cls"></div>
+            <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-cls"></div>
+        </div>
+    </div>
+</div>
+<!-- /Collection -->
+
+<!-- Latest Products (Ultimele produse) -->
+<section class="flat-spacing-3 overflow-hidden">
+    <div class="container">
+        <div class="flat-title wow fadeInUp">
+            <h4 class="title">Ultimele produse</h4>
+        </div>
+        <div class="fl-control-sw2 wrap-pos-nav sw-over-product wow fadeInUp">
+            <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+                    "slidesPerView": 2,
+                    "spaceBetween": 12,
+                    "speed": 800,
+                    "slidesPerGroup": 2,
+                    "navigation": {
+                        "clickable": true,
+                        "nextEl": ".nav-next-seller",
+                        "prevEl": ".nav-prev-seller"
+                    },
+                    "pagination": { "el": ".sw-pagination-seller", "clickable": true },
+                    "breakpoints": {
+                        "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
+                        "1200": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 4}
+                    }
+                }'>
+                <div class="swiper-wrapper">
+
+                    {% if latest_products %}
+                        {% for product in latest_products %}
+                            <div class="swiper-slide">
+                                <div class="card-product card-product-size">
+                                    <div class="card-product-wrapper">
+                                        <a href="{{ product.get_absolute_url }}" class="product-img">
+                                            <img class="img-product lazyload"
+                                                 src="{{ product.main_image.url }}"
+                                                 data-src="{{ product.main_image.url }}"
+                                                 alt="{{ product.title }}">
+                                        </a>
+
+                                        <ul class="list-product-btn">
+                                            <li>
+                                                <a href="#quickAdd" data-bs-toggle="modal"
+                                                   class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-cart2"></span>
+                                                    <span class="tooltip">Adaugă rapid</span>
+                                                </a>
+                                            </li>
+                                            <li class="wishlist">
+                                                <a href="javascript:void(0);"
+                                                   class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-heart2"></span>
+                                                    <span class="tooltip">Adaugă la Favorite</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#quickView" data-bs-toggle="modal"
+                                                   class="hover-tooltip tooltip-left box-icon quickview">
+                                                    <span class="icon icon-view"></span>
+                                                    <span class="tooltip">Previzualizare</span>
+                                                </a>
+                                            </li>
+                                            <li class="compare">
+                                                <a href="#compare" data-bs-toggle="modal"
+                                                   class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-compare"></span>
+                                                    <span class="tooltip">Compară</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-product-info">
+                                        <a href="{{ product.get_absolute_url }}"
+                                           class="name-product link fw-medium text-md">
+                                            {{ product.title }}
+                                        </a>
+                                        <p class="price-wrap fw-medium">
+                                            <span class="price-new">
+                                                {{ product.price }} RON
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="swiper-slide">
+                            <div class="card-product card-product-size">
+                                <div class="card-product-wrapper">
+                                    <a href="{% url 'catalog:product_list' %}" class="product-img">
+                                        <img class="img-product lazyload"
+                                             data-src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
+                                             src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
+                                             alt="Snobistic">
+                                    </a>
+                                </div>
+                                <div class="card-product-info">
+                                    <a href="{% url 'catalog:product_list' %}"
+                                       class="name-product link fw-medium text-md">
+                                        Descoperă produsele Snobistic
+                                    </a>
+                                    <p class="price-wrap fw-medium">
+                                        <span class="price-new">Colecții actualizate zilnic</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+                <div class="d-flex d-xl-none mt_5 sw-dot-default sw-pagination-seller justify-content-center"></div>
+            </div>
+            <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-seller"></div>
+            <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-seller"></div>
+        </div>
+    </div>
+</section>
+<!-- /Latest Products -->
+
+<!-- Banner Countdown -->
+<section>
+    <div class="container">
+        <div class="s-banner-countdown banner-cd-fashion">
+            <div class="image">
+                <img src="{% static 'images/hero/auction-bg.png' %}"
+                     data-src="{% static 'images/hero/auction-bg.png' %}" alt=""
+                    class="lazyload">
+            </div>
+            <div class="banner-content text-center">
+                <div class="box-title wow fadeInUp">
+                    <p class="season text-md fw-medium">
+                        LICITAȚII ÎN DESFĂȘURARE
+                    </p>
+                    <h2 class="fw-medium">
+                        Se încheie în curând
+                    </h2>
+                    <p class="sub text-md fw-medium">
+                        Bidează acum — escrow & autentificare incluse.
+                    </p>
+                </div>
+                <div class="box-countdown d-flex justify-content-center wow fadeInUp">
+                    <div class="wg-countdown-2">
+                        <span class="js-countdown" data-timer="46556"
+                              data-labels="Zile,Ore,Min,Sec"></span>
+                    </div>
+                </div>
+                <div class="box-btn wow fadeInUp">
+                    <a href="{% url 'auctions:auction_list' %}" class="tf-btn btn-white hover-primary">
+                        Vezi licitațiile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /Banner Countdown -->
+
+
+<!-- Categories -->
+<section class="flat-spacing-3">
+    <div class="container">
+        <div class="flat-animate-tab">
+            <div class="flat-title-tab-categories wow fadeInUp text-center">
+                <h4 class="title">Categorii</h4>
+                <ul class="menu-tab-line justify-content-center" role="tablist">
+                    <li class="nav-tab-item" role="presentation">
+                        <a href="#women" class="tab-link active" data-bs-toggle="tab">Magazin</a>
+                    </li>
+                    <li class="nav-tab-item" role="presentation">
+                        <a href="#men" class="tab-link" data-bs-toggle="tab">Licitații</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content">
+                <!-- Magazin -->
+                <div class="tab-pane active show" id="women" role="tabpanel">
+                    <div dir="ltr" class="xl-px-26 swiper tf-swiper" data-swiper='{
+                            "slidesPerView": 2,
+                            "spaceBetween": 12,
+                            "speed": 800,
+                            "observer": true,
+                            "observeParents": true,
+                            "slidesPerGroup": 2,
+                            "navigation": {
+                                "clickable": true,
+                                "nextEl": ".nav-next-women",
+                                "prevEl": ".nav-prev-women"
+                            },
+                            "pagination": { "el": ".sw-pagination-women", "clickable": true },
+                            "breakpoints": {
+                            "575": { "slidesPerView": 3, "spaceBetween": 12 ,"slidesPerGroup": 2 },    
+                            "768": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 3 },
+                            "1200": { "slidesPerView": 6, "spaceBetween": 64, "slidesPerGroup": 3}
+                            }
+                        }'>
+                        <div class="swiper-wrapper">
+                            <!-- item 1 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?condition=new" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/rochii.png' %}"
+                                            data-src="{% static 'images/categories/rochii.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?condition=new"
+                                            class="link text-md fw-medium">Rochii</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 2 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?condition=outlet" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/paltoane.png' %}"
+                                            data-src="{% static 'images/categories/paltoane.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?condition=outlet"
+                                            class="link text-md fw-medium">Paltoane</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 3 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?condition=pre-loved" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/fuste.png' %}"
+                                            data-src="{% static 'images/categories/fuste.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?condition=pre-loved"
+                                            class="link text-md fw-medium">Fuste</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 4 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?category=incaltaminte" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/incaltaminte.png' %}"
+                                            data-src="{% static 'images/categories/incaltaminte.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?category=accesorii"
+                                            class="link text-md fw-medium">Încălțăminte</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 5 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?category=incaltaminte" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/bluze.png' %}"
+                                            data-src="{% static 'images/categories/bluze.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?category=incaltaminte"
+                                            class="link text-md fw-medium">Bluze</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 6 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'catalog:product_list' %}?category=genti" class="image img-style d-block">
+                                        <img src="{% static 'images/categories/sacouri.png' %}"
+                                            data-src="{% static 'images/categories/sacouri.png' %}"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'catalog:product_list' %}?category=genti"
+                                            class="link text-md fw-medium">Sacouri</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="d-flex d-xl-none sw-dot-default sw-pagination-women justify-content-center"></span>
+                    </div>
+                </div>
+                <!-- Licitații -->
+                <div class="tab-pane" id="men" role="tabpanel">
+                    <div dir="ltr" class="xl-px-26 swiper tf-swiper" data-swiper='{
+                            "slidesPerView": 2,
+                            "spaceBetween": 12,
+                            "speed": 800,
+                            "observer": true,
+                            "observeParents": true,
+                            "slidesPerGroup": 2,
+                            "navigation": {
+                                "clickable": true,
+                                "nextEl": ".nav-next-men",
+                                "prevEl": ".nav-prev-men"
+                            },
+                            "pagination": { "el": ".sw-pagination-men", "clickable": true },
+                            "breakpoints": {
+                            "575": { "slidesPerView": 3, "spaceBetween": 12 ,"slidesPerGroup": 2 }, 
+                            "768": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 3 },
+                            "1200": { "slidesPerView": 6, "spaceBetween": 64, "slidesPerGroup": 3}
+                            }
+                        }'>
+                        <div class="swiper-wrapper">
+                            <!-- item 1 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-sportwear.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-sportwear.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}"
+                                            class="link text-md fw-medium">În desfășurare</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 2 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}?ending_soon=1" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-dress.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-dress.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}?ending_soon=1"
+                                            class="link text-md fw-medium">Ultima oră</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 3 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}?max_price=100" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-partywear.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-partywear.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}?max_price=100"
+                                            class="link text-md fw-medium">Sub 100€</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 4 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}?designer=1" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-jewelry.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-jewelry.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}?designer=1"
+                                            class="link text-md fw-medium">Designer</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 5 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}?style=vintage" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-bottoms.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-bottoms.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}?style=vintage"
+                                            class="link text-md fw-medium">Vintage</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- item 6 -->
+                            <div class="swiper-slide">
+                                <div class="wg-cls style-circle hover-img">
+                                    <a href="{% url 'auctions:auction_list' %}?category=accesorii" class="image img-style d-block">
+                                        <img src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-tops.jpg"
+                                            data-src="https://themesflat.co/html/vineta/images/cls-categories/fashion/circle-tops.jpg"
+                                            alt="categories" class="lazyload">
+                                    </a>
+                                    <div class="cls-content text-center">
+                                        <a href="{% url 'auctions:auction_list' %}?category=accesorii"
+                                            class="link text-md fw-medium">Accesorii</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <span class="d-flex d-xl-none sw-dot-default sw-pagination-men justify-content-center"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /Categories -->
+
+<!-- Today’s Picks -->
+<section class="flat-spacing-3 pt-0 overflow-hidden">
+    <div class="container">
+        <div class="flat-title wow fadeInUp">
+            <h4 class="title">Recomandările zilei</h4>
+        </div>
+        <div class="fl-control-sw2 wrap-pos-nav sw-over-product wow fadeInUp">
+            <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+                    "slidesPerView": 2,
+                    "spaceBetween": 12,
+                    "speed": 800,
+                    "observer": true,
+                    "observeParents": true,
+                    "slidesPerGroup": 2,
+                    "navigation": {
+                        "clickable": true,
+                        "nextEl": ".nav-next-top-pick",
+                        "prevEl": ".nav-prev-top-pick"
+                    },
+                    "pagination": { "el": ".sw-pagination-top-pick", "clickable": true },
+                    "breakpoints": {
+                    "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
+                    "1200": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 4}
+                    }
+                }'>
+                <div class="swiper-wrapper">
+
+                    {% if today_picks %}
+                        {% for product in today_picks %}
+                            <div class="swiper-slide">
+                                <div class="card-product card-product-size">
+                                    <div class="card-product-wrapper">
+                                        <a href="{{ product.get_absolute_url }}" class="product-img">
+                                            <img class="img-product lazyload"
+                                                 src="{{ product.main_image.url }}"
+                                                 data-src="{{ product.main_image.url }}"
+                                                 alt="{{ product.name }}">
+                                            {% if product.hover_image %}
+                                                <img class="img-hover lazyload"
+                                                     src="{{ product.hover_image.url }}"
+                                                     data-src="{{ product.hover_image.url }}"
+                                                     alt="{{ product.name }}">
+                                            {% endif %}
+                                        </a>
+
+                                        {% if product.sale_price %}
+                                            <div class="on-sale-wrap">
+                                                <span class="on-sale-item">Reducere</span>
+                                            </div>
+                                        {% endif %}
+
+                                        <ul class="list-product-btn">
+                                            <li>
+                                                <a href="#quickAdd" data-bs-toggle="modal"
+                                                    class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-cart2"></span>
+                                                    <span class="tooltip">Adaugă rapid</span>
+                                                </a>
+                                            </li>
+                                            <li class="wishlist">
+                                                <a href="javascript:void(0);" class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-heart2"></span>
+                                                    <span class="tooltip">Adaugă la favorite</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#quickView" data-bs-toggle="modal"
+                                                    class="hover-tooltip tooltip-left box-icon quickview">
+                                                    <span class="icon icon-view"></span>
+                                                    <span class="tooltip">Previzualizare rapidă</span>
+                                                </a>
+                                            </li>
+                                            <li class="compare">
+                                                <a href="#compare" data-bs-toggle="modal"
+                                                    class="hover-tooltip tooltip-left box-icon">
+                                                    <span class="icon icon-compare"></span>
+                                                    <span class="tooltip">Adaugă la comparație</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-product-info">
+                                        <a href="{{ product.get_absolute_url }}" class="name-product link fw-medium text-md">
+                                            {{ product.name }}
+                                        </a>
+                                        <p class="price-wrap fw-medium">
+                                            <span class="price-new">
+                                                {% if product.sale_price %}
+                                                    {{ product.sale_price }} €
+                                                {% else %}
+                                                    {{ product.price }} €
+                                                {% endif %}
+                                            </span>
+                                            {% if product.sale_price %}
+                                                <span class="price-old">
+                                                    {{ product.price }} €
+                                                </span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        {# fallback dacă nu ai încă today_picks în context #}
+                        <div class="swiper-slide">
+                            <div class="card-product">
+                                <div class="card-product-wrapper">
+                                    <a href="{% url 'catalog:product_list' %}" class="product-img">
+                                        <img class="img-product lazyload"
+                                            data-src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
+                                            src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
+                                            alt="Snobistic">
+                                    </a>
+                                </div>
+                                <div class="card-product-info">
+                                    <a href="{% url 'catalog:product_list' %}" class="name-product link fw-medium text-md">
+                                        Vezi toate recomandările
+                                    </a>
+                                    <p class="price-wrap fw-medium">
+                                        <span class="price-new">Produse selectate manual</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+                <div class="d-flex d-xl-none mt_5 sw-dot-default sw-pagination-top-pick justify-content-center"></div>
+            </div>
+            <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-top-pick"></div>
+            <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-top-pick"></div>
+        </div>
+    </div>
+</section>
+<!-- /Today’s Picks -->
+
+<!-- Testimonial -->
+<section>
+    <div class="container">
+        <div class="flat-title wow fadeInUp">
+            <h4 class="title">Testimoniale</h4>
+        </div>
+        <div dir="ltr" class="swiper tf-swiper" data-swiper='{
+                "slidesPerView": 1,
+                "spaceBetween": 12,
+                "speed": 800,
+                "observer": true,
+                "observeParents": true,
+                "slidesPerGroup": 1,
+                "pagination": { "el": ".sw-pagination-tes", "clickable": true },
+                "breakpoints": {
+                "768": { "slidesPerView": 2, "spaceBetween": 24, "slidesPerGroup": 2 },
+                "1200": { "slidesPerView": 3, "spaceBetween": 24, "slidesPerGroup": 3}
+                }
+            }'>
+            <div class="swiper-wrapper">
+                <!-- item 1 -->
+                <div class="swiper-slide">
+                    <div class="wg-testimonial wow fadeInLeft">
+                        <div class="content">
+                            <div class="content-top">
+                                <div class="box-author">
+                                    <p class="name-author text-sm fw-medium">Emily T.</p>
+                                    <div class="box-verified text-main">
+                                        <i class="icon-verifi"></i>
+                                        <p class="text-xs fst-italic">
+                                            Cumpărător verificat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="list-star-default">
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                </div>
+                                <p class="text-review text-sm text-main">
+                                    Calitatea hainelor mi-a depășit așteptările. Fiecare piesă se simte premium,
+                                    iar designurile sunt foarte moderne. Sunt încântată de noile mele achiziții!
+                                </p>
+                            </div>
+                            <span class="br-line d-block"></span>
+                            <div class="box-avt">
+                                <div class="avatar">
+                                    <img src="https://themesflat.co/html/vineta/images/testimonial/author/author-fs1.jpg" alt="autor">
+                                </div>
+                                <div class="box-price">
+                                    <p class="name-item text-xs">
+                                        Produs cumpărat: <a href="{% url 'catalog:product_list' %}"
+                                            class="fw-medium text-sm link text-line-clamp-1">Tricou scurt</a>
+                                    </p>
+                                    <p class="price text-md fw-medium">
+                                        150 €
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- item 2 -->
+                <div class="swiper-slide">
+                    <div class="wg-testimonial wow fadeInLeft" data-wow-delay="0.1s">
+                        <div class="content">
+                            <div class="content-top">
+                                <div class="box-author">
+                                    <p class="name-author text-sm fw-medium">Jessica M.</p>
+                                    <div class="box-verified text-main">
+                                        <i class="icon-verifi"></i>
+                                        <p class="text-xs fst-italic">
+                                            Cumpărător verificat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="list-star-default">
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                </div>
+                                <p class="text-review text-sm text-main">
+                                    Ador rochia pe care am cumpărat-o! Țesătura este foarte fină, iar croiul perfect.
+                                    Am primit o mulțime de complimente. Revin cu drag!
+                                </p>
+                            </div>
+                            <span class="br-line d-block"></span>
+                            <div class="box-avt">
+                                <div class="avatar">
+                                    <img src="https://themesflat.co/html/vineta/images/testimonial/author/author-fs2.jpg" alt="autor">
+                                </div>
+                                <div class="box-price">
+                                    <p class="name-item text-xs">
+                                        Produs cumpărat: <a href="{% url 'catalog:product_list' %}"
+                                            class="fw-medium text-sm link text-line-clamp-1">Bluză cu mânecă scurtă</a>
+                                    </p>
+                                    <p class="price text-md fw-medium">
+                                        150 €
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- item 3 -->
+                <div class="swiper-slide">
+                    <div class="wg-testimonial wow fadeInLeft" data-wow-delay="0.2s">
+                        <div class="content">
+                            <div class="content-top">
+                                <div class="box-author">
+                                    <p class="name-author text-sm fw-medium">Lisa P.</p>
+                                    <div class="box-verified text-main">
+                                        <i class="icon-verifi"></i>
+                                        <p class="text-xs fst-italic">
+                                            Cumpărător verificat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="list-star-default">
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                </div>
+                                <p class="text-review text-sm text-main">
+                                    Am fost plăcut surprinsă de cât de repede a ajuns comanda.
+                                    Echipa de suport a fost utilă și receptivă. Experiență excelentă!
+                                </p>
+                            </div>
+                            <span class="br-line d-block"></span>
+                            <div class="box-avt">
+                                <div class="avatar">
+                                    <img src="https://themesflat.co/html/vineta/images/testimonial/author/author-fs3.jpg" alt="autor">
+                                </div>
+                                <div class="box-price">
+                                    <p class="name-item text-xs">
+                                        Produs cumpărat: <a href="{% url 'catalog:product_list' %}"
+                                            class="fw-medium text-sm link text-line-clamp-1">Tricou simplu, mânecă lungă</a>
+                                    </p>
+                                    <p class="price text-md fw-medium">
+                                        150 €
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- item 4 -->
+                <div class="swiper-slide">
+                    <div class="wg-testimonial">
+                        <div class="content">
+                            <div class="content-top">
+                                <div class="box-author">
+                                    <p class="name-author text-sm fw-medium">Emily T.</p>
+                                    <div class="box-verified text-main">
+                                        <i class="icon-verifi"></i>
+                                        <p class="text-xs fst-italic">
+                                            Cumpărător verificat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="list-star-default">
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                </div>
+                                <p class="text-review text-sm text-main">
+                                    Calitatea hainelor mi-a depășit așteptările. Fiecare piesă se simte premium,
+                                    iar designurile sunt foarte moderne. Sunt încântată de noile mele achiziții!
+                                </p>
+                            </div>
+                            <span class="br-line d-block"></span>
+                            <div class="box-avt">
+                                <div class="avatar">
+                                    <img src="https://themesflat.co/html/vineta/images/testimonial/author/author-fs4.jpg" alt="autor">
+                                </div>
+                                <div class="box-price">
+                                    <p class="name-item text-xs">
+                                        Produs cumpărat: <a href="{% url 'catalog:product_list' %}"
+                                            class="fw-medium text-sm link text-line-clamp-1">Tricou scurt</a>
+                                    </p>
+                                    <p class="price text-md fw-medium">
+                                        150 €
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- item 5 -->
+                <div class="swiper-slide">
+                    <div class="wg-testimonial">
+                        <div class="content">
+                            <div class="content-top">
+                                <div class="box-author">
+                                    <p class="name-author text-sm fw-medium">Jessica M.</p>
+                                    <div class="box-verified text-main">
+                                        <i class="icon-verifi"></i>
+                                        <p class="text-xs fst-italic">
+                                            Cumpărător verificat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="list-star-default">
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                    <i class="icon-star"></i>
+                                </div>
+                                <p class="text-review text-sm text-main">
+                                    Ador rochia pe care am cumpărat-o! Țesătura este foarte fină, iar croiul perfect.
+                                    Am primit o mulțime de complimente. Revin cu drag!
+                                </p>
+                            </div>
+                            <span class="br-line d-block"></span>
+                            <div class="box-avt">
+                                <div class="avatar">
+                                    <img src="https://themesflat.co/html/vineta/images/testimonial/author/author-fs5.jpg" alt="autor">
+                                </div>
+                                <div class="box-price">
+                                    <p class="name-item text-xs">
+                                        Produs cumpărat: <a href="{% url 'catalog:product_list' %}"
+                                            class="fw-medium text-sm link text-line-clamp-1">Tricou lejer</a>
+                                    </p>
+                                    <p class="price text-md fw-medium">
+                                        150 €
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="sw-dot-default sw-pagination-tes justify-content-center"></span>
+        </div>
+    </div>
+</section>
+<!-- /Testimonial -->
+
+<!-- Brand -->
+<div class="flat-spacing-2 fade-edge">
+    <div class="container">
+        <div class="infiniteslide tf-brand" data-clone="2" data-style="left" data-speed="80">
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/zara.png" alt="brand">
+            </div>
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/bear.png" alt="brand">
+            </div>
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/nike.png" alt="brand">
+            </div>
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/asos.png" alt="brand">
+            </div>
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/burberry.png" alt="brand">
+            </div>
+            <div class="brand-item">
+                <img src="https://themesflat.co/html/vineta/images/brand/forever.png" alt="brand">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /Brand -->
+
+<!-- Shop Gram -->
+<section class="flat-spacing-4 pt-0">
+    <div class="container">
+        <div class="flat-title wow fadeInUp">
+            <h4 class="title">Shop by @Gram</h4>
+        </div>
+        <div dir="ltr" class="swiper tf-swiper" data-swiper='{
+                "slidesPerView": 2,
+                "spaceBetween": 10,
+                "speed": 800,
+                "observer": true,
+                "observeParents": true,
+                "slidesPerGroup": 2,
+                "pagination": { "el": ".sw-pagination-gallery", "clickable": true },
+                "breakpoints": {
+                "768": { "slidesPerView": 3},
+                "1200": { "slidesPerView": 5}
+                }
+            }'>
+            <div class="swiper-wrapper">
+                <!-- item 1 -->
+                <div class="swiper-slide">
+                    <div class="gallery-item hover-img hover-overlay wow fadeInLeft">
+                        <div class="image img-style">
+                            <img src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-1.jpg"
+                                data-src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-1.jpg" alt="" class="lazyload">
+                        </div>
+                        <a href="{% url 'catalog:product_list' %}" class="box-icon hover-tooltip">
+                            <span class="icon icon-cart2"></span>
+                            <span class="tooltip">Vezi produse</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- item 2 -->
+                <div class="swiper-slide">
+                    <div class="gallery-item hover-img hover-overlay wow fadeInLeft" data-wow-delay="0.1s">
+                        <div class="image img-style">
+                            <img src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-2.jpg"
+                                data-src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-2.jpg" alt="" class="lazyload">
+                        </div>
+                        <a href="{% url 'catalog:product_list' %}" class="box-icon hover-tooltip">
+                            <span class="icon icon-cart2"></span>
+                            <span class="tooltip">Vezi produse</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- item 3 -->
+                <div class="swiper-slide">
+                    <div class="gallery-item hover-img hover-overlay wow fadeInLeft" data-wow-delay="0.2s">
+                        <div class="image img-style">
+                            <img src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-3.jpg"
+                                data-src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-3.jpg" alt="" class="lazyload">
+                        </div>
+                        <a href="{% url 'catalog:product_list' %}" class="box-icon hover-tooltip">
+                            <span class="icon icon-cart2"></span>
+                            <span class="tooltip">Vezi produse</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- item 4 -->
+                <div class="swiper-slide">
+                    <div class="gallery-item hover-img hover-overlay wow fadeInLeft" data-wow-delay="0.3s">
+                        <div class="image img-style">
+                            <img src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-4.jpg"
+                                data-src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-4.jpg" alt="" class="lazyload">
+                        </div>
+                        <a href="{% url 'catalog:product_list' %}" class="box-icon hover-tooltip">
+                            <span class="icon icon-cart2"></span>
+                            <span class="tooltip">Vezi produse</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- item 5 -->
+                <div class="swiper-slide">
+                    <div class="gallery-item hover-img hover-overlay wow fadeInLeft" data-wow-delay="0.4s">
+                        <div class="image img-style">
+                            <img src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-5.jpg"
+                                data-src="https://themesflat.co/html/vineta/images/gallery/fashion/gallery-5.jpg" alt="" class="lazyload">
+                        </div>
+                        <a href="{% url 'catalog:product_list' %}" class="box-icon hover-tooltip">
+                            <span class="icon icon-cart2"></span>
+                            <span class="tooltip">Vezi produse</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <span class="d-flex d-xl-none sw-dot-default sw-pagination-gallery justify-content-center"></span>
+        </div>
+    </div>
+</section>
+<!-- /Shop Gram -->
+
+<!-- Icon box -->
+<div class="line-top flat-spacing-5">
+  <div class="container">
+    <div class="mw-1 m-auto">
+      <div dir="ltr" class="swiper tf-swiper wow fadeInUp" data-swiper='{
+              "slidesPerView": 1,
+              "spaceBetween": 12,
+              "speed": 800,
+              "preventInteractionOnTransition": false,
+              "touchStartPreventDefault": false,
+              "pagination": { "el": ".sw-pagination-iconbox", "clickable": true },
+              "breakpoints": {
+                "575": { "slidesPerView": 2, "spaceBetween": 12, "slidesPerGroup": 2},
+                "768": { "slidesPerView": 3, "spaceBetween": 24, "slidesPerGroup": 2},
+                "1200": { "slidesPerView": 4, "spaceBetween": 42, "slidesPerGroup": 2}
+              }
+            }'>
+        <div class="swiper-wrapper">
+          <div class="swiper-slide">
+            <div class="tf-icon-box style-2">
+              <div class="box-icon">
+                <i class="icon icon-shipping" aria-hidden="true"></i>
+              </div>
+              <div class="content">
+                <div class="title">Livrare gratuită</div>
+                <p class="desc">Transport gratuit la toate comenzile</p>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide">
+            <div class="tf-icon-box style-2">
+              <div class="box-icon">
+                <i class="icon icon-gift" aria-hidden="true"></i>
+              </div>
+              <div class="content">
+                <div class="title">Ambalaj cadou</div>
+                <p class="desc">Ambalare perfectă pentru a dărui</p>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide">
+            <div class="tf-icon-box style-2">
+              <div class="box-icon">
+                <i class="icon icon-return" aria-hidden="true"></i>
+              </div>
+              <div class="content">
+                <div class="title">Retur gratuit</div>
+                <p class="desc">Retur în 14 zile</p>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide">
+            <div class="tf-icon-box style-2">
+              <div class="box-icon">
+                <i class="icon icon-support" aria-hidden="true"></i>
+              </div>
+              <div class="content">
+                <div class="title">Suport online</div>
+                <p class="desc">Asistență pentru clienți 24/7</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex d-xl-none sw-dot-default sw-pagination-iconbox justify-content-center"></div>
       </div>
     </div>
-  {% empty %}
-    <p>Nu există licitații active momentan.</p>
-  {% endfor %}
+  </div>
 </div>
+<!-- /Icon box -->
+
 {% endblock %}

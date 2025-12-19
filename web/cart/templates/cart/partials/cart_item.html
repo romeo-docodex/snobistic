@@ -1,0 +1,21 @@
+<tr>
+  <td>
+    <a href="{{ item.product.get_absolute_url }}">
+      <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}" width="80">
+      {{ item.product.title }}
+    </a>
+    <div class="text-muted small mt-1">
+      Cantitate: 1
+    </div>
+  </td>
+  <td>{{ item.product.price }} RON</td>
+  <td>{{ item.get_cost }} RON</td>
+  <td>
+    <form method="post" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="remove">
+      <input type="hidden" name="item_id" value="{{ item.id }}">
+      <button class="btn btn-sm btn-danger">Șterge</button>
+    </form>
+  </td>
+</tr>

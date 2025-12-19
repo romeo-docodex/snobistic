@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Termeni & Condiții – Snobistic{% endblock %}
+
+{% block meta_description %}
+Termeni și Condiții Snobistic – detalii despre utilizarea platformei, conturi, plăți, retururi și responsabilitățile părților.
+{% endblock %}
+
+{% block content %}
+  <h1>Termeni și Condiții</h1>
+
+  <section class="mt-4">
+    <h2>1. Registrare și cont</h2>
+    <p>Prin crearea unui cont Snobistic, sunteți de acord cu aceste Termeni &amp; Condiții...</p>
+  </section>
+
+  <section class="mt-4">
+    <h2>2. Plata și taxele</h2>
+    <p>Toate plățile se efectuează prin gateway-ul nostru securizat...</p>
+  </section>
+
+  <section class="mt-4">
+    <h2>3. Politica de retur</h2>
+    <p>Pentru produsele achiziționate, aveți dreptul de retur în conformitate cu...</p>
+  </section>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
+{% endblock %}

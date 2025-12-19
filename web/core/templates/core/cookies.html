@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Politica de cookies – Snobistic{% endblock %}
+
+{% block meta_description %}
+Află cum folosește Snobistic cookie-uri pentru funcționarea site-ului, analiză trafic și personalizarea experienței.
+{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Politica de cookies</h1>
+
+  <h2>Ce sunt cookie-urile?</h2>
+  <p>Cookie-urile sunt fișiere text mici stocate pe dispozitivul tău, folosite pentru ca site-ul să funcționeze corect și pentru a îmbunătăți experiența.</p>
+
+  <h2>Tipuri de cookie-uri</h2>
+  <ul>
+    <li>Cookie-uri strict necesare – pentru autentificare, coș, securitate.</li>
+    <li>Cookie-uri de analiză – pentru a înțelege cum este utilizată platforma.</li>
+    <li>Cookie-uri de marketing – dacă vor exista campanii de remarketing.</li>
+  </ul>
+
+  <h2>Gestionarea cookie-urilor</h2>
+  <p>Poți controla și șterge cookie-urile din setările browserului. Dezactivarea lor poate afecta funcționarea corectă a anumitor funcționalități.</p>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
+{% endblock %}

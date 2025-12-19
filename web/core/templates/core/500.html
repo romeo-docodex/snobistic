@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Eroare internă – Snobistic{% endblock %}
+{% block content %}
+  <div class="text-center py-5">
+    <h1 class="display-1">500</h1>
+    <p class="lead">Oops! A apărut o eroare. Lucrăm deja la rezolvare.</p>
+    <a href="{% url 'core:home' %}" class="btn btn-primary">Înapoi la Acasă</a>
+  </div>
+{% endblock %}

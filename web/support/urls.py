@@ -4,12 +4,18 @@ from . import views
 app_name = 'support'
 
 urlpatterns = [
-    # User
-    path('', views.user_ticket_list_view, name='ticket_list'),
-    path('nou/', views.create_ticket_view, name='create_ticket'),
-    path('ticket/<int:ticket_id>/', views.ticket_detail_view, name='ticket_detail'),
+    # Coada de chat live suport: /suport/chat/
+    path('chat/', views.chat_queue, name='chat_queue'),
 
-    # Admin / Staff
-    path('admin/', views.admin_ticket_list_view, name='admin_ticket_list'),
-    path('admin/<int:ticket_id>/', views.admin_ticket_detail_view, name='admin_ticket_detail'),
+    # Listă tichete: /suport/tichete/
+    path('tichete/', views.tickets_list, name='tickets_list'),
+
+    # Creare tichet: /suport/tichete/creare/
+    path('tichete/creare/', views.ticket_create, name='ticket_create'),
+
+    # Detaliu tichet: /suport/tichete/<id>/
+    path('tichete/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),
+
+    # Editare tichet: /suport/tichete/<id>/editare/
+    path('tichete/<int:ticket_id>/editare/', views.ticket_update, name='ticket_update'),
 ]

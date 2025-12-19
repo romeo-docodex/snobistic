@@ -1,0 +1,213 @@
+{# dashboard/seller/products_list.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Produsele mele – Panou Vânzător – Snobistic{% endblock %}
+
+{% block content %}
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Produsele mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'dashboard:seller_dashboard' %}">Panou vânzător</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Produsele mele</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {# ==== Sidebar desktop – meniu vânzător ==== #}
+      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+        <ul class="my-account-nav">
+
+          {# 1. Înapoi la dashboard utilizator #}
+          <li>
+            <a href="{% url 'accounts:profile' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              &larr; Înapoi la profil
+            </a>
+          </li>
+
+          {# 2. Panou vânzător #}
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Panou vânzător
+            </a>
+          </li>
+
+          {# 3. Produsele mele (pagina curentă) #}
+          <li>
+            <a href="{% url 'dashboard:products_list' %}"
+               class="text-sm link fw-medium my-account-nav-item active">
+              Produsele mele
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'dashboard:auctions_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Licitațiile mele
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:sold_list' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Articole vândute
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'dashboard:wallet' %}"
+               class="text-sm link fw-medium my-account-nav-item">
+              Wallet & încasări
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {# ==== Conținut principal – listă produse ==== #}
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">
+          Produsele listate în magazinul tău
+        </h6>
+        <p class="text-sm text-grey mb-4">
+          Administrează toate articolele tale active sau în curs de validare pe Snobistic.
+        </p>
+
+        <div class="widget-inner-address">
+          <div class="account-address-item">
+            {# Header acțiuni #}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+              <div>
+                <p class="text-sm mb-0 text-grey">
+                  Total produse: <strong>{{ products|length }}</strong>
+                </p>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'dashboard:products_list' %}?export=csv"
+                   class="tf-btn btn-out-line-dark">
+                  <i class="fas fa-file-csv me-1"></i>
+                  Export CSV
+                </a>
+                <a href="{% url 'catalog:product_create' %}"
+                   class="tf-btn btn-fill">
+                  <i class="fas fa-plus-circle me-1"></i>
+                  Adaugă produs nou
+                </a>
+              </div>
+            </div>
+
+            {# Tabel produse #}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Imagine</th>
+                    <th>Titlu</th>
+                    <th>Subcategorie</th>
+                    <th>Status</th>
+                    <th>Creat la</th>
+                    <th>Validat la</th>
+                    <th>Preț</th>
+                    <th>SKU</th>
+                    <th class="text-end">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in products %}
+                  <tr>
+                    <td style="width: 80px;">
+                      {% if p.main_image %}
+                        <img src="{{ p.main_image.url }}" class="img-fluid rounded" alt="{{ p.title }}" />
+                      {% else %}
+                        <img src="{% static 'images/placeholder-sm.png' %}" class="img-fluid rounded" alt="Fără imagine" />
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'catalog:product_detail' p.slug %}" class="link-primary text-sm fw-medium">
+                        {{ p.title }}
+                      </a>
+                    </td>
+                    <td class="text-sm">
+                      {{ p.category.name }}
+                    </td>
+                    <td>
+                      {% if p.is_active %}
+                        <span class="badge bg-success text-xs">Validat</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark text-xs">În validare</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {{ p.created_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td class="text-xs text-grey">
+                      {% if p.is_active %}
+                        {{ p.updated_at|date:"Y-m-d H:i" }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td class="text-sm">
+                      {{ p.price }} RON
+                    </td>
+                    <td class="text-xs">
+                      <code>{{ p.sku }}</code>
+                    </td>
+                    <td class="text-end text-nowrap">
+                      <a href="{% url 'catalog:product_update' p.pk %}"
+                         class="btn btn-sm btn-outline-primary me-1">
+                        <i class="fa-solid fa-gear"></i>
+                      </a>
+                      <form action="{% url 'catalog:product_delete' p.pk %}"
+                            method="post"
+                            class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Ștergi acest produs?')">
+                          <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                      Nu ai niciun produs postat în acest moment.
+                      <br>
+                      <a href="{% url 'catalog:product_create' %}" class="text-primary text-decoration-underline">
+                        Adaugă primul tău produs.
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div> {# /account-address-item #}
+        </div> {# /widget-inner-address #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

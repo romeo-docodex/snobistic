@@ -1,32 +1,55 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% block title %}Contact – Snobistic{% endblock %}
-{% block content %}
-<h1>Contact</h1>
-<p>Ne poți scrie completând formularul de mai jos:</p>
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.non_field_errors }}
-  <div class="mb-3">
-    {{ form.name.label_tag }}  
-    {{ form.name }}
-    {{ form.name.errors }}
+{% block meta_description %}
+Contactează echipa Snobistic pentru întrebări legate de cont, comenzi, licitații, plăți sau retururi. Suntem aici să te ajutăm.
+{% endblock %}
+
+{% block content %}
+
+  <h1>Contactează-ne</h1>
+
+  {% if messages %}
+    <div class="mt-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-2" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <form method="post" action="">
+        {% csrf_token %}
+        {{ form|crispy }}
+
+        <button type="submit" class="btn btn-primary mt-3">
+          Trimite mesajul
+        </button>
+      </form>
+    </div>
+
+    <div class="col-md-6">
+      <h5>Date de contact</h5>
+      <p><i class="fas fa-map-marker-alt me-2"></i>Str. Modei 10, București, România</p>
+      <p><i class="fas fa-phone me-2"></i>+40 741 123 456</p>
+      <p><i class="fas fa-envelope me-2"></i>support@snobistic.ro</p>
+
+      <div class="mt-3">
+        <iframe
+          src="https://maps.google.com/…"
+          width="100%" height="200"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
   </div>
-  <div class="mb-3">
-    {{ form.email.label_tag }}  
-    {{ form.email }}
-    {{ form.email.errors }}
-  </div>
-  <div class="mb-3">
-    {{ form.subject.label_tag }}  
-    {{ form.subject }}
-    {{ form.subject.errors }}
-  </div>
-  <div class="mb-3">
-    {{ form.message.label_tag }}  
-    {{ form.message }}
-    {{ form.message.errors }}
-  </div>
-  <button class="btn btn-primary">Trimite</button>
-</form>
+
+  <a href="{% url 'core:home' %}" class="btn btn-outline-primary mt-4">Înapoi la Acasă</a>
 {% endblock %}

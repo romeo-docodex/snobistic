@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Verificare identitate (KYC) – Snobistic{% endblock %}
+
+{% block content %}
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Verificare identitate (KYC)</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Mic styling dedicat centrului KYC */
+
+  .kyc-stepper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .kyc-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .kyc-step-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 2px solid rgba(148, 163, 184, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .kyc-step-dot-inner {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background-color: transparent;
+  }
+
+  .kyc-step.is-active .kyc-step-dot {
+    border-color: #0f172a;
+  }
+
+  .kyc-step.is-active .kyc-step-dot-inner {
+    background-color: #0f172a;
+  }
+
+  .kyc-step.is-completed .kyc-step-dot {
+    border-color: #16a34a;
+    background-color: #16a34a;
+    color: #fff;
+    font-size: 10px;
+  }
+
+  .kyc-step.is-rejected .kyc-step-dot {
+    border-color: #dc2626;
+    background-color: #dc2626;
+    color: #fff;
+    font-size: 10px;
+  }
+
+  .kyc-step-label {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .kyc-step-label span {
+    display: block;
+  }
+
+  .kyc-step-label .title {
+    font-weight: 600;
+  }
+
+  .kyc-step-label .subtitle {
+    color: #64748b;
+  }
+</style>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {% include "accounts/profile/_account_sidebar.html" with account_section="kyc" %}
+
+      <div class="my-acount-content account-dashboard">
+        <div class="mb-4">
+          <h6 class="display-xs title-form mb-2">Centru verificare identitate (KYC)</h6>
+          <p class="text-xs text-muted mb-0">
+            Pentru a proteja atât cumpărătorii, cât și vânzătorii, avem nevoie să îți verificăm identitatea.
+            Aici poți vedea <strong>statusul KYC</strong>, <strong>documentele încărcate</strong> și
+            poți <strong>încărca documente noi</strong>.
+          </p>
+        </div>
+
+        {# 1. Card Status KYC #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-2">
+                <div>
+                  <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                    Status KYC
+                  </p>
+                  <h6 class="mb-0">
+                    {% if profile.get_kyc_status_display %}
+                      {{ profile.get_kyc_status_display }}
+                    {% else %}
+                      Neînceput
+                    {% endif %}
+                  </h6>
+                </div>
+                <div class="mt-2 mt-md-0 text-2xs text-muted">
+                  {% with last_doc=documents|first %}
+                    {% if profile.kyc_approved_at %}
+                      Ultima actualizare: {{ profile.kyc_approved_at|date:"d.m.Y H:i" }}
+                    {% elif last_doc %}
+                      Ultima actualizare: {{ last_doc.updated_at|date:"d.m.Y H:i" }}
+                    {% else %}
+                      Ultima actualizare: – 
+                    {% endif %}
+                  {% endwith %}
+                </div>
+              </div>
+
+              {% with status=profile.kyc_status %}
+              <div class="kyc-stepper">
+                {# Step 1: Neînceput #}
+                <div class="kyc-step
+                            {% if status == 'NOT_STARTED' %}is-active{% endif %}
+                            {% if status in 'IN_REVIEW APPROVED REJECTED' %} is-completed{% endif %}">
+                  <div class="kyc-step-dot">
+                    {% if status in 'IN_REVIEW APPROVED REJECTED' %}
+                      ✓
+                    {% else %}
+                      <div class="kyc-step-dot-inner"></div>
+                    {% endif %}
+                  </div>
+                  <div class="kyc-step-label">
+                    <span class="title">Neînceput</span>
+                    <span class="subtitle">Nu ai încărcat niciun document sau nu a început verificarea.</span>
+                  </div>
+                </div>
+
+                {# Step 2: În verificare #}
+                <div class="kyc-step
+                            {% if status == 'IN_REVIEW' %}is-active{% endif %}
+                            {% if status in 'APPROVED REJECTED' %} is-completed{% endif %}">
+                  <div class="kyc-step-dot">
+                    {% if status in 'APPROVED REJECTED' %}
+                      ✓
+                    {% else %}
+                      <div class="kyc-step-dot-inner"></div>
+                    {% endif %}
+                  </div>
+                  <div class="kyc-step-label">
+                    <span class="title">În verificare</span>
+                    <span class="subtitle">Echipa noastră verifică documentele trimise.</span>
+                  </div>
+                </div>
+
+                {# Step 3: Aprobat / Respins #}
+                <div class="kyc-step
+                            {% if status == 'APPROVED' %}is-active is-completed{% endif %}
+                            {% if status == 'REJECTED' %}is-active is-rejected{% endif %}">
+                  <div class="kyc-step-dot">
+                    {% if status == 'APPROVED' %}
+                      ✓
+                    {% elif status == 'REJECTED' %}
+                      !
+                    {% else %}
+                      <div class="kyc-step-dot-inner"></div>
+                    {% endif %}
+                  </div>
+                  <div class="kyc-step-label">
+                    <span class="title">
+                      {% if status == 'APPROVED' %}
+                        Aprobat
+                      {% elif status == 'REJECTED' %}
+                        Respins
+                      {% else %}
+                        Aprobat / Respins
+                      {% endif %}
+                    </span>
+                    <span class="subtitle">
+                      {% if status == 'APPROVED' %}
+                        Identitatea ta a fost confirmată. Beneficiezi de un nivel mai mare de încredere.
+                      {% elif status == 'REJECTED' %}
+                        Cel puțin un document a fost respins. Vei găsi motivul mai jos, la documente.
+                      {% else %}
+                        După verificare, primești rezultat: aprobat sau respins (cu motiv).
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        {# 2. Card Documente încărcate #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                <div>
+                  <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                    Documente încărcate
+                  </p>
+                  <h6 class="mb-0">Istoricul documentelor KYC</h6>
+                </div>
+              </div>
+
+              {% if documents %}
+                <div class="table-responsive">
+                  <table class="table align-middle mb-0">
+                    <thead class="text-2xs text-muted">
+                      <tr>
+                        <th scope="col">Tip document</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Ultima actualizare</th>
+                        <th scope="col">Motiv respingere</th>
+                        <th scope="col" class="text-end">Acțiuni</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-xs">
+                      {% for doc in documents %}
+                        <tr>
+                          <td>
+                            {{ doc.get_document_type_display }}
+                            {% if doc.is_primary %}
+                              <span class="badge rounded-pill bg-primary text-white text-2xs ms-1">
+                                Principal
+                              </span>
+                            {% endif %}
+                          </td>
+                          <td>
+                            {{ doc.get_status_display }}
+                          </td>
+                          <td>
+                            {{ doc.updated_at|date:"d.m.Y H:i" }}
+                          </td>
+                          <td>
+                            {% if doc.status == 'REJECTED' and doc.rejection_reason %}
+                              {{ doc.rejection_reason }}
+                            {% else %}
+                              <span class="text-muted">–</span>
+                            {% endif %}
+                          </td>
+                          <td class="text-end">
+                            <form method="post"
+                                  action="{% url 'accounts:kyc_document_delete' pk=doc.pk %}"
+                                  class="d-inline">
+                              {% csrf_token %}
+                              <button type="submit"
+                                      class="btn btn-sm btn-outline-danger text-xs"
+                                      {% if doc.status == 'APPROVED' or doc.status == 'IN_REVIEW' %}disabled{% endif %}>
+                                Șterge
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="text-xs text-muted mb-0">
+                  Nu ai încărcat încă niciun document. Poți începe prin formularul de mai jos.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# 3. Upload document nou + Info legal #}
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                Încarcă document nou
+              </p>
+              <h6 class="mb-3">Adaugă un document pentru verificare</h6>
+
+              {% if form %}
+                <form method="post"
+                      enctype="multipart/form-data"
+                      class="form-edit-account"
+                      novalidate>
+                  {% csrf_token %}
+                  {{ form.non_field_errors }}
+
+                  <div class="mb-3">
+                    {{ form.document_type|as_crispy_field }}
+                  </div>
+                  <div class="mb-3">
+                    {{ form.file|as_crispy_field }}
+                  </div>
+
+                  <p class="text-2xs text-muted mb-3">
+                    Formate acceptate: PDF, JPG, PNG. Dimensiune maximă recomandată:
+                    <strong>10 MB</strong> per fișier. De obicei, verificarea are loc în
+                    <strong>24–48 de ore lucrătoare</strong>, dar poate dura mai mult în perioade aglomerate.
+                  </p>
+
+                  <button type="submit" class="tf-btn animate-btn">
+                    Încarcă document
+                  </button>
+                </form>
+              {% else %}
+                <p class="text-xs text-muted mb-0">
+                  Sistemul KYC nu este disponibil momentan. Te rugăm să revii mai târziu.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
+                De ce este necesar KYC?
+              </p>
+              <h6 class="mb-3">Siguranța tranzacțiilor pe Snobistic</h6>
+
+              <p class="text-xs text-muted mb-2">
+                Verificarea identității (KYC – „Know Your Customer”) este o măsură standard în
+                platformele de vânzare și plăți online. Ne ajută să prevenim fraudele, spălarea banilor
+                și utilizarea abuzivă a conturilor.
+              </p>
+
+              <p class="text-xs text-muted mb-2">
+                Documentele tale sunt folossite exclusiv pentru a confirma că <strong>tu ești reala
+                persoană din spatele contului</strong> și pentru a permite tranzacții de încredere între cumpărători
+                și vânzători. Datele sunt păstrate în siguranță și nu sunt partajate cu terți în scopuri de marketing.
+              </p>
+
+              <p class="text-xs text-muted mb-0">
+                Dacă ai întrebări legate de verificare sau de modul în care îți protejăm datele,
+                ne poți scrie oricând în secțiunea <strong>Suport</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div> {# /.my-acount-content #}
+    </div> {# /.main-content-account #}
+
+  </div>
+</div>
+
+{% endblock %}

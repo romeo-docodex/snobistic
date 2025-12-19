@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Adresele mele – Snobistic{% endblock %}
+
+{% block content %}
+<!-- Title Page -->
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Adresele mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Main Content -->
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <!-- sidebar-account (mobil) -->
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <!-- Account -->
+    <div class="main-content-account">
+      <!-- Sidebar desktop -->
+      {% include "accounts/profile/_account_sidebar.html" with account_section="addresses" %}
+
+      <!-- Content -->
+      <div class="my-acount-content account-address">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="title-account mb-0">
+            Adresele mele ({{ addresses|length }})
+          </h6>
+          <a href="{% url 'accounts:address_form' %}"
+             class="tf-btn btn-add-address animate-btn">
+            Adaugă adresă nouă
+          </a>
+        </div>
+
+        <p class="text-xxs text-grey mb-3">
+          Poți salva mai multe adrese de livrare și facturare. Alege una
+          implicită pentru livrare și, dacă vrei, una pentru facturare.
+        </p>
+
+        <div class="widget-inner-address">
+          {% if addresses %}
+            <ul class="list-account-address tf-grid-layout md-col-2">
+              {% for address in addresses %}
+                <li class="account-address-item">
+                  {# Etichete de tip + implicită #}
+                  <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
+                    {% if address.is_default_shipping and address.is_default_billing %}
+                      <span class="badge bg-dark text-white text-xxs">
+                        Adresă principală (livrare + facturare)
+                      </span>
+                      <span class="badge bg-success text-xxs">
+                        Implicită
+                      </span>
+                    {% elif address.is_default_shipping %}
+                      <span class="badge bg-dark text-white text-xxs">
+                        Adresa de livrare principală
+                      </span>
+                      <span class="badge bg-success text-xxs">
+                        Implicită
+                      </span>
+                    {% elif address.is_default_billing %}
+                      <span class="badge bg-primary text-xxs">
+                        Adresa de facturare principală
+                      </span>
+                      <span class="badge bg-success text-xxs">
+                        Implicită
+                      </span>
+                    {% else %}
+                      <span class="badge bg-light text-dark text-xxs">
+                        Adresă salvată
+                      </span>
+                    {% endif %}
+
+                    {% if address.is_billing %}
+                      <span class="badge bg-outline text-xxs">
+                        Tip: Livrare + facturare
+                      </span>
+                    {% else %}
+                      <span class="badge bg-outline text-xxs">
+                        Tip: Doar livrare
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <p class="title text-md fw-medium mb-2">
+                    {{ address.street_address }},
+                    {{ address.city }}
+                  </p>
+
+                  <div class="info-detail">
+                    <div class="box-infor">
+                      <p class="text-sm mb-1">
+                        <strong>{{ request.user.full_name }}</strong>
+                      </p>
+                      {% if request.user.profile.phone %}
+                        <p class="text-sm mb-1">
+                          Telefon: {{ request.user.profile.phone }}
+                        </p>
+                      {% endif %}
+
+                      {% if address.building_info %}
+                        <p class="text-sm mb-0">
+                          {{ address.building_info }}
+                        </p>
+                      {% endif %}
+
+                      <p class="text-sm mb-0">
+                        {{ address.city }}, {{ address.region }}
+                      </p>
+                      <p class="text-sm mb-0">
+                        {{ address.postal_code }}, {{ address.country.name }}
+                      </p>
+
+                      {% if address.is_billing %}
+                        <p class="text-xxs text-grey mt-1 mb-0">
+                          Această adresă poate fi folosită și pentru facturare.
+                        </p>
+                      {% endif %}
+                    </div>
+
+                    <div class="box-btn d-flex flex-wrap gap-2 mt-3">
+                      <a href="{% url 'accounts:address_form' pk=address.pk %}"
+                         class="tf-btn btn-out-line-dark">
+                        Editează
+                      </a>
+
+                      <form method="post"
+                            action="{% url 'accounts:address_delete' pk=address.pk %}"
+                            class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="tf-btn btn-out-line-dark">
+                          Șterge
+                        </button>
+                      </form>
+
+                      {# Setare implicită se face acum din formularul de editare #}
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="account-address-item">
+              <p class="text-md mb-1">Nu ai adrese salvate încă.</p>
+              <p class="text-xxs text-grey mb-2">
+                Adaugă o adresă de livrare pentru a comanda mai rapid data viitoare.
+              </p>
+              <a href="{% url 'accounts:address_form' %}" class="tf-btn animate-btn">
+                Adaugă prima adresă
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div> <!-- /my-acount-content -->
+    </div> <!-- /main-content-account -->
+  </div>
+</div>
+{% endblock %}

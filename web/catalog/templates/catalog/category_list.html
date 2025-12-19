@@ -1,0 +1,6 @@
+{% extends "catalog/product_list.html" %}
+{% block title %}{{ subcategory.name }} – Snobistic{% endblock %}
+{% block content %}
+  <h1>{{ subcategory.name }}</h1>
+  {{ block.super }}
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Adaugă produs — Imagini{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap position-relative">
+
+      <!-- STÂNGA: FORMULAR IMAGINI -->
+      <div class="left">
+        <div class="heading mb-3">
+          <div class="small text-secondary mb_8">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
+          </div>
+          <div class="title text-lg fw-medium mb_16">
+            Adaugă imagini
+          </div>
+          <p class="text-sm text-main mb_0">
+            Încarcă cel puțin <strong>4 fotografii clare</strong>, inclusiv o imagine cu
+            <strong>eticheta de compoziție</strong>.
+          </p>
+        </div>
+
+        <div class="wrap">
+          <form id="wizardForm"
+                method="post"
+                enctype="multipart/form-data"
+                class="form-login"
+                novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb_16">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="mb_16">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.main_image.label }}
+                <span class="text-danger">*</span>
+              </label>
+              {{ form.main_image }}
+              {% for error in form.main_image.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted mt-1">
+                Alege fotografia principală (vedere din față a produsului).
+              </div>
+            </div>
+
+            <div class="mb_16">
+              <label class="body-text-1 mb-1 d-block">
+                {{ form.extra_images.label }}
+              </label>
+              {{ form.extra_images }}
+              {% if form.extra_images.help_text %}
+                <div class="form-text small text-muted">
+                  {{ form.extra_images.help_text }}
+                </div>
+              {% else %}
+                <div class="form-text small text-muted">
+                  Adaugă cel puțin 3 fotografii suplimentare: spate, detalii, etichetă de compoziție, eventual mici defecte.
+                </div>
+              {% endif %}
+              {% for error in form.extra_images.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </form>
+
+          {# ==== BUTOANE MOBILE (când .right e ascuns) ==== #}
+          <div class="button-submit d-flex gap-2 mt-3 d-md-none">
+            <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+              <span class="text">Renunță</span>
+            </a>
+            <button class="tf-btn btn-fill w-50 text-transform-none"
+                    type="submit"
+                    form="wizardForm">
+              <span class="text text-button">Continuă</span>
+            </button>
+          </div>
+          {# ==== END butoane mobile ==== #}
+        </div>
+      </div>
+
+      <!-- DREAPTA: PREVIEW + SFATURI + BUTOANE -->
+      <div class="right">
+        <div class="tf-page-cart-sidebar">
+          <div class="cart-box order-box mb_20">
+            <div class="title text-lg fw-medium mb_12">Previzualizare imagini</div>
+
+            <div class="mb_16">
+              <p class="text-sm text-main mb_8">Imagine principală</p>
+              <div id="main-image-preview"
+                   class="border rounded-3 p-2 d-flex align-items-center justify-content-center"
+                   style="min-height: 180px; background: #fafafa;">
+                <span class="text-sm text-muted">Nicio imagine selectată încă</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm text-main mb_8">Imagini suplimentare</p>
+              <div id="extra-images-preview"
+                   class="border rounded-3 p-2 d-flex flex-wrap gap-2"
+                   style="min-height: 100px; background: #fafafa;">
+                <span class="text-sm text-muted">Selectează una sau mai multe imagini suplimentare</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cart-box order-box">
+            <div class="title text-lg fw-medium mb_8">Cum faci poze bune</div>
+            <ul class="text-secondary text-sm mb_20">
+              <li class="mb-1">Folosește lumină naturală, fără umbre puternice.</li>
+              <li class="mb-1">Fotografiază produsul din față, spate și în detaliu (etichetă, material, eventuale defecte).</li>
+              <li class="mb-1">Alege un fundal simplu – ideal un perete sau o suprafață uniformă.</li>
+            </ul>
+
+            {# ==== BUTOANE DOAR DESKTOP / TABLETĂ ==== #}
+            <div class="button-submit d-none d-md-flex gap-2">
+              <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+                <span class="text">Renunță</span>
+              </a>
+              <button class="tf-btn btn-fill w-50 text-transform-none"
+                      type="submit"
+                      form="wizardForm">
+                <span class="text text-button">Continuă</span>
+              </button>
+            </div>
+            {# ==== END butoane desktop ==== #}
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const mainInput = document.querySelector('input[name$="-main_image"]');
+    const extraInput = document.querySelector('input[name$="-extra_images"]');
+    const mainPreview = document.querySelector('#main-image-preview');
+    const extraPreview = document.querySelector('#extra-images-preview');
+
+    function clearPreview(container) {
+      if (!container) return;
+      container.innerHTML = '';
+    }
+
+    function renderPreview(input, container, multiple) {
+      if (!input || !container || !input.files) return;
+      clearPreview(container);
+
+      const files = Array.from(input.files);
+      if (!files.length) {
+        container.innerHTML = '<span class="text-sm text-muted">Nicio imagine selectată</span>';
+        return;
+      }
+
+      files.forEach(function (file) {
+        if (!file.type.startsWith('image/')) return;
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'img-fluid rounded';
+        img.style.maxHeight = multiple ? '90px' : '220px';
+        img.style.objectFit = 'cover';
+
+        const wrapper = document.createElement('div');
+        if (multiple) {
+          wrapper.className = 'me-1 mb-1';
+        }
+        wrapper.appendChild(img);
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    if (mainInput && mainPreview) {
+      mainInput.addEventListener('change', function () {
+        renderPreview(mainInput, mainPreview, false);
+      });
+    }
+
+    if (extraInput && extraPreview) {
+      extraInput.addEventListener('change', function () {
+        renderPreview(extraInput, extraPreview, true);
+      });
+    }
+  });
+</script>
+{% endblock %}

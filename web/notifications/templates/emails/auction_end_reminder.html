@@ -1,0 +1,9 @@
+{% include "emails/partials/header.html" %}
+<p>Bună, {{ user.first_name }},</p>
+<p>Mai sunt <strong>{{ hours_left }} ore</strong> până la încheierea licitației pentru <strong>{{ auction.product.title }}</strong>.</p>
+<p style="text-align:center;">
+  <a href="{{ auction_detail_url }}" style="background:#17a2b8;color:#fff;padding:10px 20px;text-decoration:none;">
+    Urmărește licitația
+  </a>
+</p>
+{% include "emails/partials/footer.html" %}
