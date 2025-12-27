@@ -1,8 +1,5 @@
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -43,7 +40,7 @@
 /*--------- Abstracts variable ---------- */
 @import url(./bootstrap-select.min.css);
 :root {
-  --primary: #ff6f61;
+  --primary: #36bfb7;
   --primary-2: #ff9a90;
   --primary-3: #ffc5c0;
   --primary-4: #fff1ef;
@@ -105,10 +102,7 @@
 
 /*---------- Reset css styles ----------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -147,6 +141,10 @@
     * RTL
  ------------------------------------------------------------------------------ */
 /*--------- Abstracts variable ---------- */
+body {
+  background-color: #fdf9f3 !important;
+}
+
 html,
 body,
 div,
@@ -2623,11 +2621,6 @@ a:focus, a:hover {
   padding-left: 66px;
 }
 
-.rtl .modal-newsletter .sib-form .form-newsletter fieldset .input {
-  padding-right: 66px;
-  padding-left: 20px;
-}
-
 #pop-up {
   position: fixed;
   inset: 0;
@@ -2685,15 +2678,7 @@ a:focus, a:hover {
   .form-login {
     padding-bottom: 50px !important;
   }
-  .login-wrap::before {
-    position: absolute;
-    content: "";
-    height: 0 !important;
-    width: 0 !important;
-    background-color: var(--line);
-    top: 0 !important;
-    left: 0 !important;
-  }
+
   .login-wrap .right {
     display: none !important;
   }
@@ -2716,13 +2701,18 @@ a:focus, a:hover {
     width: 16px;
   }
 }
+
+.card-product {
+  background-color: #fff;
+}
+
+.card-product-info {
+  padding: 20px;
+}
 /*------------ Components ---------------- */
 /*------------ button ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -2873,8 +2863,8 @@ a:focus, a:hover {
   border-color: #b99f4a;
 }
 .tf-btn.btn-white {
-  color: var(--dark);
-  background-color: var(--white);
+  color: #fff;
+  background-color: transparent;
   border-color: var(--white);
 }
 .tf-btn.btn-yellow {
@@ -3079,9 +3069,9 @@ a:focus, a:hover {
   color: var(--white);
 }
 .tf-btn.btn-dark2 {
-  background-color: var(--dark-2);
+  background-color: #36bfb7;
   color: var(--white);
-  border: 1px solid var(--dark-2);
+  border: none;
 }
 .tf-btn.btn-dark3 {
   background-color: var(--text-2);
@@ -3510,10 +3500,7 @@ button.animate-btn::after,
 
 /*------------ hover ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -3671,10 +3658,7 @@ button.animate-btn::after,
 
 /*------------ form ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -4173,10 +4157,7 @@ button.animate-btn::after,
 
 /*------------ drop down ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -4633,10 +4614,7 @@ button.animate-btn::after,
 
 /*------------ carousel ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -5129,10 +5107,7 @@ button.animate-btn::after,
 
 /*------------ pop up ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -6753,10 +6728,7 @@ button.animate-btn::after,
 
 /*------------ box icon ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -7132,10 +7104,7 @@ button.animate-btn::after,
 
 /*------------ tabs ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -7508,10 +7477,7 @@ button.animate-btn::after,
 
 /*------------ header ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -8802,10 +8768,7 @@ header.header-bg {
 
 /*------------ footer ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -9150,10 +9113,7 @@ header.header-bg {
 
 /*------------ blog ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -9507,10 +9467,7 @@ header.header-bg {
 
 /*------------ slider banner ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -9588,13 +9545,13 @@ header.header-bg {
   object-fit: cover;
 }
 .slider-default .slider-wrap.bg-type-1 {
-  background: linear-gradient(256.55deg, #ffd1bb 0%, #fffedb 100%);
+  /* background: linear-gradient(256.55deg, #ffd1bb 0%, #fffedb 100%); */
 }
 .slider-default .slider-wrap.bg-type-2 {
-  background: linear-gradient(256.55deg, #f4e7fb 0%, #ffe9e9 25%, #ffedec 50%, #ffe9fd 100%);
+  /* background: linear-gradient(256.55deg, #f4e7fb 0%, #ffe9e9 25%, #ffedec 50%, #ffe9fd 100%); */
 }
 .slider-default .slider-wrap.bg-type-3 {
-  background: linear-gradient(256.55deg, #dcfaff 0%, #dbe3ff 100%);
+  /* background: linear-gradient(256.55deg, #dcfaff 0%, #dbe3ff 100%); */
 }
 .slider-default .slider-wrap.bg-type-4 {
   background: #d4edff;
@@ -9952,12 +9909,83 @@ header.header-bg {
   gap: 40px;
 }
 
+/* important: slider-wrap devine referinta pentru straturi */
+.slider-default .slider-wrap {
+  position: relative;
+}
+
+/* textul trebuie sa fie cel mai sus */
+.slider-default .box-content{
+  z-index: 5;
+}
+
+/* pagination sa nu intre peste text */
+.tf-slideshow .wrap-pagination{
+  z-index: 6;
+}
+
+/* overlay doar pe slide 1 */
+.slider-default .slider-wrap.has-hero1-overlay .image{
+  position: relative; /* ca ::after sa se ancoreze corect */
+}
+
+.slider-default .slider-wrap.has-hero1-overlay .image::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* overlay image */
+  background: url("../images/hero/hero1_overlay.png") center / cover no-repeat;
+
+  /* layer peste img, dar sub text */
+  z-index: 2;
+}
+
+/* optional: asigura ca img sta sub overlay */
+.slider-default .slider-wrap.has-hero1-overlay .image img{
+  position: relative;
+  z-index: 1;
+}
+
+/* overlay slide 2 */
+.slider-default .slider-wrap.has-hero2-overlay .image{
+  position: relative;
+}
+.slider-default .slider-wrap.has-hero2-overlay .image::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url("../images/hero/hero2_overlay.png") center / cover no-repeat;
+  z-index: 2;
+}
+.slider-default .slider-wrap.has-hero2-overlay .image img{
+  position: relative;
+  z-index: 1;
+}
+
+/* overlay slide 3 */
+.slider-default .slider-wrap.has-hero3-overlay .image{
+  position: relative;
+}
+.slider-default .slider-wrap.has-hero3-overlay .image::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url("../images/hero/hero3_overlay.png") center / cover no-repeat;
+  z-index: 2;
+}
+.slider-default .slider-wrap.has-hero3-overlay .image img{
+  position: relative;
+  z-index: 1;
+}
+
+
 /*------------ collection ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -10564,10 +10592,7 @@ header.header-bg {
 
 /*------------ product ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -13036,10 +13061,7 @@ header.header-bg {
 
 /*------------ testimonial ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -13351,10 +13373,7 @@ header.header-bg {
 
 /*------------ lookbook ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -13849,10 +13868,7 @@ header.header-bg {
 
 /*------------ brand ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -14019,10 +14035,7 @@ header.header-bg {
 
 /*------------ zoom ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -14139,10 +14152,7 @@ header.header-bg {
 
 /*------------ shop ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -15025,10 +15035,7 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
 
 /*------------ shop ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -16253,10 +16260,7 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
 
 /*------------ account ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -16551,10 +16555,7 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
 
 /*------------ sections ---------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -18074,10 +18075,7 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
 
 /*-------------- Responsive ----------------- */
 /* ---------------------------------------------------------
-    * Name: Vineta - Multipurpose eCommerce
-    * Version: 1.0.2
-    * Author: Themesflat
-    * Author URI: http://themesflat.com 
+
 
 	* Abstracts variable
 
@@ -22420,611 +22418,6 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
   border-radius: 3px;
 }
 
-.rtl .slider-jewelry .icon-arrow-right,
-.rtl .wg-offer .icon-arrow-right,
-.rtl .skincare-product .icon-arrow-right,
-.rtl .pickleball-product .icon-arrow-right,
-.rtl .section-cls-tabs .nav-tab-item .tab-link .icon {
-  transform: rotateY(180deg);
-}
-.rtl .tf-icon-box.style-3 {
-  flex-direction: row-reverse;
-  text-align: end;
-}
-.rtl .breadcrumb-prev-next .breadcrumb-next, .rtl .breadcrumb-prev-next .breadcrumb-prev {
-  transform: rotate(-180deg);
-}
-.rtl .wg-cls.style-02 .btn-cls:hover .icon {
-  transform: rotate(-135deg);
-}
-.rtl .flat-title.text-start {
-  text-align: right !important;
-}
-.rtl .entry-tag {
-  justify-content: flex-end;
-}
-.rtl .blog-item-v2 .entry-tag {
-  right: 14px;
-  justify-content: flex-start;
-}
-.rtl .box-nav-menu .mega-tab .wrapper-sub-product {
-  padding-left: 32px;
-  padding-right: 0;
-}
-.rtl .swiperrtl .swiper-horizontal {
-  touch-action: pan-x;
-}
-.rtl .swiperrtl .swiper-pagination-progressbar .swiper-pagination-progressbar-fill {
-  transform-origin: right top;
-}
-.rtl #toggle-rtl {
-  left: 15px;
-  right: auto;
-}
-.rtl .tf-compare-table .tf-compare-row .tf-compare-col:last-child {
-  border-left: 1px solid var(--line);
-}
-.rtl .wg-coming-soon .form-email-wrap .button-submit {
-  left: 5px;
-  right: unset;
-}
-.rtl .wd-product-descriptions .item ul li {
-  padding-left: 0;
-  padding-right: 20px;
-}
-.rtl .wd-product-descriptions .item ul li::before {
-  left: 0;
-  right: 5px;
-}
-.rtl .tf-variant-dropdown .select-item {
-  text-align: start;
-}
-.rtl .tf-product-info-wrap .tf-product-delivery-return .product-delivery:not(:last-child) {
-  border-left: 1px solid var(--line);
-  border-right: 0;
-}
-.rtl .wrap-code.style-1 {
-  padding-left: 112px;
-  padding-right: 11px;
-}
-.rtl .wrap-code.style-1 .btn-coppy-text {
-  left: 3px;
-  right: unset;
-}
-.rtl .modal-dialog-centered .icon-close {
-  left: 9px;
-  right: unset;
-}
-.rtl .box-nav-menu .sub-menu-style-3 {
-  left: -135px;
-}
-.rtl .box-nav-menu .sub-menu-style-2 {
-  left: -400px;
-}
-.rtl .wrapper-header-bottom .tf-mega-categories .categories-title {
-  margin-left: 42px;
-  margin-right: 0;
-}
-.rtl .tf-btn.hover-icon:hover .icon {
-  animation: 0.3s link-icon-reverse linear;
-}
-@keyframes link-icon-reverse {
-  0% {
-    transform: translateX(0) rotate(-90deg);
-    opacity: 1;
-  }
-  49% {
-    transform: translateX(-20px) rotate(-90deg);
-    opacity: 0;
-  }
-  50% {
-    transform: translateX(20px) rotate(-90deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0) rotate(-90deg);
-    opacity: 1;
-  }
-}
-.rtl .s3-banner-with-text .content-with-text,
-.rtl .s2-banner-with-text .content-with-text {
-  justify-items: center;
-}
-.rtl .cls-video,
-.rtl .wg-cls,
-.rtl .banner-shop.style-left-center {
-  direction: rtl;
-}
-.rtl .infiniteslide,
-.rtl .box-nav-swiper,
-.rtl .s-banner-with-text .image-banner {
-  direction: ltr;
-}
-.rtl .flat-controltab-nav .box-nav-swiper {
-  left: 0;
-  right: unset;
-  direction: ltr;
-}
-.rtl .marquee-sale .marquee-wrapper {
-  animation-name: infiniteScrollRv;
-}
-@keyframes infiniteScrollRv {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-.rtl .header-default .nav-icon .nav-icon-item .text {
-  margin-right: 8px;
-  margin-left: 0;
-}
-.rtl .form-search .btn-search {
-  left: 6px;
-  right: unset;
-}
-.rtl .flat-thumbs-tes .box-nav-swiper {
-  justify-content: flex-end;
-}
-.rtl .box-testimonial-main {
-  direction: rtl;
-}
-.rtl .banner-shop.style-top .tf-btn {
-  direction: rtl;
-}
-.rtl .s-blog-single .related-post .text-wrap-right {
-  text-align: left;
-}
-.rtl .s-blog-single .related-post .icon,
-.rtl .modal-quick-view .tf-product-info-wrap .view-details .icon,
-.rtl .s-cls.abs-left-center .image img,
-.rtl .blog-item-v2 .entry-content .btn-readmore .icon-arr-right,
-.rtl .tf-btn svg,
-.rtl .tf-btn .icon-arr-right3,
-.rtl .tf-btn .icon-arr-right {
-  transform: rotate(180deg);
-}
-.rtl .icon-arrow1-top-left,
-.rtl .icon-arrow-top-left {
-  transform: rotate(-90deg);
-}
-.rtl .tf-btn.hover-icon-2 {
-  flex-direction: row-reverse;
-}
-.rtl .tf-btn.hover-icon-2 .icon {
-  transform: scale(0) rotateY(-180deg);
-}
-.rtl .tf-btn.hover-icon-2:hover .icon {
-  transform: scale(1) rotateY(-180deg);
-  margin-right: 10px;
-  margin-left: 0px;
-}
-.rtl .wg-cls .hover-icon-2 .icon {
-  transform: scale(0) rotateY(-180deg);
-}
-.rtl .wg-cls .hover-icon-2:hover .icon {
-  transform: scale(1) rotateY(-180deg);
-}
-.rtl .tf-mini-cart-tool-openable.estimate-shipping select {
-  padding-left: 24px;
-  padding-right: 12px;
-}
-.rtl .popup-shopping-cart .tf-minicart-recommendations .tf-mini-cart-item {
-  direction: rtl;
-}
-.rtl .popup-shopping-cart .tf-minicart-recommendations .tf-minicart-recommendations-heading .d-flex {
-  direction: ltr;
-}
-.rtl .popup-shopping-cart .tf-mini-cart-threshold .tf-progress-bar .icon {
-  left: -12px;
-}
-.rtl .popup-search .form-search button {
-  left: 20px;
-  right: unset;
-}
-.rtl .nav-ul-mb .demo-label {
-  right: calc(100% + 2px);
-  left: unset;
-}
-.rtl .footer-heading-mobile {
-  padding-left: 20px;
-  padding-right: 0;
-}
-.rtl .footer-heading-mobile::before {
-  left: 16px;
-  right: unset;
-}
-.rtl .footer-heading-mobile::after {
-  left: 10px;
-  right: unset;
-}
-.rtl .footer-default .form-newsletter .button-submit {
-  left: 2px;
-  right: unset !important;
-}
-.rtl .footer-default .form-newsletter .button-submit .subscribe-button svg,
-.rtl .footer-default .form-newsletter .button-submit .subscribe-button .icon {
-  transform: rotateY(180deg);
-}
-.rtl .footer-default .form-newsletter .button-submit.end-0 {
-  left: 0;
-}
-.rtl .blog-item-v2,
-.rtl .wg-testimonial {
-  direction: rtl;
-}
-.rtl .wg-countdown-2 .countdown__item:not(:last-child) .countdown__value::after {
-  left: -14px;
-  right: unset;
-}
-.rtl .modal-newsletter .form-newsletter fieldset input {
-  padding-right: 66px;
-  padding-left: 20px;
-}
-.rtl .modal-newsletter .form-newsletter fieldset .icon {
-  left: unset;
-  right: 20px;
-}
-.rtl .banner-cls-sportwear.style-abs-2 .image img,
-.rtl .modal-newsletter .modal-top img,
-.rtl .wg-pagination .icon-arr-right2,
-.rtl .grid-cls-suppermarket .s-cls .img-style img,
-.rtl .s-banner-countdown .image img {
-  transform: rotateY(180deg);
-}
-.rtl .mega-menu .box-search .form-search button {
-  left: 20px;
-  right: unset !important;
-}
-.rtl .box-nav-menu .menu-list .menu-link-text .demo-label {
-  margin-left: 0;
-  margin-right: 4px;
-}
-.rtl .coming-soon {
-  transform: rotateY(180deg);
-}
-.rtl .coming-soon .coming-soon-inner {
-  transform: rotateY(180deg);
-}
-.rtl .loobook-product,
-.rtl .tf-icon-box.style-2 {
-  direction: rtl;
-}
-.rtl .tf-cart-item .tf-cart-item_price .old-price {
-  margin-left: 8px;
-  margin-right: 0;
-}
-.rtl .tf-dropdown-sort .select-item {
-  text-align: start;
-}
-.rtl .meta-filter-shop .count-text {
-  padding-left: 12px;
-  padding-right: 0;
-}
-.rtl .meta-filter-shop .count-text::after {
-  left: 0;
-  right: unset;
-}
-.rtl .card-product.style-2 .list-product-btn li:last-child .box-icon {
-  border: 1px solid var(--line);
-  border-radius: 30px 0px 0px 30px;
-}
-.rtl .card-product.style-2 .list-product-btn li:first-child .box-icon {
-  border-radius: 0px 30px 30px 0px;
-  border-left-color: var(--white);
-}
-.rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) .list-product-btn {
-  left: 8px;
-  right: unset;
-}
-.rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) .list-product-btn .tooltip::before {
-  left: -4px;
-  right: unset;
-}
-.rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) .box-icon .tooltip {
-  left: 100%;
-  right: unset;
-}
-.rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) .box-icon:hover .tooltip {
-  transform: translateX(8px);
-}
-.rtl .card-product .card-product-info .old-price {
-  margin-left: 8px;
-  margin-right: 0;
-}
-.rtl .card-product .marquee-product .marquee-wrapper {
-  animation-name: infiniteScrollRv;
-}
-.rtl .card-product.style-7 .list-product-btn .box-icon:not(:last-child) {
-  border-left: 1px solid var(--line);
-  border-right: 0;
-}
-.rtl .nav-account .dropdown-account {
-  left: -50px;
-  right: unset;
-}
-.rtl .tf-select::after {
-  left: 16px;
-  right: unset !important;
-}
-.rtl .tf-select select {
-  padding: 9px 12px 9px 24px;
-}
-.rtl .canvas-mb .mb-bottom .bottom-bar-language .tf-currencies {
-  border-left: 1px solid var(--line);
-  border-right: 0;
-}
-.rtl .noUi-horizontal .noUi-handle {
-  left: auto;
-  right: -8px;
-}
-.rtl .widget-facet {
-  overflow: hidden;
-}
-.rtl #goTop {
-  left: 20px;
-  right: unset;
-}
-.rtl .card-product {
-  direction: rtl;
-}
-.rtl .tf-sw-slideshow .slider-wrap {
-  direction: rtl;
-}
-.rtl .tf-sw-slideshow .slider-wrap img {
-  transform: rotateY(180deg);
-}
-.rtl .tf-sw-slideshow .bg-type-3 .row {
-  justify-content: flex-end;
-}
-.rtl .tf-sw-slideshow .bg-type-3 .row > div {
-  margin-left: unset;
-}
-.rtl .tf-sw-slideshow .bg-type-5 .row {
-  justify-content: flex-end;
-}
-.rtl .tf-sw-slideshow .bg-type-5 .row > div {
-  margin-left: unset;
-}
-.rtl .tf-sw-slideshow .bg-type-5 .content-slider {
-  text-align: end;
-}
-.rtl .slider-effect .img-slider {
-  margin-left: unset;
-  margin-right: auto;
-}
-.rtl .slider-effect .content-left {
-  direction: rtl;
-}
-.rtl .tf-currencies {
-  direction: ltr;
-}
-.rtl .tf-currencies .dropdown-menu .text {
-  justify-content: flex-end !important;
-}
-.rtl .tf-currencies .dropdown-menu::after {
-  display: none !important;
-}
-.rtl .testimonial-item {
-  direction: rtl;
-}
-.rtl .testimonial-item .product > a {
-  right: auto;
-  left: 0;
-}
-.rtl .footer .footer-heading-mobile::before {
-  left: 15px;
-  right: auto;
-}
-.rtl .footer .footer-heading-mobile::after {
-  left: 10px;
-  right: auto;
-}
-.rtl .footer .footer-newsletter input {
-  padding-left: 143px;
-  padding-right: 18px;
-}
-.rtl .footer .footer-newsletter .button-submit button {
-  right: auto;
-  left: 8px;
-}
-.rtl .modal.fullRight .modal-dialog {
-  transform: translate(-100%, 0) !important;
-  transition: all 0.3s !important;
-}
-.rtl .modal.fullRight .modal-dialog .modal-content {
-  left: 0;
-  right: unset;
-}
-.rtl .modal.fullRight.show .modal-dialog {
-  transform: translate(0, 0) !important;
-}
-.rtl .offcanvas.offcanvas-end {
-  left: 0;
-  right: unset;
-  transform: translateX(-100%);
-}
-.rtl .offcanvas.offcanvas-start {
-  right: 0;
-  left: unset;
-  transform: translateX(100%);
-}
-.rtl .offcanvas.show:not(.hiding),
-.rtl .offcanvas.showing {
-  transform: none;
-}
-.rtl .offcanvas.hiding,
-.rtl .offcanvas.show,
-.rtl .offcanvas.showing {
-  visibility: visible;
-}
-.rtl .card-product .on-sale-item,
-.rtl .icv__theme-wrapper {
-  direction: ltr;
-}
-.rtl .drift-zoom-pane.drift-inline {
-  display: flex;
-  justify-content: flex-end;
-}
-.rtl .tf-zoom-main .drift-zoom-pane {
-  display: flex;
-  justify-content: flex-end;
-}
-.rtl .box-nav-ul .menu-item-2::after {
-  left: 0;
-  right: unset;
-  content: "\e905";
-}
-.rtl .box-nav-ul .menu-item-2 .sub-menu {
-  right: calc(100% + 23px);
-  left: unset;
-}
-.rtl .box-nav-ul .menu-item-2 .sub-menu::after {
-  left: 90%;
-}
-.rtl .tf-topbar .marquee-wrapper {
-  animation: slide-har-reverse 20s linear infinite;
-}
-.rtl .tf-bundle-product-item {
-  direction: rtl;
-}
-.rtl .footer.has-border .footer-col.footer-col-1 {
-  padding-right: 90px;
-  padding-left: 30px;
-}
-.rtl .footer.has-border .footer-col.footer-col-2 {
-  padding-right: 0px;
-  padding-left: 30px;
-}
-.rtl .footer.has-border .footer-col.footer-col-3 {
-  padding-right: 0px;
-  padding-left: 30px;
-}
-.rtl .footer.has-border .footer-newsletter {
-  padding-left: 123px;
-  padding-right: 0;
-  border-right: 0;
-  border-left: 1px solid var(--line);
-}
-@keyframes slide-har-reverse {
-  0% {
-    -webkit-transform: translateX(0%);
-    transform: translateX(0%);
-  }
-  100% {
-    -webkit-transform: translateX(100%);
-    transform: translateX(100%);
-  }
-}
-.rtl .tf-cart-item .tf-cart-item_product .img-box {
-  margin-left: 24px;
-  margin-right: 0px;
-}
-.rtl .sib-form .form-newsletter button {
-  left: 0px;
-  right: unset;
-}
-
-@media (min-width: 768px) {
-  .rtl .banner-cd-fashion .banner-content {
-    right: 100px;
-    left: unset;
-  }
-  .rtl .wrapper-thumbs-tes-2 .box-left {
-    padding: 40px 0px 40px 46px;
-  }
-  .rtl .wrapper-thumbs-tes-3 .box-left {
-    padding: 40px 0px 40px 46px;
-  }
-  .rtl .wrapper-thumbs-tes-3.type-1 .box-left {
-    padding-right: 46px;
-    padding-left: 0;
-  }
-  .rtl .wrapper-thumbs-tes-4 .box-right {
-    padding: 40px 46px 40px 0px;
-  }
-  .rtl .banner-cls-sportwear.style-abs-2 .box-content {
-    right: 84px;
-    left: 0;
-  }
-}
-@media (min-width: 992px) {
-  .rtl .banner-cd-fashion .banner-content {
-    right: 203px;
-    left: unset;
-  }
-  .rtl .tf-topbar .marquee-wrapper {
-    animation: slide-har-reverse 60s linear infinite;
-  }
-}
-@media (min-width: 1200px) {
-  .rtl .tf-product-media-wrap {
-    padding-right: 0;
-    padding-left: 24px;
-  }
-  .rtl .wrapper-thumbs-tes-2 .box-left {
-    padding: 60px 0px 60px 200px;
-  }
-  .rtl .wrapper-thumbs-tes-3 .box-left {
-    padding: 60px 99px 60px;
-  }
-  .rtl .wrapper-thumbs-tes-4 .box-right {
-    padding: 60px 100px 60px 0px;
-  }
-  .rtl .s-contact.style-2 .image-right {
-    margin-right: -120px;
-    margin-left: 0;
-  }
-  .rtl .modalCentered:not(.show) .modal-dialog {
-    transform: translate(50px, 0px);
-  }
-  .rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) .list-product-btn {
-    left: 20px;
-  }
-  .rtl .card-product:not(.style-2, .style-3, .style-6, .style-7, .style-list) li {
-    transform: translateX(-20px);
-  }
-  .rtl .banner-cls-baby .image {
-    border-radius: 0 16px 16px 0;
-  }
-}
-@media (min-width: 1440px) {
-  .rtl .box-nav-menu.justify-content-start .mega-home {
-    right: 0;
-    max-width: 1464px;
-  }
-  .rtl .box-nav-menu .mega-menu {
-    left: 0;
-    right: 0;
-  }
-  .rtl .wrapper-thumbs-tes.type-2 .box-right {
-    padding-left: 60px;
-    padding-right: 120px;
-  }
-}
-@media (min-width: 1600px) {
-  .rtl .tf-btn.btn-cls:hover .icon {
-    margin-right: 16px;
-    margin-left: 0;
-  }
-}
-@media (max-width: 1024px) {
-  .rtl .tf-product-info-wrap .tf-product-delivery-return .product-delivery:not(:last-child) {
-    border-left: 0;
-  }
-}
-@media (max-width: 767px) {
-  .rtl .s-cls.abs-left-center .content {
-    left: unset;
-    right: 15px;
-  }
-  .rtl .grid-cls-suppermarket .s-cls .content {
-    right: 15px;
-  }
-}
-
-
 .nav-account {
   position: relative;
 }
@@ -23333,15 +22726,7 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
 .login-wrap .right a {
   padding: 10px 32px;
 }
-.login-wrap::before {
-  position: absolute;
-  content: "";
-  height: 100%;
-  width: 1px;
-  background-color: var(--line);
-  top: 0;
-  left: 50%;
-}
+
 .form-login .wrap .forget-password {
   text-decoration: underline;
   font-size: 16px;
@@ -23360,11 +22745,95 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
   position: relative;
 }
 
-.slider-default .slider-wrap .image::after{
+.text-right {
+  text-align: right !important;
+}
+
+.box-title-slider h2 {
+  color: #fff !important;
+}
+
+.box-title-slider p {
+  color: #fff !important;
+}
+
+.ml-10 {
+  margin-left: 10px !important;
+}
+
+.why-card {
+  background-color: #fff;
+  border-radius: 30px;
+}
+
+.why-card img {
+  border-radius: 30px 30px 0 0;
+}
+
+.why-card__body {
+  padding: 20px;
+}
+
+/* ===== Auth background ===== */
+.auth-bg{
+  position: relative;
+  background: url("../images/auth/1.png") center / cover no-repeat;
+}
+
+/* overlay ca sa fie lizibil textul */
+.auth-bg::before{
   content: "";
   position: absolute;
   inset: 0;
+  background: rgba(0,0,0,0.45);
   pointer-events: none;
-  background: linear-gradient(to right, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 80%);
+  z-index: 0;
+}
+
+/* continutul peste overlay */
+.auth-bg .container{
+  position: relative;
   z-index: 1;
+}
+
+/* ===== Centered login card ===== */
+.login-wrap--center{
+  display: flex;
+  justify-content: center;
+}
+
+.login-wrap--center .left{
+  width: 100%;
+  max-width: 520px;
+  background-color: transparent;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  backdrop-filter: blur(6px);
+}
+
+/* pe mobile: padding mai mic */
+@media (max-width: 576px){
+  .login-wrap--center .left{
+    padding: 20px;
+  }
+}
+
+.left h4 {
+  color: #fff;
+  text-align: center;
+}
+
+
+#div_id_username input, #div_id_password input {
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #fff;
+}
+
+#div_id_username label, #div_id_password label {
+  color: #fff;
 }

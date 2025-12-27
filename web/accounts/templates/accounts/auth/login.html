@@ -9,25 +9,14 @@
 {% block footer %}{% endblock %}
 
 {% block content %}
-<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0 auth-bg" data-aos="fade-up">
   <div class="container">
+    <div class="login-wrap login-wrap--center">
 
-    {# Logo centrat deasupra conținutului #}
-    <div class="container text-center my-4 pb-5">
-      <a href="{% url 'core:home' %}">
-        <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" style="height:56px;width:auto;">
-      </a>
-    </div>
-
-    <div class="login-wrap">
-
-      {# ==== Col stânga: Login ==== #}
+      {# ==== Login (centred) ==== #}
       <div class="left">
         <div class="heading">
-          <h4>Autentificare în cont</h4>
-          <p class="text-secondary small mt-1">
-            Autentifică-te cu adresa ta de email și parola setată la înregistrare.
-          </p>
+          <h4>Autentificare</h4>
         </div>
 
         {# Mesaje Django #}
@@ -52,27 +41,7 @@
             <input type="hidden" name="next" value="{{ request.GET.next }}">
           {% endif %}
 
-          {# Social sign-in – placeholder, de conectat când adaugi provideri (allauth etc.) #}
-          <div class="d-grid gap-2 mb-3">
-            <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
-              <img width="24" height="24"
-                   src="https://img.icons8.com/fluency/48/google-logo.png"
-                   alt="google-logo">
-              <span class="text text-button ms-2">Continuă cu Google</span>
-            </a>
-            <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
-              <img width="24" height="24"
-                   src="https://img.icons8.com/fluency/48/facebook-new.png"
-                   alt="facebook-logo">
-              <span class="text text-button ms-2">Continuă cu Facebook</span>
-            </a>
-          </div>
-
-          <div class="text-center mb-3">
-            <span class="text-secondary small">sau continuă cu email</span>
-          </div>
-
-          {# Honeypot anti-bot – ignorat de view, dar ajută un pic #}
+          {# Honeypot anti-bot – ignorat de view #}
           <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
             <label>Lasă acest câmp gol</label>
             <input type="text" name="website" tabindex="-1" autocomplete="off">
@@ -110,38 +79,28 @@
               </div>
 
               <a href="{% url 'accounts:password_reset' %}"
-                 class="font-2 text-button forget-password link">
+                 class="font-2 text-button forget-password link text-white">
                 Ai uitat parola?
               </a>
             </div>
           </div>
 
           <div class="button-submit mt-2">
-            <button class="tf-btn btn-fill w-100" type="submit" id="loginSubmit">
+            <button class="tf-btn btn-dark2 animate-btn w-100" type="submit" id="loginSubmit">
               <span class="text text-button">Autentifică-te</span>
             </button>
           </div>
 
-          {# Mic mesaj de securitate #}
-          <p class="text-secondary small text-center mt-3 mb-0">
-            Nu împărtăși niciodată codurile sau parola cu altcineva.
-          </p>
+          <div class="text-center mt-3">
+            <a href="{% url 'accounts:register' %}" class="text-button link text-white">
+              Nu ai cont? Creează unul
+            </a>
+          </div>
         </form>
       </div>
 
-      {# ==== Col dreapta: Client nou / Register ==== #}
-      <div class="right">
-        <h4 class="mb_8">Nu ai încă un cont?</h4>
-        <p class="text-secondary">
-          Creează-ți un cont Snobistic și începe să vinzi sau să cumperi piese pre-loved,
-          outlet sau noi, cu protecția cumpărătorului și plăți prin escrow.
-        </p>
-        <a href="{% url 'accounts:register' %}" class="tf-btn btn-fill mt-2">
-          <span class="text text-button">Creează-ți un cont</span>
-        </a>
-      </div>
-
     </div> {# /login-wrap #}
+
   </div>
 </section>
 {% endblock %}
