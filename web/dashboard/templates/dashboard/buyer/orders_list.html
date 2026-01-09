@@ -1,4 +1,4 @@
-{# dashboard/buyer/orders_list.html #}
+{# templates/dashboard/buyer/orders_list.html #}
 {% extends "base.html" %}
 
 {% block title %}Comenzile mele – Snobistic{% endblock %}
@@ -30,7 +30,8 @@
     </div>
 
     <div class="main-content-account">
-      {# ==== Sidebar cont ==== #}
+
+      {# ==== Sidebar cont (desktop) ==== #}
       <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
         <ul class="my-account-nav">
           <li>
@@ -77,27 +78,45 @@
             </a>
           </li>
 
+          {# Logout POST-only (safe) #}
           <li>
-            <a href="{% url 'accounts:logout' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Deloghează-te
-            </a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+              {% csrf_token %}
+              <button type="submit"
+                      class="text-sm link fw-medium my-account-nav-item btn btn-link p-0 border-0 bg-transparent">
+                Deloghează-te
+              </button>
+            </form>
           </li>
         </ul>
       </div>
 
       {# ==== Conținut principal – Comenzile mele ==== #}
       <div class="my-acount-content account-address">
-        <h6 class="title-account mb-2">
-          Comenzile mele
-        </h6>
+        <h6 class="title-account mb-2">Comenzile mele</h6>
         <p class="text-sm text-grey mb-4">
-          Toate comenzile plasate pe Snobistic. Poți verifica statusul de plată,
-          livrare și detaliile fiecărei comenzi.
+          Vezi statusul de plată, escrow și livrare pentru fiecare comandă.
         </p>
 
         <div class="widget-inner-address">
           <div class="account-address-item">
+
+            {# Header info (în stilul sold_list.html) #}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+              <div>
+                <p class="text-sm mb-0 text-grey">
+                  Total comenzi: <strong>{{ orders|length }}</strong>
+                </p>
+              </div>
+              <div class="d-flex gap-2">
+                <a href="{% url 'accounts:profile' %}"
+                   class="tf-btn btn-out-line-dark">
+                  &larr; Înapoi la cont
+                </a>
+              </div>
+            </div>
+
+            {# Tabel comenzi #}
             <div class="table-responsive">
               <table class="table align-middle mb-0">
                 <thead class="table-light">
@@ -105,7 +124,7 @@
                     <th>ID comandă</th>
                     <th>Data</th>
                     <th>Produse</th>
-                    <th class="text-end">Total comandă</th>
+                    <th class="text-end">Total</th>
                     <th>Status plată</th>
                     <th>Status escrow</th>
                     <th>Status livrare</th>
@@ -120,6 +139,13 @@
                         <a href="{% url 'orders:order_detail' order.pk %}">
                           #{{ order.id }}
                         </a>
+                        <div class="text-xxs text-muted">
+                          {% if order.order_type == 'auction_win' %}
+                            Licitație
+                          {% else %}
+                            Magazin
+                          {% endif %}
+                        </div>
                       </td>
 
                       <td class="small">
@@ -128,15 +154,27 @@
 
                       <td class="small">
                         {% for item in order.items.all %}
-                          <div>
-                            {{ item.product.title }} × {{ item.quantity }}
-                            <span class="text-muted">({{ item.product.sku }})</span>
+                          <div class="d-flex justify-content-between gap-2">
+                            <span>
+                              {{ item.product.title }} × {{ item.quantity }}
+                              {% if item.product.sku %}
+                                <span class="text-muted">({{ item.product.sku }})</span>
+                              {% endif %}
+                            </span>
+                            <span class="text-muted text-nowrap">
+                              {{ item.subtotal }} RON
+                            </span>
                           </div>
+                        {% empty %}
+                          <span class="text-muted">—</span>
                         {% endfor %}
                       </td>
 
-                      <td class="text-end">
+                      <td class="text-end text-nowrap">
                         {{ order.total }} RON
+                        <div class="text-xxs text-muted">
+                          Subtotal: {{ order.subtotal }} RON
+                        </div>
                       </td>
 
                       <td class="small">
@@ -145,6 +183,7 @@
                         {% else %}
                           <span class="badge bg-warning text-dark">{{ order.payment_status_label }}</span>
                         {% endif %}
+
                         {% if order.latest_payment %}
                           <br>
                           <small class="text-muted">
@@ -168,13 +207,27 @@
 
                       <td class="small">
                         {{ order.get_shipping_status_display }}
+                        {% if order.shipping_days_min or order.shipping_days_max %}
+                          <div class="text-xxs text-muted">
+                            Estimare: {{ order.shipping_days_min }}–{{ order.shipping_days_max }} zile
+                          </div>
+                        {% endif %}
                       </td>
 
                       <td class="text-end">
-                        <a href="{% url 'orders:order_detail' order.pk %}"
-                           class="btn btn-sm btn-primary">
-                          Detalii
-                        </a>
+                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                          <a href="{% url 'orders:order_detail' order.pk %}"
+                             class="btn btn-sm btn-primary">
+                            Detalii
+                          </a>
+
+                          {% if order.payment_status != 'paid' %}
+                            <a href="{% url 'payments:payment_confirm' order.id %}"
+                               class="btn btn-sm btn-outline-dark">
+                              Plătește
+                            </a>
+                          {% endif %}
+                        </div>
                       </td>
                     </tr>
                   {% endfor %}
@@ -188,11 +241,12 @@
                 </tbody>
               </table>
             </div>
+
           </div> {# /account-address-item #}
         </div> {# /widget-inner-address #}
       </div> {# /my-acount-content #}
-    </div> {# /main-content-account #}
 
+    </div> {# /main-content-account #}
   </div>
 </div>
 

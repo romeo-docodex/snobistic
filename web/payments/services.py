@@ -16,17 +16,10 @@ stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", "")
 
 @transaction.atomic
 def charge_order_from_wallet(order: Order, user=None) -> Payment:
-    """
-    Plătește o comandă folosind wallet-ul intern al userului (buyer).
-    ENTERPRISE:
-    - atomic + row lock pe Wallet
-    - idempotency pe ORDER_PAYMENT (external_id = f"order:{order.id}")
-    """
     if user is None:
         user = order.buyer
 
     if order.payment_status == Order.PAYMENT_PAID:
-        # deja plătită — nu mai debităm wallet-ul
         return order.payments.order_by("-created_at").first()
 
     wallet, _ = Wallet.objects.select_for_update().get_or_create(user=user)
@@ -35,14 +28,12 @@ def charge_order_from_wallet(order: Order, user=None) -> Payment:
     if amount <= 0:
         raise ValueError("Suma comenzii trebuie să fie > 0.")
 
-    # Idempotency: dacă există deja tranzacție ORDER_PAYMENT pt acest order, ieșim
     ext_id = f"order:{order.id}:wallet_payment"
     if WalletTransaction.objects.filter(
         user=user,
         transaction_type=WalletTransaction.ORDER_PAYMENT,
         external_id=ext_id,
     ).exists():
-        # asigurăm și comanda ca PAID dacă cumva lipsește
         if order.payment_status != Order.PAYMENT_PAID:
             order.mark_as_paid()
         return order.payments.order_by("-created_at").first()
@@ -60,7 +51,6 @@ def charge_order_from_wallet(order: Order, user=None) -> Payment:
         status=Payment.Status.SUCCEEDED,
     )
 
-    # debităm wallet-ul
     wallet.balance -= amount
     wallet.save(update_fields=["balance"])
 
@@ -73,7 +63,6 @@ def charge_order_from_wallet(order: Order, user=None) -> Payment:
         external_id=ext_id,
     )
 
-    # marcăm comanda ca plătită + escrow HELD (declanșează trust hooks)
     order.mark_as_paid()
     return payment
 
@@ -88,13 +77,6 @@ def refund_payment(
     to_wallet: bool = True,
     via_stripe: bool = False,
 ) -> Refund:
-    """
-    Refund total/parțial pentru un Payment.
-    ENTERPRISE:
-    - atomic
-    - idempotency pentru creditare wallet (external_id = f"refund:{refund.id}" / stripe_refund_id)
-    - escrow DISPUTED (ordine safe)
-    """
     if amount <= 0:
         raise ValueError("Suma de refund trebuie să fie > 0.")
 
@@ -102,19 +84,17 @@ def refund_payment(
         raise ValueError("Suma depășește valoarea disponibilă pentru refund.")
 
     order = payment.order
-    target_user = payment.user  # în mod normal buyer-ul
+    target_user = payment.user  # buyer
 
-    # 1) Validări legate de ESCROW
     if order.escrow_status == Order.ESCROW_RELEASED:
         raise ValueError(
             "Nu poți face refund automat după ce escrow-ul a fost eliberat către vânzător. "
-            "Este necesară o procedură manuală (ex: ajustare din wallet-ul vânzătorului)."
+            "Necesită procedură manuală."
         )
 
-    # 2) escrow DISPUTED (blochează release)
+    # Blochează release
     order.mark_escrow_disputed()
 
-    # 3) Creăm Refund PENDING
     refund = Refund.objects.create(
         payment=payment,
         order=order,
@@ -125,21 +105,14 @@ def refund_payment(
         reason=reason or "",
     )
 
-    # 4) Refund prin Stripe (card) – opțional
     stripe_refund_id = ""
     if via_stripe and payment.provider == Payment.Provider.STRIPE:
         if not payment.stripe_payment_intent_id:
-            raise ValueError(
-                "Payment nu are stripe_payment_intent_id setat – nu pot trimite refund la Stripe."
-            )
+            raise ValueError("Payment nu are stripe_payment_intent_id setat – nu pot trimite refund la Stripe.")
         stripe_amount = int((amount * Decimal("100")).quantize(Decimal("1")))
-        stripe_ref = stripe.Refund.create(
-            payment_intent=payment.stripe_payment_intent_id,
-            amount=stripe_amount,
-        )
+        stripe_ref = stripe.Refund.create(payment_intent=payment.stripe_payment_intent_id, amount=stripe_amount)
         stripe_refund_id = stripe_ref["id"]
 
-    # 5) Refund în wallet intern (creditează buyer) + idempotency
     if to_wallet:
         wallet, _ = Wallet.objects.select_for_update().get_or_create(user=target_user)
 
@@ -161,36 +134,18 @@ def refund_payment(
                 external_id=ext_id,
             )
 
-    # 6) SUCCEEDED
     refund.status = Refund.Status.SUCCEEDED
     if stripe_refund_id:
         refund.stripe_refund_id = stripe_refund_id
     refund.processed_at = timezone.now()
     refund.save(update_fields=["status", "stripe_refund_id", "processed_at"])
 
-    # (Opțional) TRUST audit event fără delta — recomandat pentru trasabilitate.
-    try:
-        from accounts.services.trust_engine import record_event
-
-        record_event(
-            target_user,
-            kind="MANUAL_ADJUST",
-            source_app="payments",
-            source_event_id=f"refund:{refund.id}:succeeded",
-            meta={
-                "event": "REFUND_SUCCEEDED",
-                "order_id": str(order.id),
-                "payment_id": str(payment.id),
-                "amount": str(amount),
-                "via_stripe": bool(via_stripe),
-                "to_wallet": bool(to_wallet),
-                "reason": reason or "",
-            },
-            delta_buyer=0,
-            delta_seller=0,
-            apply_bonus_sync=True,
-        )
-    except Exception:
-        pass
+    # ✅ dacă după refund nu mai rămâne nimic refundable -> FULL REFUND -> Order REFUNDED
+    # (payment.refundable_amount e calculat din refunds PENDING+SUCCEEDED)
+    if payment.refundable_amount <= Decimal("0.00"):
+        try:
+            order.mark_as_refunded()
+        except Exception:
+            pass
 
     return refund

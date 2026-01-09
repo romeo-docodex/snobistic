@@ -22,18 +22,11 @@ def _is_seller(user):
 
 @login_required
 def order_list_view(request):
-    """
-    /orders/ – fallback pentru BUYER.
-    - dacă user-ul este seller → trimitem spre dashboard-ul de seller (articole vândute)
-    - dacă este buyer → folosim același template ca în dashboard: dashboard/buyer/orders_list.html
-    """
     user = request.user
 
-    # Seller: nu mai listăm comenzile aici, îl trimitem în dashboard-ul lui
     if _is_seller(user):
         return redirect("dashboard:sold_list")
 
-    # Buyer: listă comenzi (același pattern ca în dashboard.views.orders_list)
     orders = (
         Order.objects.filter(buyer=user)
         .order_by("-created_at")
@@ -43,36 +36,32 @@ def order_list_view(request):
     return render(
         request,
         "dashboard/buyer/orders_list.html",
-        {
-            "orders": orders,
-            "now": timezone.now(),
-        },
+        {"orders": orders, "now": timezone.now()},
     )
 
 
 @login_required
 def order_detail_view(request, pk):
-    """
-    Detalii comandă + info retur (buyer) / doar detalii (seller).
-    """
     order = get_object_or_404(Order, pk=pk)
     user = request.user
 
-    # Seller are acces doar dacă are produse în comandă
     is_seller = _is_seller(user) and order.items.filter(product__owner=user).exists()
 
     if not (order.buyer == user or is_seller or user.is_staff):
         raise Http404
 
-    # Info retur doar pentru buyer
     last_return = None
     can_request_return = False
     if order.buyer == user:
-        last_return = order.return_requests.filter(buyer=user).order_by(
-            "-created_at"
-        ).first()
+        last_return = order.return_requests.filter(buyer=user).order_by("-created_at").first()
+
+        # ✅ retur permis după ce e cel puțin "shipped" (incl. in_transit/delivered)
         can_request_return = (
-            order.shipping_status == Order.SHIPPING_SHIPPED
+            order.shipping_status in (
+                Order.SHIPPING_SHIPPED,
+                Order.SHIPPING_IN_TRANSIT,
+                Order.SHIPPING_DELIVERED,
+            )
             and not order.return_requests.filter(
                 buyer=user,
                 status=ReturnRequest.STATUS_PENDING,
@@ -94,9 +83,6 @@ def order_detail_view(request, pk):
 @login_required
 @user_passes_test(_is_seller)
 def order_export_view(request):
-    """
-    Export CSV pentru seller.
-    """
     orders = (
         Order.objects.filter(items__product__owner=request.user)
         .distinct()
@@ -107,9 +93,7 @@ def order_export_view(request):
     response["Content-Disposition"] = 'attachment; filename="orders_export.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(
-        ["Order ID", "Data", "Buyer", "Total", "Status plată", "Status livrare"]
-    )
+    writer.writerow(["Order ID", "Data", "Buyer", "Total", "Status plată", "Status livrare", "Lifecycle"])
 
     for o in orders:
         buyer_name = getattr(o.buyer, "full_name", "").strip() or o.buyer.email
@@ -121,6 +105,7 @@ def order_export_view(request):
                 f"{o.total} RON",
                 o.payment_status_label,
                 o.get_shipping_status_display(),
+                o.get_status_display(),
             ]
         )
     return response
@@ -128,10 +113,6 @@ def order_export_view(request):
 
 @login_required
 def return_list_view(request):
-    """
-    Buyer: vede propriile cereri de retur.
-    Seller: vede cererile de retur pentru comenzile cu produsele lui.
-    """
     user = request.user
     if _is_seller(user):
         returns = (
@@ -141,46 +122,33 @@ def return_list_view(request):
         )
         is_seller = True
     else:
-        returns = ReturnRequest.objects.filter(buyer=user).select_related(
-            "order", "buyer"
-        )
+        returns = ReturnRequest.objects.filter(buyer=user).select_related("order", "buyer")
         is_seller = False
 
     return render(
         request,
         "orders/return_list.html",
-        {
-            "returns": returns,
-            "is_seller": is_seller,
-        },
+        {"returns": returns, "is_seller": is_seller},
     )
 
 
 @login_required
 def order_return_request_view(request, pk):
-    """
-    Buyer inițiază cerere de retur pentru o comandă.
-    O permitem doar dacă:
-      - comanda îi aparține
-      - comanda este marcată ca expediată
-      - nu există deja o cerere PENDING pentru această comandă și buyer.
-
-    La crearea returului, marcăm și escrow-ul ca DISPUTED,
-    ca să nu mai poată fi eliberat automat.
-    """
     order = get_object_or_404(Order, pk=pk, buyer=request.user)
 
-    if order.shipping_status != Order.SHIPPING_SHIPPED:
-        # Poți înlocui cu redirect + mesaj dacă vrei alt comportament
+    # ✅ acum permitem și in_transit / delivered
+    if order.shipping_status not in (
+        Order.SHIPPING_SHIPPED,
+        Order.SHIPPING_IN_TRANSIT,
+        Order.SHIPPING_DELIVERED,
+    ):
         raise Http404
 
     if order.return_requests.filter(
         buyer=request.user,
         status=ReturnRequest.STATUS_PENDING,
     ).exists():
-        messages.warning(
-            request, "Ai deja o cerere de retur în curs pentru această comandă."
-        )
+        messages.warning(request, "Ai deja o cerere de retur în curs pentru această comandă.")
         return redirect("orders:order_detail", pk=order.pk)
 
     if request.method == "POST":
@@ -191,13 +159,9 @@ def order_return_request_view(request, pk):
             rr.buyer = request.user
             rr.save()
 
-            # IMPORTANT: escrow intră în dispută când se deschide returul
             order.mark_escrow_disputed()
 
-            messages.success(
-                request,
-                "Cererea de retur a fost trimisă. Te vom contacta în curând.",
-            )
+            messages.success(request, "Cererea de retur a fost trimisă. Te vom contacta în curând.")
             return redirect("orders:order_detail", pk=order.pk)
     else:
         form = ReturnRequestForm()
@@ -205,27 +169,12 @@ def order_return_request_view(request, pk):
     return render(
         request,
         "orders/return_request.html",
-        {
-            "order": order,
-            "form": form,
-        },
+        {"order": order, "form": form},
     )
 
 
 @login_required
 def invoice_view(request, order_id, kind):
-    """
-    Generează (dacă nu există) sau afișează factura pentru:
-    - 'product'   → valoare produse (seller ↔ buyer)
-    - 'shipping'  → transport (platformă ↔ buyer, în funcție de modelul de business)
-    - 'commission'→ comision platformă (platformă ↔ seller)
-    - 'return'    → retur (ajustare / storno, legat de ReturnRequest aprobat)
-
-    Reguli legate de escrow:
-    - PRODUCT/SHIPPING → doar dacă comanda este PLĂTITĂ (payment_status=PAID)
-    - COMMISSION       → doar dacă escrow_status = RELEASED (banii au devenit definitiv ai platformei)
-    - RETURN           → doar dacă există cel puțin un ReturnRequest APPROVED
-    """
     order = get_object_or_404(Order, pk=order_id)
 
     user = request.user
@@ -248,50 +197,26 @@ def invoice_view(request, order_id, kind):
 
     invoice_type = type_map[kind]
 
-    # 1) Validări business legate de stare plată / escrow / retur
-    # ----------------------------------------------------------
-
-    # PRODUCT + SHIPPING → necesită plată confirmată
     if invoice_type in (Invoice.Type.PRODUCT, Invoice.Type.SHIPPING):
         if order.payment_status != Order.PAYMENT_PAID:
-            messages.error(
-                request,
-                "Factura poate fi generată doar după ce comanda este plătită.",
-            )
+            messages.error(request, "Factura poate fi generată doar după ce comanda este plătită.")
             return redirect("orders:order_detail", pk=order.pk)
 
-    # COMMISSION → doar după eliberarea escrow-ului
     if invoice_type == Invoice.Type.COMMISSION:
         if order.escrow_status != Order.ESCROW_RELEASED:
-            messages.error(
-                request,
-                "Factura de comision poate fi emisă doar după eliberarea escrow-ului.",
-            )
+            messages.error(request, "Factura de comision poate fi emisă doar după eliberarea escrow-ului.")
             return redirect("orders:order_detail", pk=order.pk)
 
-        # de comision are sens în principal pentru seller + staff
         if not (is_seller or user.is_staff):
-            messages.error(
-                request,
-                "Doar vânzătorul sau staff-ul Snobistic pot accesa această factură.",
-            )
+            messages.error(request, "Doar vânzătorul sau staff-ul Snobistic pot accesa această factură.")
             return redirect("orders:order_detail", pk=order.pk)
 
-    # RETURN → doar dacă există un retur APPROVED
     if invoice_type == Invoice.Type.RETURN:
-        has_approved_return = order.return_requests.filter(
-            status=ReturnRequest.STATUS_APPROVED
-        ).exists()
+        has_approved_return = order.return_requests.filter(status=ReturnRequest.STATUS_APPROVED).exists()
         if not has_approved_return:
-            messages.error(
-                request,
-                "Factura de retur poate fi emisă doar pentru comenzi cu retur aprobat.",
-            )
+            messages.error(request, "Factura de retur poate fi emisă doar pentru comenzi cu retur aprobat.")
             return redirect("orders:order_detail", pk=order.pk)
 
-    # 2) Determinare buyer/seller + sume
-    # ----------------------------------
-    # vânzătorul principal – primul owner din items
     seller = order.items.first().product.owner if order.items.exists() else None
 
     base_amount = D("0.00")
@@ -302,7 +227,6 @@ def invoice_view(request, order_id, kind):
     elif invoice_type == Invoice.Type.COMMISSION:
         base_amount = order.seller_commission_amount
     elif invoice_type == Invoice.Type.RETURN:
-        # momentan 0 – ulterior se poate lega de suma efectiv restituită
         base_amount = D("0.00")
 
     vat_percent = D(getattr(settings, "SNOBISTIC_VAT_PERCENT", "19.00"))
@@ -327,9 +251,5 @@ def invoice_view(request, order_id, kind):
     return render(
         request,
         "invoices/invoice_detail.html",
-        {
-            "invoice": invoice,
-            "order": order,
-            "kind": kind,
-        },
+        {"invoice": invoice, "order": order, "kind": kind},
     )
