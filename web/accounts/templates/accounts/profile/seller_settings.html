@@ -159,9 +159,11 @@
 
         {% endwith %}
 
-        {# SECȚIUNEA 3 – Locații marfă / depozite (tot o singură secțiune, cu 2 coloane) #}
-        <div class="row g-4">
-          <div class="col-lg-5">
+        {# SECȚIUNEA 3 – Locații marfă / depozite (FIECARE PE RÂNDUL LUI) #}
+
+        {# 3A) Adaugă locație #}
+        <div class="row mb-4">
+          <div class="col-12">
             <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
               <p class="text-xs text-uppercase text-muted fw-semibold mb-1">
                 Locații marfă / depozite
@@ -174,10 +176,10 @@
                     novalidate>
                 {% csrf_token %}
                 <div class="row g-3">
-                  <div class="col-6">
+                  <div class="col-md-6">
                     {{ add_form.code|as_crispy_field }}
                   </div>
-                  <div class="col-6">
+                  <div class="col-md-6">
                     {{ add_form.label|as_crispy_field }}
                   </div>
                 </div>
@@ -201,8 +203,11 @@
               </form>
             </div>
           </div>
+        </div>
 
-          <div class="col-lg-7">
+        {# 3B) Lista locațiilor #}
+        <div class="row">
+          <div class="col-12">
             <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
@@ -238,9 +243,10 @@
 
                       <div class="d-flex gap-2">
                         <form method="post"
-                              action="{% url 'accounts:seller_location_default' pk=loc.pk %}">
+                              action="{% url 'accounts:seller_location_make_default' pk=loc.pk %}">
                           {% csrf_token %}
-                          <button class="btn btn-sm btn-outline-secondary text-xs"
+                          <button type="submit"
+                                  class="btn btn-sm btn-outline-secondary text-xs"
                                   {% if loc.is_default %}disabled{% endif %}>
                             Fă implicită
                           </button>
@@ -249,7 +255,7 @@
                         <form method="post"
                               action="{% url 'accounts:seller_location_delete' pk=loc.pk %}">
                           {% csrf_token %}
-                          <button class="btn btn-sm btn-outline-danger text-xs">
+                          <button type="submit" class="btn btn-sm btn-outline-danger text-xs">
                             Șterge
                           </button>
                         </form>

@@ -10,3 +10,7 @@ django-crispy-forms
 crispy-bootstrap5
 django-formtools
 requests
+jwt
+djangorestframework-jwt
+dajngo-allauth
+PyJWT

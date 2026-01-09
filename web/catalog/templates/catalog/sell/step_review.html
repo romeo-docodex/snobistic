@@ -28,7 +28,30 @@
             </div>
           {% endif %}
 
-          {% with td=review.title_desc cb=review.category_brand sd=review.size_details pp=review.price_package %}
+          {# ✅ IMAGINI PREVIEW #}
+          <div class="mb-4">
+            <h6 class="mb-2">Imagini</h6>
+            {% if photos_preview %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for ph in photos_preview %}
+                  <div class="sn-review-thumb {% if ph.is_main %}sn-main{% endif %}">
+                    <img src="{{ ph.url }}" alt="Foto produs {{ forloop.counter }}">
+                    <span class="sn-badge">
+                      {% if ph.is_main %}MAIN{% else %}IMG{% endif %}
+                      {% if ph.is_new %} • NEW{% endif %}
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="form-text small text-muted mt-2">
+                Dacă vrei să schimbi ordinea sau imaginea principală, apasă “Înapoi” și ajustează în pasul Imagini.
+              </div>
+            {% else %}
+              <p class="small text-muted mb-0">—</p>
+            {% endif %}
+          </div>
+
+          {% with td=review.title_desc cb=review.category_brand sd=review.size_details dim=review.dimensions su=review.sustainability pp=review.price_package %}
           <div class="mb-4">
             <h6 class="mb-2">Produs</h6>
             <p class="small mb-1">
@@ -59,12 +82,20 @@
             <h6 class="mb-2">Mărime & stare</h6>
             <p class="small text-muted mb-1">
               Mărime:
-              {% if sd.size_other_label %}
-                {{ sd.size }} ({{ sd.size_other_label }})
+              {% if sd.size_alpha %}
+                {{ sd.size }} • {{ sd.size_alpha }}
               {% else %}
                 {{ sd.size }}
               {% endif %}
             </p>
+
+            {% if sd.shoe_size_eu %}
+              <p class="small text-muted mb-1">EU (încălțăminte): {{ sd.shoe_size_eu }}</p>
+            {% endif %}
+            {% if sd.size_fr %}<p class="small text-muted mb-1">FR: {{ sd.size_fr }}</p>{% endif %}
+            {% if sd.size_it %}<p class="small text-muted mb-1">IT: {{ sd.size_it }}</p>{% endif %}
+            {% if sd.size_gb %}<p class="small text-muted mb-1">GB: {{ sd.size_gb }}</p>{% endif %}
+
             <p class="small text-muted mb-1">
               Stare:
               {% if sd.condition == "NEW_TAG" %}
@@ -79,6 +110,7 @@
                 —
               {% endif %}
             </p>
+
             {% if sd.condition_notes %}
               <p class="small text-muted mb-0">
                 Detalii stare: {{ sd.condition_notes }}
@@ -90,14 +122,11 @@
             <h6 class="mb-2">Material & culori</h6>
             <p class="small text-muted mb-1">
               Material:
-              {% if sd.material %}
-                {{ sd.material }}
-              {% else %}
-                —
-              {% endif %}
+              {% if sd.material %}{{ sd.material }}{% else %}—{% endif %}
             </p>
-            <p class="small text-muted mb-0">
-              Culori:
+
+            <p class="small text-muted mb-1">
+              Culoare de bază:
               {% if sd.colors %}
                 {% for c in sd.colors %}
                   {{ c.name }}{% if not forloop.last %}, {% endif %}
@@ -106,18 +135,67 @@
                 —
               {% endif %}
             </p>
+
+            {# compositions a fost eliminat (rămâne safe dacă apare din vechi contexte) #}
+            {% if sd.compositions %}
+              <p class="small text-muted mb-0">
+                Compoziție:
+                {% for row in sd.compositions %}
+                  {% if row.0.name %}{{ row.0.name }}{% else %}{{ row.0 }}{% endif %} {{ row.1 }}%
+                  {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <h6 class="mb-2">Dimensiuni</h6>
+
+            {% if dim %}
+              <div class="small text-muted">
+                {% if dim.shoulders_cm %}<div>Umeri: {{ dim.shoulders_cm }} cm</div>{% endif %}
+                {% if dim.bust_cm %}<div>Bust: {{ dim.bust_cm }} cm</div>{% endif %}
+                {% if dim.waist_cm %}<div>Talie: {{ dim.waist_cm }} cm</div>{% endif %}
+                {% if dim.hips_cm %}<div>Șold: {{ dim.hips_cm }} cm</div>{% endif %}
+                {% if dim.length_cm %}<div>Lungime: {{ dim.length_cm }} cm</div>{% endif %}
+                {% if dim.sleeve_cm %}<div>Mânecă: {{ dim.sleeve_cm }} cm</div>{% endif %}
+                {% if dim.inseam_cm %}<div>Crac interior: {{ dim.inseam_cm }} cm</div>{% endif %}
+                {% if dim.outseam_cm %}<div>Outseam: {{ dim.outseam_cm }} cm</div>{% endif %}
+
+                {% if dim.shoe_insole_length_cm %}<div>Branț (interior): {{ dim.shoe_insole_length_cm }} cm</div>{% endif %}
+                {% if dim.shoe_width_cm %}<div>Lățime talpă: {{ dim.shoe_width_cm }} cm</div>{% endif %}
+                {% if dim.shoe_heel_height_cm %}<div>Toc: {{ dim.shoe_heel_height_cm }} cm</div>{% endif %}
+                {% if dim.shoe_total_height_cm %}<div>Înălțime totală încălțăminte: {{ dim.shoe_total_height_cm }} cm</div>{% endif %}
+
+                {% if dim.bag_width_cm %}<div>Geantă lățime: {{ dim.bag_width_cm }} cm</div>{% endif %}
+                {% if dim.bag_height_cm %}<div>Geantă înălțime: {{ dim.bag_height_cm }} cm</div>{% endif %}
+                {% if dim.bag_depth_cm %}<div>Geantă adâncime: {{ dim.bag_depth_cm }} cm</div>{% endif %}
+                {% if dim.strap_length_cm %}<div>Baretă / lanț: {{ dim.strap_length_cm }} cm</div>{% endif %}
+
+                {% if dim.belt_length_total_cm %}<div>Curea lungime totală: {{ dim.belt_length_total_cm }} cm</div>{% endif %}
+                {% if dim.belt_length_usable_cm %}<div>Curea lungime utilă: {{ dim.belt_length_usable_cm }} cm</div>{% endif %}
+                {% if dim.belt_width_cm %}<div>Curea lățime: {{ dim.belt_width_cm }} cm</div>{% endif %}
+
+                {% if dim.jewelry_chain_length_cm %}<div>Lanț: {{ dim.jewelry_chain_length_cm }} cm</div>{% endif %}
+                {% if dim.jewelry_drop_length_cm %}<div>Drop: {{ dim.jewelry_drop_length_cm }} cm</div>{% endif %}
+                {% if dim.jewelry_pendant_size_cm %}<div>Pandantiv: {{ dim.jewelry_pendant_size_cm }} cm</div>{% endif %}
+              </div>
+            {% else %}
+              <p class="small text-muted mb-0">—</p>
+            {% endif %}
           </div>
 
           <div class="mb-4">
             <h6 class="mb-2">Sustenabilitate</h6>
-            {% if sd.sustainability_none %}
+
+            {% if su.sustainability_none %}
               <p class="small text-muted mb-0">
                 Nici una dintre opțiunile de sustenabilitate nu se aplică acestui produs.
               </p>
-            {% elif sd.sustainability_tags %}
+            {% elif su.sustainability_tags %}
               <p class="small text-muted mb-0">
-                Etichete sustenabilitate:
-                {% for tag in sd.sustainability_tags %}
+                Etichete:
+                {% for tag in su.sustainability_tags %}
                   {{ tag.name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
               </p>
@@ -130,7 +208,6 @@
             <h6 class="mb-2">Preț & colet</h6>
             <p class="small text-muted mb-1">
               Preț: {{ pp.price }} RON
-              • Cantitate: {{ pp.quantity }}
             </p>
             <p class="small text-muted mb-0">
               Colet:
@@ -154,19 +231,8 @@
                 novalidate>
             {% csrf_token %}
             {{ wizard.management_form }}
-
-            <div class="mb-3">
-              <div class="form-check">
-                {{ form.confirm }}
-                <label class="form-check-label ms-1">
-                  {{ form.confirm.label }}
-                </label>
-              </div>
-              {% for error in form.confirm.errors %}
-                <div class="text-danger small mt-1">{{ error }}</div>
-              {% endfor %}
-            </div>
           </form>
+
         </div>
       </div>
 
@@ -200,4 +266,37 @@
     </div><!-- /.login-wrap -->
   </div>
 </section>
+
+<style>
+  .sn-review-thumb{
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.08);
+    background: #fff;
+  }
+  .sn-review-thumb img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+  }
+  .sn-review-thumb .sn-badge{
+    position:absolute;
+    left:6px;
+    top:6px;
+    background: rgba(0,0,0,.72);
+    color:#fff;
+    border-radius:999px;
+    padding:2px 8px;
+    font-size:11px;
+    line-height:1.4;
+  }
+  .sn-review-thumb.sn-main{
+    outline: 2px solid rgba(0,0,0,.65);
+    outline-offset: 1px;
+  }
+</style>
 {% endblock %}

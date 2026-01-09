@@ -4,6 +4,14 @@
 
 {% block content %}
 
+{# ---------- helpers for display size ---------- #}
+{% with display_size=product.display_size %}
+  {% if product.shoe_size_eu %}
+    {% with display_size="EU "|add:product.shoe_size_eu %}
+    {% endwith %}
+  {% endif %}
+{% endwith %}
+
 <!-- Breadcrumb -->
 <div class="breadcrumb-sec">
   <div class="container">
@@ -11,11 +19,14 @@
       <div class="breadcrumb-list">
         <a class="breadcrumb-item" href="{% url 'catalog:product_list' %}">Home</a>
         <div class="breadcrumb-item dot"><span></span></div>
-        {% if product.category.parent %}
-          <a class="breadcrumb-item" href="{{ product.category.parent.get_absolute_url }}">{{ product.category.parent.name }}</a>
-          <div class="breadcrumb-item dot"><span></span></div>
-        {% endif %}
+
         <a class="breadcrumb-item" href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
+
+        {% if product.subcategory %}
+          <div class="breadcrumb-item dot"><span></span></div>
+          <span class="breadcrumb-item">{{ product.subcategory.get_breadcrumb }}</span>
+        {% endif %}
+
         <div class="breadcrumb-item dot"><span></span></div>
         <div class="breadcrumb-item current">{{ product.title }}</div>
       </div>
@@ -101,8 +112,8 @@
               <div class="tf-product-heading">
                 <div class="row align-items-start">
                   <div class="col-12">
-                    {% if product.brand %}
-                      <span class="brand-product">{{ product.brand.name }}</span>
+                    {% if product.display_brand %}
+                      <span class="brand-product">{{ product.display_brand }}</span>
                     {% endif %}
 
                     <h5 class="product-name fw-medium">{{ product.title }}</h5>
@@ -127,21 +138,30 @@
               <!-- Variants -->
               <div class="tf-product-variant">
 
-                {% if product.colors.all %}
+                {% if product.base_color or product.colors.all %}
                 <div class="variant-picker-item variant-color">
                   <div class="variant-picker-label">
-                    Culori:
+                    Culoare:
                     <span class="variant-picker-label-value value-currentColor">
-                      {% firstof product.colors.first.name "—" %}
+                      {% firstof product.real_color_name product.base_color.name product.colors.first.name "—" %}
                     </span>
                   </div>
+
                   <div class="variant-picker-values">
-                    {% for c in product.colors.all %}
-                      <div class="hover-tooltip tooltip-bot color-btn {% if forloop.first %}active{% endif %}">
-                        <span class="check-color" style="background: {{ c.hex_code|default:'#eee' }};"></span>
-                        <span class="tooltip">{{ c.name }}</span>
+                    {# SINGLE color UI: prefer base_color; fallback first from colors #}
+                    {% if product.base_color %}
+                      <div class="hover-tooltip tooltip-bot color-btn active">
+                        <span class="check-color" style="background: {{ product.base_color.hex_code|default:'#eee' }};"></span>
+                        <span class="tooltip">{% firstof product.real_color_name product.base_color.name %}</span>
                       </div>
-                    {% endfor %}
+                    {% else %}
+                      {% for c in product.colors.all|slice:":1" %}
+                        <div class="hover-tooltip tooltip-bot color-btn active">
+                          <span class="check-color" style="background: {{ c.hex_code|default:'#eee' }};"></span>
+                          <span class="tooltip">{% firstof product.real_color_name c.name %}</span>
+                        </div>
+                      {% endfor %}
+                    {% endif %}
                   </div>
                 </div>
                 {% endif %}
@@ -149,7 +169,13 @@
                 <div class="variant-picker-item variant-size">
                   <div class="variant-picker-label">
                     <div>Mărime:
-                      <span class="variant-picker-label-value value-currentSize">{{ product.size }}</span>
+                      <span class="variant-picker-label-value value-currentSize">
+                        {% if product.shoe_size_eu %}EU {{ product.shoe_size_eu }}
+                        {% elif product.size_fr %}FR {{ product.size_fr }}
+                        {% elif product.size_it %}IT {{ product.size_it }}
+                        {% elif product.size_gb %}GB {{ product.size_gb }}
+                        {% else %}{{ product.display_size }}{% endif %}
+                      </span>
                     </div>
                     <a href="#sizeGuide" data-bs-toggle="modal" class="size-guide link">Ghid mărimi</a>
                   </div>
@@ -162,16 +188,26 @@
                   <span class="label">SKU:</span>
                   <span class="value">{{ product.sku }}</span>
                 </li>
+
                 <li class="item-cate-sku">
                   <span class="label">Categorie:</span>
                   <span class="value">{{ product.category.name }}</span>
                 </li>
-                {% if product.brand %}
-                <li class="item-cate-sku">
-                  <span class="label">Brand:</span>
-                  <span class="value">{{ product.brand.name }}</span>
-                </li>
+
+                {% if product.subcategory %}
+                  <li class="item-cate-sku">
+                    <span class="label">Subcategorie:</span>
+                    <span class="value">{{ product.subcategory.get_breadcrumb }}</span>
+                  </li>
                 {% endif %}
+
+                {% if product.display_brand %}
+                  <li class="item-cate-sku">
+                    <span class="label">Brand:</span>
+                    <span class="value">{{ product.display_brand }}</span>
+                  </li>
+                {% endif %}
+
                 <li class="item-cate-sku">
                   <span class="label">Condiție:</span>
                   <span class="value">{{ product.get_condition_display }}</span>
@@ -197,12 +233,10 @@
                   </div>
 
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    {# Nume vânzător #}
                     <span class="fw-medium text-md">
                       {{ product.owner.full_name|default:product.owner.email }}
                     </span>
 
-                    {# TRUST SELLER BADGE – la fel ca în navbar #}
                     {% with sp=product.owner.sellerprofile %}
                       {% if sp %}
                         <span
@@ -234,7 +268,6 @@
                       {% endif %}
                     {% endwith %}
 
-                    {# KYC BADGE – la fel ca în navbar, dar pentru owner #}
                     {% with prof=product.owner.profile %}
                       {% if prof.has_kyc_badge %}
                         <span
@@ -284,12 +317,19 @@
 
               <!-- Extras -->
               <div class="tf-product-extra-link m-auto">
-                <a href="{% url 'catalog:toggle_favorite' product.pk %}"
-                   class="product-extra-icon link btn-add-wishlist"
-                   data-toggle-fav>
-                  <i class="icon add icon-heart"></i><span class="add">Adaugă la favorite</span>
-                  <i class="icon added icon-trash"></i><span class="added">Șterge de la favorite</span>
-                </a>
+                <form method="post"
+                      action="{% url 'catalog:toggle_favorite' product.pk %}"
+                      class="js-fav-form d-inline"
+                      data-product-id="{{ product.pk }}">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="product-extra-icon link btn-add-wishlist {% if product.pk in favorite_ids %}active{% endif %}"
+                          data-toggle-fav
+                          aria-pressed="{% if product.pk in favorite_ids %}true{% else %}false{% endif %}">
+                    <i class="icon add icon-heart"></i><span class="add">Adaugă la favorite</span>
+                    <i class="icon added icon-trash"></i><span class="added">Șterge de la favorite</span>
+                  </button>
+                </form>
                 <a href="#compare" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-compare2"></i>Compară</a>
                 <a href="#askQuestion" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-ask"></i>Întreabă</a>
                 <a href="#shareSocial" data-bs-toggle="modal" class="product-extra-icon link"><i class="icon icon-share"></i>Share</a>
@@ -375,8 +415,13 @@
 
             <div class="tf-sticky-atc-variant-price text-center">
               <p>
-                {% if product.brand %}{{ product.brand.name }} – {% endif %}
-                {{ product.size }} – {{ product.price }} RON
+                {% if product.display_brand %}{{ product.display_brand }} – {% endif %}
+                {% if product.shoe_size_eu %}EU {{ product.shoe_size_eu }}
+                {% elif product.size_fr %}FR {{ product.size_fr }}
+                {% elif product.size_it %}IT {{ product.size_it }}
+                {% elif product.size_gb %}GB {{ product.size_gb }}
+                {% else %}{{ product.display_size }}{% endif %}
+                – {{ product.price }} RON
               </p>
             </div>
 
@@ -411,25 +456,27 @@
       </div>
       <div id="description" class="collapse">
         <div class="accordion-body widget-desc">
+
           {% if product.description %}
-            <p class="item">{{ product.description|linebreaks }}</p>
+            <div class="item">
+              <p class="mb-0">{{ product.description|linebreaksbr }}</p>
+            </div>
           {% endif %}
 
-          {% if product.compositions.all %}
+          {% if product.material %}
             <div class="item">
-              <p class="fw-medium title">Compoziție</p>
-              <ul>
-                {% for comp in product.compositions.all %}
-                  <li>{{ comp.material.name }} {{ comp.percent }}%</li>
-                {% endfor %}
-              </ul>
-            </div>
-          {% elif product.material %}
-            <div class="item">
-              <p class="fw-medium title">Material principal</p>
+              <p class="fw-medium title">Material</p>
               <ul><li>{{ product.material.name }}</li></ul>
             </div>
           {% endif %}
+
+          {% if product.condition_notes %}
+            <div class="item">
+              <p class="fw-medium title">Observații</p>
+              <p class="mb-0">{{ product.condition_notes }}</p>
+            </div>
+          {% endif %}
+
         </div>
       </div>
     </div>
@@ -445,46 +492,67 @@
         <div class="accordion-body">
           <table class="tb-info-product text-md">
             <tbody>
-              {% if product.material or product.compositions.all %}
+
+              {# --- Material (single) --- #}
+              {% if product.material %}
               <tr class="tb-attr-item">
                 <th class="tb-attr-label">Material</th>
-                <td class="tb-attr-value">
-                  {% if product.compositions.all %}
-                    <p>
-                      {% for comp in product.compositions.all %}
-                        {{ comp.material.name }} {{ comp.percent }}%{% if not forloop.last %}, {% endif %}
-                      {% endfor %}
-                    </p>
-                  {% else %}
-                    <p>{{ product.material.name }}</p>
-                  {% endif %}
-                </td>
+                <td class="tb-attr-value"><p>{{ product.material.name }}</p></td>
               </tr>
               {% endif %}
 
-              {% if product.colors.all %}
+              {# --- Color: real_color_name (nuanță) + base_color (culoare principală) --- #}
+              {% if product.real_color_name or product.base_color %}
               <tr class="tb-attr-item">
                 <th class="tb-attr-label">Culoare</th>
                 <td class="tb-attr-value">
                   <p>
-                    {% for c in product.colors.all %}
-                      {{ c.name }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
+                    {% if product.real_color_name %}
+                      {{ product.real_color_name }}
+                      {% if product.base_color and product.base_color.name and product.base_color.name != product.real_color_name %}
+                        ({{ product.base_color.name }})
+                      {% endif %}
+                    {% else %}
+                      {{ product.base_color.name }}
+                    {% endif %}
                   </p>
                 </td>
               </tr>
               {% endif %}
 
-              {% if product.brand %}
+              {# --- Brand (brand sau brand_other) --- #}
+              {% if product.display_brand %}
               <tr class="tb-attr-item">
                 <th class="tb-attr-label">Brand</th>
-                <td class="tb-attr-value"><p>{{ product.brand.name }}</p></td>
+                <td class="tb-attr-value"><p>{{ product.display_brand }}</p></td>
               </tr>
               {% endif %}
 
+              {# --- Category/Subcategory --- #}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Categorie</th>
+                <td class="tb-attr-value"><p>{{ product.category.name }}</p></td>
+              </tr>
+
+              {% if product.subcategory %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Subcategorie</th>
+                <td class="tb-attr-value"><p>{{ product.subcategory.get_breadcrumb }}</p></td>
+              </tr>
+              {% endif %}
+
+              {# --- Size (prefer numeric fields if present) --- #}
               <tr class="tb-attr-item">
                 <th class="tb-attr-label">Mărime</th>
-                <td class="tb-attr-value"><p>{{ product.size }}</p></td>
+                <td class="tb-attr-value">
+                  <p>
+                    {% if product.shoe_size_eu %}EU {{ product.shoe_size_eu }}
+                    {% elif product.size_fr %}FR {{ product.size_fr }}
+                    {% elif product.size_it %}IT {{ product.size_it }}
+                    {% elif product.size_gb %}GB {{ product.size_gb }}
+                    {% else %}{{ product.display_size }}{% endif %}
+                  </p>
+                </td>
               </tr>
 
               {% if product.fit %}
@@ -495,29 +563,149 @@
               {% endif %}
 
               <tr class="tb-attr-item">
+                <th class="tb-attr-label">Condiție</th>
+                <td class="tb-attr-value"><p>{{ product.get_condition_display }}</p></td>
+              </tr>
+
+              {% if product.condition_notes %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Detalii condiție</th>
+                <td class="tb-attr-value"><p>{{ product.condition_notes }}</p></td>
+              </tr>
+              {% endif %}
+
+              <tr class="tb-attr-item">
                 <th class="tb-attr-label">Gen</th>
                 <td class="tb-attr-value"><p>{{ product.get_gender_display }}</p></td>
               </tr>
 
+              {% if product.package_size %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Dimensiune colet</th>
+                <td class="tb-attr-value"><p>{{ product.get_package_size_display }}</p></td>
+              </tr>
+              {% endif %}
+
+              {% if product.weight_g %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Greutate</th>
+                <td class="tb-attr-value"><p>{{ product.weight_g }} g</p></td>
+              </tr>
+              {% endif %}
+
+              {% if product.pickup_location %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Locație ridicare</th>
+                <td class="tb-attr-value">
+                  <p>{% firstof product.pickup_location.label product.pickup_location.code "—" %}</p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {# --- Sustainability --- #}
+              {% if product.sustainability_none or product.sustainability_tags.all %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Sustenabilitate</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if product.sustainability_none %}
+                      Nici una
+                    {% else %}
+                      {% for tag in product.sustainability_tags.all %}
+                        {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {# --- Return policy flag from subcategory --- #}
+              {% if product.subcategory and product.subcategory.is_non_returnable %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Retur</th>
+                <td class="tb-attr-value"><p>Nereturnabil (categorie specială)</p></td>
+              </tr>
+              {% endif %}
+
+              {# --- Measurements: clothing fields --- #}
               {% with p=product %}
               {% if p.shoulders or p.bust or p.waist or p.hips or p.length or p.sleeve or p.inseam or p.outseam or p.shoulders_cm or p.bust_cm or p.waist_cm or p.hips_cm or p.length_cm or p.sleeve_cm or p.inseam_cm or p.outseam_cm %}
                 <tr class="tb-attr-item">
-                  <th class="tb-attr-label">Măsuri</th>
+                  <th class="tb-attr-label">Măsuri (haine)</th>
                   <td class="tb-attr-value">
                     <p class="mb-0">
-                      {% if p.shoulders %}Umeri: {{ p.shoulders }}{% if p.shoulders_cm %} ({{ p.shoulders_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.bust %}Bust: {{ p.bust }}{% if p.bust_cm %} ({{ p.bust_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.waist %}Talie: {{ p.waist }}{% if p.waist_cm %} ({{ p.waist_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.hips %}Șold: {{ p.hips }}{% if p.hips_cm %} ({{ p.hips_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.length %}Lungime: {{ p.length }}{% if p.length_cm %} ({{ p.length_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.sleeve %}Mâneca: {{ p.sleeve }}{% if p.sleeve_cm %} ({{ p.sleeve_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.inseam %}Crac interior: {{ p.inseam }}{% if p.inseam_cm %} ({{ p.inseam_cm }} cm){% endif %}<br>{% endif %}
-                      {% if p.outseam %}Crac exterior: {{ p.outseam }}{% if p.outseam_cm %} ({{ p.outseam_cm }} cm){% endif %}{% endif %}
+                      {% if p.shoulders or p.shoulders_cm %}Umeri: {% firstof p.shoulders p.shoulders_cm %}{% if p.shoulders_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.bust or p.bust_cm %}Bust: {% firstof p.bust p.bust_cm %}{% if p.bust_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.waist or p.waist_cm %}Talie: {% firstof p.waist p.waist_cm %}{% if p.waist_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.hips or p.hips_cm %}Șold: {% firstof p.hips p.hips_cm %}{% if p.hips_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.length or p.length_cm %}Lungime: {% firstof p.length p.length_cm %}{% if p.length_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.sleeve or p.sleeve_cm %}Mâneca: {% firstof p.sleeve p.sleeve_cm %}{% if p.sleeve_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.inseam or p.inseam_cm %}Crac interior: {% firstof p.inseam p.inseam_cm %}{% if p.inseam_cm %} cm{% endif %}<br>{% endif %}
+                      {% if p.outseam or p.outseam_cm %}Crac exterior: {% firstof p.outseam p.outseam_cm %}{% if p.outseam_cm %} cm{% endif %}{% endif %}
                     </p>
                   </td>
                 </tr>
               {% endif %}
               {% endwith %}
+
+              {# --- Measurements: shoes --- #}
+              {% if product.shoe_insole_length_cm or product.shoe_width_cm or product.shoe_heel_height_cm or product.shoe_total_height_cm %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Măsuri (încălțăminte)</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if product.shoe_insole_length_cm %}Branț: {{ product.shoe_insole_length_cm }} cm<br>{% endif %}
+                    {% if product.shoe_width_cm %}Lățime: {{ product.shoe_width_cm }} cm<br>{% endif %}
+                    {% if product.shoe_heel_height_cm %}Toc: {{ product.shoe_heel_height_cm }} cm<br>{% endif %}
+                    {% if product.shoe_total_height_cm %}Înălțime totală: {{ product.shoe_total_height_cm }} cm{% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {# --- Measurements: bags --- #}
+              {% if product.bag_width_cm or product.bag_height_cm or product.bag_depth_cm or product.strap_length_cm %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Măsuri (geantă)</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if product.bag_width_cm %}Lățime: {{ product.bag_width_cm }} cm<br>{% endif %}
+                    {% if product.bag_height_cm %}Înălțime: {{ product.bag_height_cm }} cm<br>{% endif %}
+                    {% if product.bag_depth_cm %}Adâncime: {{ product.bag_depth_cm }} cm<br>{% endif %}
+                    {% if product.strap_length_cm %}Baretă/șnur: {{ product.strap_length_cm }} cm{% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {# --- Measurements: belts --- #}
+              {% if product.belt_length_total_cm or product.belt_length_usable_cm or product.belt_width_cm %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Măsuri (curea)</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if product.belt_length_total_cm %}Lungime totală: {{ product.belt_length_total_cm }} cm<br>{% endif %}
+                    {% if product.belt_length_usable_cm %}Lungime utilă: {{ product.belt_length_usable_cm }} cm<br>{% endif %}
+                    {% if product.belt_width_cm %}Lățime: {{ product.belt_width_cm }} cm{% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {# --- Measurements: jewelry --- #}
+              {% if product.jewelry_chain_length_cm or product.jewelry_drop_length_cm or product.jewelry_pendant_size_cm %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Măsuri (bijuterii)</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if product.jewelry_chain_length_cm %}Lanț/colier: {{ product.jewelry_chain_length_cm }} cm<br>{% endif %}
+                    {% if product.jewelry_drop_length_cm %}Drop: {{ product.jewelry_drop_length_cm }} cm<br>{% endif %}
+                    {% if product.jewelry_pendant_size_cm %}Pandantiv: {{ product.jewelry_pendant_size_cm }} cm{% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
 
             </tbody>
           </table>
@@ -647,9 +835,19 @@
                     </form>
                   </li>
                   <li class="wishlist">
-                    <a href="{% url 'catalog:toggle_favorite' p.pk %}" class="box-icon hover-tooltip" data-toggle-fav>
-                      <span class="icon icon-heart2"></span><span class="tooltip">Favorite</span>
-                    </a>
+                    <form method="post"
+                          action="{% url 'catalog:toggle_favorite' p.pk %}"
+                          class="js-fav-form"
+                          data-product-id="{{ p.pk }}">
+                      {% csrf_token %}
+                      <button type="submit" class="box-icon hover-tooltip {% if p.pk in favorite_ids %}active{% endif %}"
+                              data-toggle-fav
+                              aria-pressed="{% if p.pk in favorite_ids %}true{% else %}false{% endif %}">
+                        <span class="icon icon-heart2"></span>
+                        <span class="tooltip">Favorite</span>
+                      </button>
+                    </form>
+
                   </li>
                   <li>
                     <a href="{{ p.get_absolute_url }}" class="box-icon quickview hover-tooltip">
@@ -722,9 +920,18 @@
                     </form>
                   </li>
                   <li class="wishlist">
-                    <a href="{% url 'catalog:toggle_favorite' p.pk %}" class="box-icon hover-tooltip" data-toggle-fav>
-                      <span class="icon icon-heart2"></span><span class="tooltip">Favorite</span>
-                    </a>
+                    <form method="post"
+                          action="{% url 'catalog:toggle_favorite' p.pk %}"
+                          class="js-fav-form"
+                          data-product-id="{{ p.pk }}">
+                      {% csrf_token %}
+                      <button type="submit" class="box-icon hover-tooltip {% if p.pk in favorite_ids %}active{% endif %}"
+                              data-toggle-fav
+                              aria-pressed="{% if p.pk in favorite_ids %}true{% else %}false{% endif %}">
+                        <span class="icon icon-heart2"></span>
+                        <span class="tooltip">Favorite</span>
+                      </button>
+                    </form>
                   </li>
                   <li>
                     <a href="{{ p.get_absolute_url }}" class="box-icon quickview hover-tooltip">
@@ -770,12 +977,8 @@
       watchSlidesVisibility: true,
       freeMode: true,
       breakpoints: {
-        0: {
-          direction: 'horizontal'
-        },
-        768: {
-          direction: 'vertical'
-        }
+        0: { direction: 'horizontal' },
+        768: { direction: 'vertical' }
       }
     });
 
@@ -786,9 +989,7 @@
         nextEl: '.thumbs-next',
         prevEl: '.thumbs-prev',
       },
-      thumbs: {
-        swiper: thumbsSwiper
-      }
+      thumbs: { swiper: thumbsSwiper }
     });
   });
 </script>

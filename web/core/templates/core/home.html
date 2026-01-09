@@ -307,146 +307,121 @@ Cumpără și vinde haine, încălțăminte și accesorii autentice pe Snobistic
             <h4 class="title">Recomandările zilei</h4>
             <p>Articole alese pentru gusturi rafinate, ușor de purtat, ușor de iubit.</p>
         </div>
-        <div class="fl-control-sw2 wrap-pos-nav sw-over-product wow fadeInUp">
-            <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
-                    "slidesPerView": 2,
-                    "spaceBetween": 12,
-                    "speed": 800,
-                    "slidesPerGroup": 2,
-                    "navigation": {
-                        "clickable": true,
-                        "nextEl": ".nav-next-seller",
-                        "prevEl": ".nav-prev-seller"
-                    },
-                    "pagination": { "el": ".sw-pagination-seller", "clickable": true },
-                    "breakpoints": {
-                        "768": { "slidesPerView": 3, "spaceBetween": 12, "slidesPerGroup": 3 },
-                        "1200": { "slidesPerView": 4, "spaceBetween": 24, "slidesPerGroup": 4}
-                    }
-                }'>
-                <div class="swiper-wrapper">
 
-                    {% if latest_products %}
-                        {% for product in latest_products %}
-                            <div class="swiper-slide">
-                                <div class="card-product card-product-size">
-                                    <div class="card-product-wrapper">
-                                        <a href="{{ product.get_absolute_url }}" class="product-img">
-                                            <img class="img-product lazyload"
-                                                 src="{{ product.main_image.url }}"
-                                                 data-src="{{ product.main_image.url }}"
-                                                 alt="{{ product.title }}">
+        <div class="row wow fadeInUp">
+            {% if today_picks %}
+                {% for product in today_picks|slice:":8" %}
+                    <div class="col-6 col-md-4 col-xl-3 mb-4">
+                        <div class="card-product card-product-size">
+                            <div class="card-product-wrapper">
+                                <a href="{{ product.get_absolute_url }}" class="product-img">
+                                    <img class="img-product lazyload"
+                                         src="{{ product.main_image.url }}"
+                                         data-src="{{ product.main_image.url }}"
+                                         alt="{{ product.title }}">
+                                </a>
+
+                                <ul class="list-product-btn">
+                                    <li>
+                                        <a href="#quickAdd" data-bs-toggle="modal"
+                                           class="hover-tooltip tooltip-left box-icon">
+                                            <span class="icon icon-cart2"></span>
+                                            <span class="tooltip">Adaugă rapid</span>
                                         </a>
-
-                                        <ul class="list-product-btn">
-                                            <li>
-                                                <a href="#quickAdd" data-bs-toggle="modal"
-                                                   class="hover-tooltip tooltip-left box-icon">
-                                                    <span class="icon icon-cart2"></span>
-                                                    <span class="tooltip">Adaugă rapid</span>
-                                                </a>
-                                            </li>
-                                            <li class="wishlist">
-                                                <a href="javascript:void(0);"
-                                                   class="hover-tooltip tooltip-left box-icon">
-                                                    <span class="icon icon-heart2"></span>
-                                                    <span class="tooltip">Adaugă la Favorite</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="#quickView" data-bs-toggle="modal"
-                                                   class="hover-tooltip tooltip-left box-icon quickview">
-                                                    <span class="icon icon-view"></span>
-                                                    <span class="tooltip">Previzualizare</span>
-                                                </a>
-                                            </li>
-                                            <li class="compare">
-                                                <a href="#compare" data-bs-toggle="modal"
-                                                   class="hover-tooltip tooltip-left box-icon">
-                                                    <span class="icon icon-compare"></span>
-                                                    <span class="tooltip">Compară</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="card-product-info">
-                                        <!-- 1) Nume produs -->
-                                        <a href="{{ product.get_absolute_url }}"
-                                        class="name-product link fw-medium text-md">
-                                            {{ product.title }}
+                                    </li>
+                                    <li class="wishlist">
+                                        <a href="javascript:void(0);"
+                                           class="hover-tooltip tooltip-left box-icon">
+                                            <span class="icon icon-heart2"></span>
+                                            <span class="tooltip">Adaugă la Favorite</span>
                                         </a>
-
-                                        <!-- 2) Brand -->
-                                        <div class="tf-product-meta">
-                                            <span class="tf-meta-label">Brand:</span>
-                                            <span class="tf-meta-value">
-                                                {% if product.brand %}
-                                                    {{ product.brand.name }}
-                                                {% else %}
-                                                    —
-                                                {% endif %}
-                                            </span>
-                                        </div>
-
-                                        <!-- 3) Dimensiune -->
-                                        <div class="tf-product-meta">
-                                            <span class="tf-meta-label">Dimensiune:</span>
-                                            <span class="tf-meta-value">
-                                                {# Alege UNA din variantele de mai jos, in functie de modelul tau #}
-
-                                                {# Varianta A (cel mai des): Product.size (CharField / Choice) #}
-                                                {% if product.size %}
-                                                    {{ product.size }}
-                                                {% else %}
-                                                    —
-
-                                                {# Varianta B: Product.size_value + size_unit (ex: 42 EU) #}
-                                                {# {% if product.size_value %}{{ product.size_value }} {{ product.size_unit|default:'' }}{% else %}—{% endif %} #}
-
-                                                {# Varianta C: relatie (FK) product.size.name #}
-                                                {# {% if product.size %}{{ product.size.name }}{% else %}—{% endif %} #}
-
-                                                {% endif %}
-                                            </span>
-                                        </div>
-
-                                        <!-- 4) Pret -->
-                                        <p class="price-wrap fw-medium">
-                                            <span class="price-new">{{ product.price }} RON</span>
-                                        </p>
-                                    </div>
-                                </div>
+                                    </li>
+                                    <li>
+                                        <a href="#quickView" data-bs-toggle="modal"
+                                           class="hover-tooltip tooltip-left box-icon quickview">
+                                            <span class="icon icon-view"></span>
+                                            <span class="tooltip">Previzualizare</span>
+                                        </a>
+                                    </li>
+                                    <li class="compare">
+                                        <a href="#compare" data-bs-toggle="modal"
+                                           class="hover-tooltip tooltip-left box-icon">
+                                            <span class="icon icon-compare"></span>
+                                            <span class="tooltip">Compară</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="swiper-slide">
-                            <div class="card-product card-product-size">
-                                <div class="card-product-wrapper">
-                                    <a href="{% url 'catalog:product_list' %}" class="product-img">
-                                        <img class="img-product lazyload"
-                                             data-src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
-                                             src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
-                                             alt="Snobistic">
-                                    </a>
+
+                            <div class="card-product-info">
+                                <!-- 1) Nume produs -->
+                                <a href="{{ product.get_absolute_url }}"
+                                   class="name-product link fw-medium text-md">
+                                    {{ product.title }}
+                                </a>
+
+                                <!-- 2) Brand -->
+                                <div class="tf-product-meta">
+                                    <span class="tf-meta-label">Brand:</span>
+                                    <span class="tf-meta-value">
+                                        {% if product.brand %}
+                                            {{ product.brand.name }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </span>
                                 </div>
-                                <div class="card-product-info">
-                                    <a href="{% url 'catalog:product_list' %}"
-                                       class="name-product link fw-medium text-md">
-                                        Descoperă produsele Snobistic
-                                    </a>
-                                    <p class="price-wrap fw-medium">
-                                        <span class="price-new">Colecții actualizate zilnic</span>
-                                    </p>
+
+                                <!-- 3) Dimensiune -->
+                                <div class="tf-product-meta">
+                                    <span class="tf-meta-label">Dimensiune:</span>
+                                    <span class="tf-meta-value">
+                                        {% if product.size %}
+                                            {{ product.size }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </span>
                                 </div>
+
+                                <!-- 4) Pret -->
+                                <p class="price-wrap fw-medium">
+                                    <span class="price-new">{{ product.price }} RON</span>
+                                </p>
                             </div>
                         </div>
-                    {% endif %}
-
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card-product card-product-size">
+                        <div class="card-product-wrapper">
+                            <a href="{% url 'catalog:product_list' %}" class="product-img">
+                                <img class="img-product lazyload"
+                                     data-src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
+                                     src="https://themesflat.co/html/vineta/images/products/fashion/product-3.jpg"
+                                     alt="Snobistic">
+                            </a>
+                        </div>
+                        <div class="card-product-info">
+                            <a href="{% url 'catalog:product_list' %}"
+                               class="name-product link fw-medium text-md">
+                                Descoperă produsele Snobistic
+                            </a>
+                            <p class="price-wrap fw-medium">
+                                <span class="price-new">Colecții actualizate zilnic</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="d-flex d-xl-none mt_5 sw-dot-default sw-pagination-seller justify-content-center"></div>
-            </div>
-            <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-seller"></div>
-            <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-seller"></div>
+            {% endif %}
+        </div>
+
+        <!-- Buton: vezi toate produsele -->
+        <div class="text-center mt-4 wow fadeInUp">
+            <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-fill">
+                Vezi toate produsele
+            </a>
         </div>
     </div>
 </section>

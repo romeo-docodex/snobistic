@@ -24,9 +24,15 @@
       <div class="wrapper-wishlist tf-grid-layout tf-col-2 lg-col-3 xl-col-4">
         {% for product in products %}
           <div class="card-product style-wishlist style-3 card-product-size">
-            <a href="{% url 'catalog:toggle_favorite' product.pk %}"
-               class="icon icon-close remove"
-               data-toggle-fav></a>
+            <form method="post"
+                  action="{% url 'catalog:toggle_favorite' product.pk %}"
+                  class="js-fav-form"
+                  data-product-id="{{ product.pk }}"
+                  data-remove-on-unfav="1">
+              {% csrf_token %}
+              <button type="submit" class="icon icon-close remove" data-toggle-fav aria-label="Șterge de la favorite"></button>
+            </form>
+
 
             <div class="card-product-wrapper">
               <a href="{{ product.get_absolute_url }}" class="product-img">

@@ -34,6 +34,10 @@
             {% csrf_token %}
             {{ wizard.management_form }}
 
+            {# ✅ IMPORTANT: hidden fields pentru ordering + main selection #}
+            {{ form.photos_order }}
+            {{ form.main_choice }}
+
             {% if form.non_field_errors %}
               <div class="alert alert-danger mb_16">
                 {{ form.non_field_errors }}
@@ -50,7 +54,8 @@
                 <div class="text-danger small mt-1">{{ error }}</div>
               {% endfor %}
               <div class="form-text small text-muted mt-1">
-                Alege fotografia principală (vedere din față a produsului).
+                Poți încărca aici fotografia principală, <strong>dar poți seta ca principală</strong>
+                și una dintre pozele din “Imagini suplimentare” (din dreapta).
               </div>
             </div>
 
@@ -100,16 +105,23 @@
               <div id="main-image-preview"
                    class="border rounded-3 p-2 d-flex align-items-center justify-content-center"
                    style="min-height: 180px; background: #fafafa;">
-                <span class="text-sm text-muted">Nicio imagine selectată încă</span>
+                <span class="text-sm text-muted">Selectează imagini. Apoi apasă pe un thumbnail ca să-l faci principal.</span>
+              </div>
+              <div class="form-text small text-muted mt-2">
+                Tip: apasă pe un thumbnail din listă pentru a seta imaginea principală.
               </div>
             </div>
 
             <div>
-              <p class="text-sm text-main mb_8">Imagini suplimentare</p>
-              <div id="extra-images-preview"
+              <div class="d-flex align-items-center justify-content-between mb_8">
+                <p class="text-sm text-main mb-0">Imagini (drag pentru ordine)</p>
+                <small class="text-muted">Drag & drop + click pentru “main”</small>
+              </div>
+
+              <div id="all-images-preview"
                    class="border rounded-3 p-2 d-flex flex-wrap gap-2"
-                   style="min-height: 100px; background: #fafafa;">
-                <span class="text-sm text-muted">Selectează una sau mai multe imagini suplimentare</span>
+                   style="min-height: 120px; background: #fafafa;">
+                <span class="text-sm text-muted">Selectează imagini din stânga.</span>
               </div>
             </div>
           </div>
@@ -142,58 +154,262 @@
   </div>
 </section>
 
+<style>
+  /* Thumbnail cards */
+  .sn-thumb {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.08);
+    background: #fff;
+    cursor: grab;
+    user-select: none;
+  }
+  .sn-thumb:active { cursor: grabbing; }
+  .sn-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .sn-thumb .sn-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    line-height: 1.4;
+    background: rgba(0,0,0,.72);
+    color: #fff;
+  }
+  .sn-thumb.sn-main {
+    outline: 2px solid rgba(0,0,0,.65);
+    outline-offset: 1px;
+  }
+  .sn-drop-hint {
+    outline: 2px dashed rgba(0,0,0,.35);
+    outline-offset: 2px;
+  }
+</style>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const mainInput = document.querySelector('input[name$="-main_image"]');
     const extraInput = document.querySelector('input[name$="-extra_images"]');
-    const mainPreview = document.querySelector('#main-image-preview');
-    const extraPreview = document.querySelector('#extra-images-preview');
 
-    function clearPreview(container) {
-      if (!container) return;
-      container.innerHTML = '';
+    const mainPreview = document.querySelector('#main-image-preview');
+    const allPreview = document.querySelector('#all-images-preview');
+
+    const orderField = document.querySelector('input[name$="-photos_order"]');
+    const mainChoiceField = document.querySelector('input[name$="-main_choice"]');
+
+    let currentMainKey = null;
+    let dragSrcEl = null;
+
+    function isImage(file) {
+      return file && file.type && file.type.startsWith('image/');
     }
 
-    function renderPreview(input, container, multiple) {
-      if (!input || !container || !input.files) return;
-      clearPreview(container);
+    function buildItems() {
+      const items = [];
 
-      const files = Array.from(input.files);
-      if (!files.length) {
-        container.innerHTML = '<span class="text-sm text-muted">Nicio imagine selectată</span>';
+      // "m" dacă user a pus ceva în main_image input
+      if (mainInput && mainInput.files && mainInput.files.length) {
+        const f = mainInput.files[0];
+        if (isImage(f)) {
+          items.push({ key: 'm', file: f, url: URL.createObjectURL(f) });
+        }
+      }
+
+      // extra: e0, e1...
+      if (extraInput && extraInput.files && extraInput.files.length) {
+        Array.from(extraInput.files).forEach((f, idx) => {
+          if (!isImage(f)) return;
+          items.push({ key: `e${idx}`, file: f, url: URL.createObjectURL(f) });
+        });
+      }
+
+      return items;
+    }
+
+    function setHiddenOrderFromDOM() {
+      if (!orderField) return;
+      const keys = Array.from(allPreview.querySelectorAll('[data-key]'))
+        .map(el => el.getAttribute('data-key'))
+        .filter(Boolean);
+      orderField.value = keys.join(',');
+    }
+
+    function setMainKey(key) {
+      currentMainKey = key;
+      if (mainChoiceField) mainChoiceField.value = key;
+
+      // update main highlight + badges
+      Array.from(allPreview.querySelectorAll('.sn-thumb')).forEach(el => {
+        const k = el.getAttribute('data-key');
+        el.classList.toggle('sn-main', k === currentMainKey);
+
+        const badge = el.querySelector('.sn-badge');
+        if (badge) badge.textContent = (k === currentMainKey) ? 'MAIN' : 'IMG';
+      });
+
+      // update big preview
+      const chosen = allPreview.querySelector(`.sn-thumb[data-key="${CSS.escape(key)}"] img`);
+      if (chosen && mainPreview) {
+        mainPreview.innerHTML = '';
+        const big = document.createElement('img');
+        big.src = chosen.src;
+        big.className = 'img-fluid rounded';
+        big.style.maxHeight = '240px';
+        big.style.objectFit = 'cover';
+        mainPreview.appendChild(big);
+      }
+    }
+
+    function ensureDefaultMain(items) {
+      // păstrează dacă încă există
+      const keys = items.map(x => x.key);
+      if (currentMainKey && keys.includes(currentMainKey)) return;
+
+      // dacă există main input -> default 'm', altfel primul din listă
+      if (keys.includes('m')) currentMainKey = 'm';
+      else currentMainKey = keys[0] || null;
+
+      if (mainChoiceField) mainChoiceField.value = currentMainKey || '';
+    }
+
+    function clearContainer(el, emptyHtml) {
+      if (!el) return;
+      el.innerHTML = emptyHtml || '';
+    }
+
+    function onDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.getAttribute('data-key') || '');
+      this.classList.add('sn-drop-hint');
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function onDragEnter() {
+      this.classList.add('sn-drop-hint');
+    }
+
+    function onDragLeave() {
+      this.classList.remove('sn-drop-hint');
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!dragSrcEl || dragSrcEl === this) return false;
+
+      // swap nodes by inserting dragged before/after target
+      const parent = this.parentNode;
+      const src = dragSrcEl;
+      const tgt = this;
+
+      const srcNext = src.nextSibling === tgt ? src : src.nextSibling;
+      parent.insertBefore(src, tgt);
+      parent.insertBefore(tgt, srcNext);
+
+      // persist order
+      setHiddenOrderFromDOM();
+      return false;
+    }
+
+    function onDragEnd() {
+      Array.from(allPreview.querySelectorAll('.sn-thumb')).forEach(el => {
+        el.classList.remove('sn-drop-hint');
+      });
+      setHiddenOrderFromDOM();
+    }
+
+    function renderAll(items) {
+      if (!allPreview) return;
+
+      if (!items.length) {
+        clearContainer(allPreview, '<span class="text-sm text-muted">Selectează imagini din stânga.</span>');
+        if (mainPreview) {
+          mainPreview.innerHTML = '<span class="text-sm text-muted">Nicio imagine selectată încă</span>';
+        }
+        if (orderField) orderField.value = '';
+        if (mainChoiceField) mainChoiceField.value = '';
+        currentMainKey = null;
         return;
       }
 
-      files.forEach(function (file) {
-        if (!file.type.startsWith('image/')) return;
+      ensureDefaultMain(items);
+      clearContainer(allPreview);
+
+      items.forEach(item => {
+        const wrap = document.createElement('div');
+        wrap.className = 'sn-thumb';
+        wrap.setAttribute('draggable', 'true');
+        wrap.setAttribute('data-key', item.key);
 
         const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.className = 'img-fluid rounded';
-        img.style.maxHeight = multiple ? '90px' : '220px';
-        img.style.objectFit = 'cover';
+        img.src = item.url;
 
-        const wrapper = document.createElement('div');
-        if (multiple) {
-          wrapper.className = 'me-1 mb-1';
-        }
-        wrapper.appendChild(img);
+        const badge = document.createElement('div');
+        badge.className = 'sn-badge';
+        badge.textContent = (item.key === currentMainKey) ? 'MAIN' : 'IMG';
 
-        container.appendChild(wrapper);
+        wrap.appendChild(img);
+        wrap.appendChild(badge);
+
+        // click -> set main
+        wrap.addEventListener('click', function () {
+          setMainKey(item.key);
+        });
+
+        // drag events
+        wrap.addEventListener('dragstart', onDragStart);
+        wrap.addEventListener('dragover', onDragOver);
+        wrap.addEventListener('dragenter', onDragEnter);
+        wrap.addEventListener('dragleave', onDragLeave);
+        wrap.addEventListener('drop', onDrop);
+        wrap.addEventListener('dragend', onDragEnd);
+
+        if (item.key === currentMainKey) wrap.classList.add('sn-main');
+
+        allPreview.appendChild(wrap);
       });
+
+      // set hidden order according to current DOM order
+      setHiddenOrderFromDOM();
+
+      // set main big preview
+      if (currentMainKey) setMainKey(currentMainKey);
     }
 
-    if (mainInput && mainPreview) {
+    function refresh() {
+      const items = buildItems();
+      renderAll(items);
+    }
+
+    if (mainInput) {
       mainInput.addEventListener('change', function () {
-        renderPreview(mainInput, mainPreview, false);
+        refresh();
       });
     }
 
-    if (extraInput && extraPreview) {
+    if (extraInput) {
       extraInput.addEventListener('change', function () {
-        renderPreview(extraInput, extraPreview, true);
+        refresh();
       });
     }
+
+    // initial
+    refresh();
   });
 </script>
 {% endblock %}

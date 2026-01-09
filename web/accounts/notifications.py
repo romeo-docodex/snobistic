@@ -1,106 +1,141 @@
 # accounts/notifications.py
+
 import logging
-from importlib import import_module
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from .tokens import account_activation_token
+from .utils import add_next_param
 
 logger = logging.getLogger(__name__)
+
+
+def _site_name() -> str:
+    return getattr(settings, "SITE_NAME", "Snobistic")
 
 
 def _default_from_email():
     return getattr(settings, "DEFAULT_FROM_EMAIL", None)
 
 
-def send_activation_email(user, request, next_url=None):
+def _reply_to_list():
+    val = getattr(settings, "SNOBISTIC_REPLY_TO_EMAIL", None)
+    return [val] if val else None
+
+
+def _subject(subject: str) -> str:
+    prefix = getattr(settings, "EMAIL_SUBJECT_PREFIX", "") or ""
+    return f"{prefix}{subject}"
+
+
+def _fail_silently() -> bool:
+    # În dev vrei să vezi erorile; în prod nu vrei să crape flow-ul userului.
+    return not bool(getattr(settings, "DEBUG", False))
+
+
+def send_activation_email(user, request, next_url=None) -> bool:
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = account_activation_token.make_token(user)
 
     activate_path = reverse("accounts:activate", kwargs={"uidb64": uid, "token": token})
-    if next_url:
-        activate_url = f"{request.scheme}://{request.get_host()}{activate_path}?next={next_url}"
-    else:
-        activate_url = f"{request.scheme}://{request.get_host()}{activate_path}"
+    activate_url = request.build_absolute_uri(activate_path)
+    activate_url = add_next_param(activate_url, next_url)
 
-    ctx = {"user": user, "activate_url": activate_url, "site_name": "Snobistic"}
-    subject = "Activează-ți contul Snobistic"
+    ctx = {"user": user, "activate_url": activate_url, "site_name": _site_name()}
+    subject = _subject(f"{_site_name()} – Activează-ți contul")
     html = render_to_string("accounts/emails/activation.html", ctx)
     text = render_to_string("accounts/emails/activation.txt", ctx)
 
-    msg = EmailMultiAlternatives(subject, text, _default_from_email(), [user.email])
-    msg.attach_alternative(html, "text/html")
-    msg.send(fail_silently=False)
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text,
+            from_email=_default_from_email(),
+            to=[user.email],
+            reply_to=_reply_to_list(),
+        )
+        msg.attach_alternative(html, "text/html")
+        msg.send(fail_silently=_fail_silently())
+        return True
+    except Exception as exc:
+        logger.exception("Activation email send failed (user_id=%s): %s", getattr(user, "pk", None), exc)
+        return False
 
 
-def send_email_2fa_code(user, code):
-    ctx = {"user": user, "code": code}
-    subject = "Codul tău de autentificare (2FA)"
+def send_email_2fa_code(user, code) -> bool:
+    ctx = {"user": user, "code": code, "site_name": _site_name()}
+    subject = _subject(f"{_site_name()} – Cod de autentificare (2FA)")
     html = render_to_string("accounts/emails/2fa_code.html", ctx)
     text = render_to_string("accounts/emails/2fa_code.txt", ctx)
-    msg = EmailMultiAlternatives(subject, text, _default_from_email(), [user.email])
-    msg.attach_alternative(html, "text/html")
-    msg.send(fail_silently=False)
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text,
+            from_email=_default_from_email(),
+            to=[user.email],
+            reply_to=_reply_to_list(),
+        )
+        msg.attach_alternative(html, "text/html")
+        msg.send(fail_silently=_fail_silently())
+        return True
+    except Exception as exc:
+        logger.exception("2FA email send failed (user_id=%s): %s", getattr(user, "pk", None), exc)
+        return False
 
 
-def send_delete_account_code(user, code):
-    subject = "Confirmare ștergere cont"
+def send_delete_account_code(user, code) -> bool:
+    subject = _subject(f"{_site_name()} – Confirmare ștergere cont")
     message = (
         f"Bună, {user.first_name or user.email}\n\n"
         f"Codul tău de confirmare pentru ștergerea contului este: {code}\n"
         f"Codul expiră în 10 minute.\n\n"
         f"Dacă nu tu ai inițiat această acțiune, ignoră acest mesaj."
     )
-    send_mail(
-        subject,
-        message,
-        _default_from_email(),
-        [user.email],
-        fail_silently=False,
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=_default_from_email(),
+            recipient_list=[user.email],
+            fail_silently=_fail_silently(),
+        )
+        return True
+    except Exception as exc:
+        logger.exception("Delete-account email send failed (user_id=%s): %s", getattr(user, "pk", None), exc)
+        return False
+
+
+def send_email_change_confirmation(request, user, new_email: str, token: str, next_url: str | None = None) -> bool:
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    url = request.build_absolute_uri(
+        reverse("accounts:email_change_confirm", kwargs={"uidb64": uidb64, "token": token})
+    )
+    url = add_next_param(url, next_url)
+
+    subject = _subject(f"{_site_name()} – Confirmă schimbarea emailului")
+    body = (
+        f"Bună, {getattr(user, 'full_name', '') or user.email}!\n\n"
+        f"Ai cerut schimbarea adresei de email către: {new_email}\n\n"
+        f"Confirmă schimbarea accesând linkul:\n{url}\n\n"
+        f"Dacă nu tu ai făcut cererea, ignoră acest mesaj.\n"
     )
 
-
-def send_sms_2fa_code(user, code: str) -> None:
-    """
-    Helper generic pentru 2FA prin SMS.
-
-    Se bazează pe o setare opțională:
-        SNOBISTIC_SMS_2FA_BACKEND = "module.path.func_name"
-
-    Funcția target trebuie să aibă semnătura:
-        func(phone_number_str: str, code: str) -> None
-    """
-    phone = getattr(getattr(user, "profile", None), "phone", None)
-    if not phone:
-        logger.warning("Nu există număr de telefon pe profil pentru 2FA SMS (user_id=%s).", user.pk)
-        return
-
-    backend_path = getattr(settings, "SNOBISTIC_SMS_2FA_BACKEND", None)
-    if not backend_path:
-        # Nu blocăm nimic – doar logăm. Poți decide ulterior să ridici excepție dacă vrei strict.
-        logger.warning(
-            "SNOBISTIC_SMS_2FA_BACKEND nu este configurat. "
-            "Nu pot trimite SMS 2FA pentru user_id=%s, code=%s.",
-            user.pk,
-            code,
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=body,
+            from_email=_default_from_email(),
+            to=[new_email],
+            reply_to=_reply_to_list(),
         )
-        return
-
-    try:
-        module_path, func_name = backend_path.rsplit(".", 1)
-        mod = import_module(module_path)
-        func = getattr(mod, func_name)
+        msg.send(fail_silently=_fail_silently())
+        return True
     except Exception as exc:
-        logger.error("Nu pot importa backend-ul SMS 2FA (%s): %s", backend_path, exc)
-        return
-
-    try:
-        # PhoneNumberField => îl convertim la string simplu
-        func(str(phone), code)
-    except Exception as exc:
-        logger.error("Eroare la trimiterea SMS 2FA către %s: %s", phone, exc)
+        logger.exception("Email-change confirmation send failed (user_id=%s): %s", getattr(user, "pk", None), exc)
+        return False

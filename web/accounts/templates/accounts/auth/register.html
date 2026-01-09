@@ -1,13 +1,19 @@
+{# templates/accounts/auth/register.html #}
 {% extends "base.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
 
 {% block title %}Creează-ți cont pe Snobistic{% endblock %}
 
+{# Dacă base.html are header/footer globale pe care vrei să le ascunzi pe auth pages #}
 {% block header %}{% endblock %}
 {% block footer %}{% endblock %}
 
 {% block content %}
+{% url 'core:terms' as terms_url %}
+{% url 'core:privacy' as privacy_url %}
+{% url 'core:cookies' as cookies_url %}
+
 <section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
   <div class="container">
 
@@ -24,14 +30,14 @@
         <div class="heading">
           <h4>Creează-ți cont pe Snobistic</h4>
           <p class="text-secondary small mt-1">
-            Completează datele de mai jos pentru a-ți crea un cont de cumpărător sau vânzător.
-            După înregistrare îți trimitem un email cu linkul de activare a contului.
+            Completează datele de mai jos pentru a-ți crea un cont.
+            După înregistrare îți trimitem un email cu linkul de activare.
           </p>
         </div>
 
         {# Mesaje Django #}
         {% if messages %}
-          <div class="mt-3 mb-2">
+          <div class="mt-3 mb-2" role="status" aria-live="polite">
             {% for m in messages %}
               <div class="alert alert-{{ m.tags|default:'info' }} mb-1">
                 {{ m }}
@@ -42,35 +48,49 @@
 
         <form method="post" novalidate class="form-login" autocomplete="off" id="registerForm">
           {% csrf_token %}
-          {% if request.GET.next %}
+
+          {# ✅ next din view (RegisterView pune "next" în context) #}
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% elif request.GET.next %}
             <input type="hidden" name="next" value="{{ request.GET.next }}">
           {% endif %}
 
-          {# Social sign-in – placeholder #}
-          <div class="d-grid gap-2 mb-3">
-            <div class="row">
-              <div class="col-xl-6">
-                <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
-                  <img width="24" height="24"
-                      src="https://img.icons8.com/fluency/48/google-logo.png"
-                      alt="google-logo">
-                  <span class="text text-button ms-2">Continuă cu Google</span>
-                </a>
-              </div>
-              <div class="col-xl-6">
-                <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="#">
-                  <img width="24" height="24"
-                      src="https://img.icons8.com/fluency/48/facebook-new.png"
-                      alt="facebook-logo">
-                  <span class="text text-button ms-2">Continuă cu Facebook</span>
-                </a>
+          {# Social sign-in (din context: social_google_url / facebook / apple) #}
+          {% if social_google_url or social_facebook_url or social_apple_url %}
+            <div class="d-grid gap-2 mb-3">
+              <div class="row g-2">
+                {% if social_google_url %}
+                  <div class="col-xl-6">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_google_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/fluency/48/google-logo.png" alt="Google">
+                      <span class="text text-button ms-2">Continuă cu Google</span>
+                    </a>
+                  </div>
+                {% endif %}
+                {% if social_facebook_url %}
+                  <div class="col-xl-6">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_facebook_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook">
+                      <span class="text text-button ms-2">Continuă cu Facebook</span>
+                    </a>
+                  </div>
+                {% endif %}
+                {% if social_apple_url %}
+                  <div class="col-xl-12">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_apple_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/mac-os.png" alt="Apple">
+                      <span class="text text-button ms-2">Continuă cu Apple</span>
+                    </a>
+                  </div>
+                {% endif %}
               </div>
             </div>
-          </div>
 
-          <div class="text-center mb-3">
-            <span class="text-secondary small">sau continuă cu email</span>
-          </div>
+            <div class="text-center mb-3">
+              <span class="text-secondary small">sau continuă cu email</span>
+            </div>
+          {% endif %}
 
           {% if form.non_field_errors %}
             <div class="alert alert-danger mb-3">
@@ -86,6 +106,7 @@
                 <p class="text-secondary small mb-2">
                   Alege cum vrei să folosești Snobistic:
                 </p>
+
                 <div class="btn-group" role="group" aria-label="Rol">
                   {# Buyer #}
                   <input
@@ -115,9 +136,10 @@
                     Vreau să vând și să cumpăr
                   </label>
                 </div>
+
                 {% if form.role.errors %}
                   <div class="text-danger small mt-1">
-                    {{ form.role.errors.as_text }}
+                    {{ form.role.errors }}
                   </div>
                 {% endif %}
               </div>
@@ -161,54 +183,54 @@
               </div>
             </div>
 
-            {# PAS 3 – detalii firmă (opțional) + IBAN + termeni #}
+            {# PAS 3 – detalii firmă (opțional) + IBAN (seller) + termeni #}
             <div class="register-step d-none" data-step="3">
-              {# Dacă CUI/TVA e gol, contul este considerat persoană fizică #}
               <div class="mb_12">
                 {{ form.company_vat|as_crispy_field }}
+                <div class="text-secondary small mt-1">
+                  Opțional. Dacă completezi CUI/TVA, contul va fi tratat ca persoană juridică (restul datelor firmei se completează ulterior în profil).
+                </div>
               </div>
 
               <div id="iban-group" class="mb_12">
                 {{ form.iban|as_crispy_field }}
+                <div class="text-secondary small mt-1">
+                  IBAN este obligatoriu pentru conturile de vânzător.
+                </div>
               </div>
 
               <div class="form-check mb_12">
                 {{ form.agree_terms }}
                 <label class="form-check-label ms-1" for="{{ form.agree_terms.id_for_label }}">
                   Sunt de acord cu
-                  <a href="{% url 'core:terms' %}" target="_blank">Termenii și Condițiile</a>,
-                  precum și cu Politica de confidențialitate și Politica de cookies ale platformei Snobistic.
+                  {% if terms_url %}<a href="{{ terms_url }}" target="_blank" rel="noopener">Termenii și Condițiile</a>{% else %}Termenii și Condițiile{% endif %}
+                  {% if privacy_url %}, <a href="{{ privacy_url }}" target="_blank" rel="noopener">Politica de confidențialitate</a>{% else %}, Politica de confidențialitate{% endif %}
+                  {% if cookies_url %} și <a href="{{ cookies_url }}" target="_blank" rel="noopener">Politica de cookies</a>{% else %} și Politica de cookies{% endif %}.
                 </label>
                 {% if form.agree_terms.errors %}
                   <div class="text-danger small mt-1">
-                    {{ form.agree_terms.errors.as_text }}
+                    {{ form.agree_terms.errors }}
                   </div>
                 {% endif %}
               </div>
 
               <p class="text-secondary small mt-2">
-                După trimiterea formularului îți vom trimite un email de activare. Verifică și folderul Spam/Promotions.
+                După trimiterea formularului îți vom trimite un email de activare. Verifică și Spam/Promotions.
               </p>
             </div>
 
           </div>
 
           <div class="d-flex justify-content-between align-items-center mt-3">
-            <button type="button"
-                    class="tf-btn btn-line"
-                    id="prevStepBtn">
+            <button type="button" class="tf-btn btn-line d-none" id="prevStepBtn">
               <span class="text text-button">Înapoi</span>
             </button>
 
-            <button type="button"
-                    class="tf-btn btn-fill"
-                    id="nextStepBtn" style="margin-left:auto;">
+            <button type="button" class="tf-btn btn-fill" id="nextStepBtn" style="margin-left:auto;">
               <span class="text text-button">Continuă</span>
             </button>
 
-            <button type="submit"
-                    class="tf-btn btn-fill d-none"
-                    id="submitBtn">
+            <button type="submit" class="tf-btn btn-fill d-none" id="submitBtn">
               <span class="text text-button">Creează contul</span>
             </button>
           </div>
@@ -226,11 +248,15 @@
           Dacă ai deja un cont Snobistic, autentifică-te pentru a-ți vedea comenzile,
           favoritele și licitațiile active.
         </p>
-        <a href="{% url 'accounts:login' %}" class="tf-btn btn-fill mt-2 mb-4">
+
+        {# ✅ păstrează next pe link-ul către login #}
+        <a
+          href="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% elif request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}"
+          class="tf-btn btn-fill mt-2 mb-4"
+        >
           <span class="text text-button">Autentifică-te</span>
         </a>
       </div>
-
     </div>
   </div>
 </section>
@@ -271,7 +297,6 @@
       stepEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
       if (step === 1) {
-        // role (radio)
         const roleInputs = Array.from(document.querySelectorAll('input[name="role"]'));
         const anyChecked = roleInputs.some(r => r.checked);
         if (!anyChecked) {
@@ -310,8 +335,6 @@
         const dob = stepEl.querySelector('[name="date_of_birth"]');
         markInvalid(dob, !dob || !dob.value.trim());
         if (!dob || !dob.value.trim()) valid = false;
-
-        // referral_code este opțional
       }
 
       if (step === 3) {
@@ -358,6 +381,17 @@
       toggleIban();
     }
 
+    function detectStepWithServerErrors() {
+      // Dacă vine POST invalid, crispy poate seta .is-invalid / .invalid-feedback / .errorlist
+      for (let i = 1; i <= totalSteps; i++) {
+        const stepEl = document.querySelector('.register-step[data-step="' + i + '"]');
+        if (!stepEl) continue;
+        const hasErrors = stepEl.querySelector('.is-invalid, .invalid-feedback, .errorlist, .text-danger');
+        if (hasErrors) return i;
+      }
+      return 1;
+    }
+
     prevBtn.addEventListener('click', function() {
       if (currentStep > 1) {
         currentStep--;
@@ -366,9 +400,7 @@
     });
 
     nextBtn.addEventListener('click', function() {
-      if (!validateStep(currentStep)) {
-        return;
-      }
+      if (!validateStep(currentStep)) return;
       if (currentStep < totalSteps) {
         currentStep++;
         updateStepUI();
@@ -384,14 +416,13 @@
     document.querySelectorAll('input[name="role"]').forEach(r => {
       r.addEventListener('change', function() {
         toggleIban();
-        if (currentStep === 3) {
-          validateStep(3);
-        }
+        if (currentStep === 3) validateStep(3);
       });
     });
 
+    // ✅ dacă există erori server-side, sari direct la pasul relevant
+    currentStep = detectStepWithServerErrors();
     updateStepUI();
   });
 </script>
-
 {% endblock %}

@@ -8,75 +8,220 @@
 {% block footer %}{% endblock %}
 
 {% block content %}
+
+<style>
+  /* Ascunde săgețile la input-urile numerice Bootstrap (.form-control) */
+  input.form-control[type="number"]::-webkit-outer-spin-button,
+  input.form-control[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input.form-control[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  .sn-dim-hint { font-size: 12px; }
+</style>
+
 <section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
   <div class="container">
     <div class="login-wrap">
 
       <div class="left">
         <div class="heading">
-          <div class="small text-secondary mb-2">
-            Pasul 5 din 8
+          <div class="small text-secondary mb-1">
+            Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
           </div>
+
           <h4>Dimensiunile articolului</h4>
-          {% if form.measurement_profile %}
-            <p class="mt-2 text-muted">
-              Completează dimensiunile relevante pentru tipul de produs selectat.
-            </p>
-          {% endif %}
+
+          <p class="small text-secondary mb-0">
+            Completează dimensiunile relevante pentru tipul de produs selectat.
+            Câmpurile care nu se aplică sunt ascunse automat.
+          </p>
         </div>
-      </div>
 
-      <div class="right">
-        <form method="post">
-          {% csrf_token %}
-          {{ wizard.management_form }}
-
+        <div class="wrap">
           {% if form.non_field_errors %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mb-3">
               {{ form.non_field_errors }}
             </div>
           {% endif %}
 
-          <div class="row">
+          <form id="wizardForm" method="post" class="form-login" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {# === Hidden fields (postate, dar invizibile) === #}
             {% for field in form %}
-              {# HiddenInput-urile vor fi randate ca <input type="hidden">, fără label #}
               {% if field.is_hidden %}
                 {{ field }}
-              {% else %}
-                <div class="col-md-6 mb-3">
-                  <label class="form-label" for="{{ field.id_for_label }}">
-                    {{ field.label }}
-                  </label>
-                  {{ field }}
-                  {% if field.errors %}
-                    <div class="invalid-feedback d-block">
-                      {{ field.errors|striptags }}
-                    </div>
-                  {% endif %}
-                  {% if field.help_text %}
-                    <small class="form-text text-muted">
-                      {{ field.help_text }}
-                    </small>
-                  {% endif %}
-                </div>
               {% endif %}
             {% endfor %}
-          </div>
 
-          <div class="d-flex justify-content-between mt-4">
-            <button name="wizard_goto_step"
-                    value="{{ wizard.steps.prev }}"
-                    class="btn btn-outline-secondary">
-              Înapoi
-            </button>
-            <button type="submit" class="btn btn-primary">
-              Continuă
-            </button>
-          </div>
-        </form>
+            {% if not form.shoulders_cm.is_hidden or not form.bust_cm.is_hidden or not form.waist_cm.is_hidden or not form.hips_cm.is_hidden or not form.length_cm.is_hidden or not form.sleeve_cm.is_hidden or not form.inseam_cm.is_hidden or not form.outseam_cm.is_hidden %}
+              <div class="mb-4">
+                <h6 class="mb-2">Îmbrăcăminte</h6>
+                <div class="row g-3">
+                  {% for field in form %}
+                    {% if not field.is_hidden and ","|add:field.name|add:"," in ",shoulders_cm,bust_cm,waist_cm,hips_cm,length_cm,sleeve_cm,inseam_cm,outseam_cm," %}
+                      <div class="col-md-6">
+                        <label class="body-text-1 mb-1 d-block" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                          <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                          <div class="form-text text-muted sn-dim-hint">{{ field.help_text }}</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+
+                <div class="form-text text-muted sn-dim-hint mt-2">
+                  Tip: măsoară pe o suprafață plană, fără a întinde materialul.
+                </div>
+              </div>
+            {% endif %}
+
+            {% if not form.shoe_insole_length_cm.is_hidden or not form.shoe_width_cm.is_hidden or not form.shoe_heel_height_cm.is_hidden or not form.shoe_total_height_cm.is_hidden %}
+              <div class="mb-4">
+                <h6 class="mb-2">Încălțăminte</h6>
+                <div class="row g-3">
+                  {% for field in form %}
+                    {% if not field.is_hidden and ","|add:field.name|add:"," in ",shoe_insole_length_cm,shoe_width_cm,shoe_heel_height_cm,shoe_total_height_cm," %}
+                      <div class="col-md-6">
+                        <label class="body-text-1 mb-1 d-block" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                          <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                          <div class="form-text text-muted sn-dim-hint">{{ field.help_text }}</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if not form.bag_width_cm.is_hidden or not form.bag_height_cm.is_hidden or not form.bag_depth_cm.is_hidden or not form.strap_length_cm.is_hidden %}
+              <div class="mb-4">
+                <h6 class="mb-2">Genți</h6>
+                <div class="row g-3">
+                  {% for field in form %}
+                    {% if not field.is_hidden and ","|add:field.name|add:"," in ",bag_width_cm,bag_height_cm,bag_depth_cm,strap_length_cm," %}
+                      <div class="col-md-6">
+                        <label class="body-text-1 mb-1 d-block" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                          <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                          <div class="form-text text-muted sn-dim-hint">{{ field.help_text }}</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if not form.belt_length_total_cm.is_hidden or not form.belt_length_usable_cm.is_hidden or not form.belt_width_cm.is_hidden %}
+              <div class="mb-4">
+                <h6 class="mb-2">Curele</h6>
+                <div class="row g-3">
+                  {% for field in form %}
+                    {% if not field.is_hidden and ","|add:field.name|add:"," in ",belt_length_total_cm,belt_length_usable_cm,belt_width_cm," %}
+                      <div class="col-md-6">
+                        <label class="body-text-1 mb-1 d-block" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                                                   <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                          <div class="form-text text-muted sn-dim-hint">{{ field.help_text }}</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if not form.jewelry_chain_length_cm.is_hidden or not form.jewelry_drop_length_cm.is_hidden or not form.jewelry_pendant_size_cm.is_hidden %}
+              <div class="mb-4">
+                <h6 class="mb-2">Bijuterii / accesorii mici</h6>
+                <div class="row g-3">
+                  {% for field in form %}
+                    {% if not field.is_hidden and ","|add:field.name|add:"," in ",jewelry_chain_length_cm,jewelry_drop_length_cm,jewelry_pendant_size_cm," %}
+                      <div class="col-md-6">
+                        <label class="body-text-1 mb-1 d-block" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                          <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                          <div class="form-text text-muted sn-dim-hint">{{ field.help_text }}</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+          </form>
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">Cum măsori corect</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1">Folosește un centimetru de croitorie.</li>
+          <li class="mb-1">Măsoară produsul pe o suprafață plană.</li>
+          <li class="mb-1">Nu întinde materialul.</li>
+          <li class="mb-1">Rotunjește la 0.5 cm dacă e nevoie.</li>
+        </ul>
+
+        <div class="button-submit d-flex gap-2">
+          <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+            <span class="text">Renunță</span>
+          </a>
+
+          <button class="tf-btn btn-outline"
+                  name="wizard_goto_step"
+                  value="{{ wizard.steps.prev }}"
+                  type="submit"
+                  form="wizardForm">
+            <span class="text">Înapoi</span>
+          </button>
+
+          <button class="tf-btn btn-fill" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
       </div>
 
     </div>
   </div>
 </section>
+
 {% endblock %}

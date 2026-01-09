@@ -1,3 +1,4 @@
+# accounts/context_processors.py
 from .forms import LoginForm, RegisterForm
 
 def login_form_context(request):

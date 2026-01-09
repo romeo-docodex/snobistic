@@ -1,3 +1,4 @@
+{# templates/accounts/auth/login.html #}
 {% extends "base.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
@@ -11,17 +12,28 @@
 {% block content %}
 <section class="flat-spacing min-vh-100 d-flex align-items-center py-0 auth-bg" data-aos="fade-up">
   <div class="container">
-    <div class="login-wrap login-wrap--center">
 
-      {# ==== Login (centred) ==== #}
+    {# Logo (identic ca pe register) #}
+    <div class="container text-center my-4 pb-5">
+      <a href="{% url 'core:home' %}">
+        <img src="{% static 'images/logo/logo.png' %}" alt="Snobistic" style="height:56px;width:auto;">
+      </a>
+    </div>
+
+    <div class="login-wrap login-wrap--center">
+      {# ==== Login ==== #}
       <div class="left">
         <div class="heading">
           <h4>Autentificare</h4>
+          <p class="text-secondary small mt-1">
+            Intră în cont pentru a-ți vedea comenzile, favoritele și licitațiile.
+            Dacă ai 2FA activat, după parolă ți se va cere un cod.
+          </p>
         </div>
 
         {# Mesaje Django #}
         {% if messages %}
-          <div class="mt-3 mb-2">
+          <div class="mt-3 mb-2" role="status" aria-live="polite">
             {% for m in messages %}
               <div class="alert alert-{{ m.tags|default:'info' }} mb-1">
                 {{ m }}
@@ -30,14 +42,13 @@
           </div>
         {% endif %}
 
-        <form method="post"
-              novalidate
-              class="form-login"
-              autocomplete="off">
+        <form method="post" novalidate class="form-login" autocomplete="off">
           {% csrf_token %}
 
-          {# păstrăm redirect-ul după login (safe_next îl va valida) #}
-          {% if request.GET.next %}
+          {# ✅ next din view (LoginView pune "next" în context) #}
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% elif request.GET.next %}
             <input type="hidden" name="next" value="{{ request.GET.next }}">
           {% endif %}
 
@@ -47,8 +58,45 @@
             <input type="text" name="website" tabindex="-1" autocomplete="off">
           </div>
 
-          <div class="wrap">
+          {# Social login (din context) #}
+          {% if social_google_url or social_facebook_url or social_apple_url %}
+            <div class="d-grid gap-2 mb-3">
+              <div class="row g-2">
+                {% if social_google_url %}
+                  <div class="col-xl-6">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_google_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/fluency/48/google-logo.png" alt="Google">
+                      <span class="text text-button ms-2">Continuă cu Google</span>
+                    </a>
+                  </div>
+                {% endif %}
 
+                {% if social_facebook_url %}
+                  <div class="col-xl-6">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_facebook_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook">
+                      <span class="text text-button ms-2">Continuă cu Facebook</span>
+                    </a>
+                  </div>
+                {% endif %}
+
+                {% if social_apple_url %}
+                  <div class="col-xl-12">
+                    <a class="tf-btn btn-fill d-flex align-items-center justify-content-center" href="{{ social_apple_url }}">
+                      <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/mac-os.png" alt="Apple">
+                      <span class="text text-button ms-2">Continuă cu Apple</span>
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="text-center mb-3">
+              <span class="text-secondary small">sau continuă cu email</span>
+            </div>
+          {% endif %}
+
+          <div class="wrap">
             {# Erori globale (ex: credențiale invalide) #}
             {% if form.non_field_errors %}
               <div class="alert alert-danger mb-3">
@@ -58,24 +106,24 @@
 
             {# Email #}
             <fieldset class="mb_20">
-              {{ form.username.errors }}
               {{ form.username|as_crispy_field }}
             </fieldset>
 
             {# Parolă #}
             <fieldset class="mb_12">
-              {{ form.password.errors }}
               {{ form.password|as_crispy_field }}
             </fieldset>
 
             <div class="d-flex align-items-center justify-content-between mb-2">
               <div class="tf-cart-checkbox">
                 <div class="tf-checkbox-wrapp">
-                  {{ form.remember_me.errors }}
                   {{ form.remember_me }}
                   <div><i class="icon-check"></i></div>
                 </div>
                 <label for="{{ form.remember_me.id_for_label }}">Ține-mă minte</label>
+                {% if form.remember_me.errors %}
+                  <div class="text-danger small mt-1">{{ form.remember_me.errors }}</div>
+                {% endif %}
               </div>
 
               <a href="{% url 'accounts:password_reset' %}"
@@ -92,13 +140,16 @@
           </div>
 
           <div class="text-center mt-3">
-            <a href="{% url 'accounts:register' %}" class="text-button link text-white">
+            {# ✅ păstrează next pe link-ul către register #}
+            <a
+              href="{% url 'accounts:register' %}{% if next %}?next={{ next|urlencode }}{% elif request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}"
+              class="text-button link text-white"
+            >
               Nu ai cont? Creează unul
             </a>
           </div>
         </form>
       </div>
-
     </div> {# /login-wrap #}
 
   </div>

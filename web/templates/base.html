@@ -3,19 +3,56 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Snobistic{% endblock %}</title>
+
+    <title>
+        {% block title %}
+            {{ meta_title|default:site_settings.default_meta_title|default:meta_title_default|default:"Snobistic" }}
+        {% endblock %}
+    </title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <meta name="description"
-          content="{% block meta_description %}Snobistic este marketplace-ul de fashion autentic, cu magazin, licitații, autentificare produse și plăți în siguranță.{% endblock %}">
+          content="{% block meta_description %}{{ meta_description|default:site_settings.default_meta_description|default:meta_description_default|default:"" }}{% endblock %}">
 
     <meta name="robots"
-          content="{% block meta_robots %}index, follow, max-snippet:-1, max-image-preview:large{% endblock %}">
+          content="{% block meta_robots %}{{ meta_robots|default:site_settings.default_meta_robots|default:meta_robots_default|default:"index, follow, max-snippet:-1, max-image-preview:large" }}{% endblock %}">
 
     <link rel="canonical"
-          href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+          href="{% block canonical_url %}{{ canonical_url|default:request.build_absolute_uri }}{% endblock %}">
 
+    <meta property="og:locale" content="ro_RO">
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'Snobistic' }}">
+
+    <meta property="og:title"
+          content="{{ meta_title|default:site_settings.default_meta_title|default:meta_title_default|default:'Snobistic' }}">
+
+    <meta property="og:description"
+          content="{{ meta_description|default:site_settings.default_meta_description|default:meta_description_default|default:'' }}">
+
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ canonical_url|default:request.build_absolute_uri }}">
+
+    {# Optional: OG image (poti seta og_image in view/context) #}
+    {% if og_image %}
+        <meta property="og:image" content="{{ og_image }}">
+    {% endif %}
+
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
+
+    <meta name="twitter:title"
+          content="{{ meta_title|default:site_settings.default_meta_title|default:meta_title_default|default:'Snobistic' }}">
+
+    <meta name="twitter:description"
+          content="{{ meta_description|default:site_settings.default_meta_description|default:meta_description_default|default:'' }}">
+
+    {% if twitter_image %}
+        <meta name="twitter:image" content="{{ twitter_image }}">
+    {% elif og_image %}
+        <meta name="twitter:image" content="{{ og_image }}">
+    {% endif %}
+
+    {# CSS #}
     <link href="{% static 'css/fonts.css' %}" rel="stylesheet">
     <link href="{% static 'css/font-icons.css' %}" rel="stylesheet">
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
@@ -26,6 +63,8 @@
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
+    {# Extra head injections (page-specific) #}
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
@@ -89,7 +128,6 @@
                 });
 
                 if (res.status === 401) {
-                    // nu e logat -> încercăm offcanvas, altfel redirect pe pagina de login
                     const loginEl = document.querySelector('#login');
                     if (loginEl && window.bootstrap && bootstrap.Offcanvas) {
                         new bootstrap.Offcanvas(loginEl).show();
@@ -130,6 +168,106 @@
     })();
     </script>
 
+    <script>
+    (function () {
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    function getCSRFToken(form) {
+        return getCookie('csrftoken') || (form && form.querySelector('input[name="csrfmiddlewaretoken"]')?.value) || '';
+    }
+
+    async function postFavorite(form) {
+        const csrf = getCSRFToken(form);
+        const fd = new FormData(form);
+
+        const resp = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrf
+        },
+        body: fd,
+        credentials: 'same-origin'
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch (e) {}
+
+        if (!resp.ok || !data || data.ok !== true) {
+        const msg = (data && data.error) ? data.error : `Eroare (${resp.status}).`;
+        throw new Error(msg);
+        }
+        return data;
+    }
+
+    function updateUIForProduct(productId, added, count) {
+        if (!productId) return;
+
+        // Toggle all buttons/forms for same product (list + carousel + detail)
+        const forms = document.querySelectorAll(`form.js-fav-form[data-product-id="${productId}"]`);
+        forms.forEach(f => {
+        const btn = f.querySelector('[data-toggle-fav]');
+        if (!btn) return;
+
+        btn.classList.toggle('active', !!added);
+        btn.setAttribute('aria-pressed', added ? 'true' : 'false');
+
+        // Optional: update tooltip text if exists
+        const tip = btn.querySelector('.tooltip');
+        if (tip) tip.textContent = added ? 'Șterge de la favorite' : 'Adaugă la favorite';
+
+        // Optional: detail button that has .add / .added spans
+        btn.classList.toggle('is-favorited', !!added);
+        });
+
+        // Update any counters if you add them later
+        document.querySelectorAll('[data-favorites-count]').forEach(el => {
+        el.textContent = String(count ?? '');
+        });
+    }
+
+    document.addEventListener('submit', async function (e) {
+        const form = e.target.closest('form.js-fav-form');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const btn = form.querySelector('[data-toggle-fav]') || form.querySelector('button');
+        if (btn) {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+        }
+
+        try {
+        const data = await postFavorite(form);
+        const productId = form.dataset.productId;
+        updateUIForProduct(productId, data.added, data.count);
+
+        // If we're on favorites page and we removed it => remove card
+        if (form.dataset.removeOnUnfav === '1' && data.added === false) {
+            const card = form.closest('.card-product');
+            if (card) card.remove();
+        }
+        } catch (err) {
+        console.error(err);
+        // fallback safe: refresh (optional) or show alert
+        alert(err.message || 'Nu s-a putut actualiza favoritul.');
+        } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('is-loading');
+        }
+        }
+    }, true);
+    })();
+    </script>
+
+
     <!-- Custom Scripts -->
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/jquery.min.js' %}"></script>
@@ -145,6 +283,9 @@
     <script src="{% static 'js/sibforms.js' %}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    {# Extra JS injections (page-specific) #}
+    {% block extra_js %}{% endblock %}
 
 </body>
 </html>

@@ -1,88 +1,89 @@
 # accounts/urls.py
 from django.urls import path
+
 from . import views
 
-app_name = 'accounts'
+app_name = "accounts"
 
 urlpatterns = [
-    # ============================
-    # Autentificare & înregistrare
-    # ============================
-    path('autentificare/', views.LoginView.as_view(), name='login'),
-    path('deconectare/', views.logout_view, name='logout'),
-    path('inregistrare/', views.RegisterView.as_view(), name='register'),
-    path('inregistrare/email-trimis/', views.registration_email_sent, name='registration_email_sent'),
-    path('activare-cont/<uidb64>/<token>/', views.activate_account, name='activate'),
-    path('activare/retrimitere/', views.resend_activation, name='resend_activation'),
+    # Auth
+    path("login/", views.LoginView.as_view(), name="login"),
+    path("logout/", views.logout_view, name="logout"),  # ✅ POST-only enforced in view
+    path("register/", views.RegisterView.as_view(), name="register"),
+    path("registration-email-sent/", views.registration_email_sent, name="registration_email_sent"),
+    path("activate/<uidb64>/<token>/", views.activate_account, name="activate"),
+    path("resend-activation/", views.resend_activation, name="resend_activation"),
 
-    # ============================
-    # 2FA – flux principal
-    # ============================
-    path('autentificare-2-factor/', views.TwoFactorView.as_view(), name='two_factor'),
-    path('autentificare-2-factor/configurare/', views.two_factor_setup, name='two_factor_setup'),
-    path('autentificare-2-factor/configurare/verificare/', views.two_factor_setup_verify, name='two_factor_setup_verify'),
-    path('profil/2fa/coduri-backup/regenerare/', views.regenerate_backup_codes, name='regenerate_backup_codes'),
+    # Social login helper
+    path("oauth/", views.social_login_start, name="social_login_start"),
 
-    # ============================
-    # Resetare / schimbare parolă
-    # ============================
-    path('parola/resetare/', views.CustomPasswordResetView.as_view(), name='password_reset'),
-    path('parola/resetare/trimis/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('parola/resetare/confirmare/<uidb64>/<token>/', views.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-    path('parola/resetare/finalizata/', views.CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    path('parola/modificare/', views.CustomPasswordChangeView.as_view(), name='password_change'),
-    path('parola/modificare/finalizata/', views.CustomPasswordChangeDoneView.as_view(), name='password_change_done'),
+    # 2FA
+    path("2fa/", views.TwoFactorView.as_view(), name="two_factor"),
+    path("2fa/enable/", views.enable_2fa, name="enable_2fa"),
+    path("2fa/setup/", views.two_factor_setup, name="two_factor_setup"),
+    path("2fa/setup/verify/", views.two_factor_setup_verify, name="two_factor_setup_verify"),
+    path("2fa/backup/regenerate/", views.regenerate_backup_codes, name="regenerate_backup_codes"),
+    path("2fa/disable/", views.disable_2fa, name="disable_2fa"),
+    path("2fa/enable-email/", views.enable_2fa_email, name="enable_2fa_email"),
+    path("2fa/enable-sms/", views.enable_2fa_sms, name="enable_2fa_sms"),
+    path("trusted-devices/<int:pk>/revoke/", views.revoke_trusted_device, name="revoke_trusted_device"),
 
-    # ============================
-    # Profil – pagini principale
-    # ============================
-    path('profil/', views.profile, name='profile'),
-    path('profil/date-personale/', views.profile_data, name='profile_data'),
-    path('profil/securitate/', views.profile_security, name='profile_security'),
+    # Password reset/change
+    path("password/reset/", views.CustomPasswordResetView.as_view(), name="password_reset"),
+    path("password/reset/done/", views.CustomPasswordResetDoneView.as_view(), name="password_reset_done"),
+    path("password/reset/<uidb64>/<token>/", views.CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("password/reset/complete/", views.CustomPasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path("password/change/", views.CustomPasswordChangeView.as_view(), name="password_change"),
+    path("password/change/done/", views.CustomPasswordChangeDoneView.as_view(), name="password_change_done"),
 
-    # ============================
-    # Profil – adrese
-    # ============================
-    path('profil/adrese/', views.address_list, name='address_list'),
-    path('profil/adresa/adaugare/', views.address_form, name='address_form'),
-    path('profil/adresa/<int:pk>/editare/', views.address_form, name='address_form'),
-    path('profil/adresa/<int:pk>/stergere/', views.address_delete, name='address_delete'),
+    # Profile
+    path("profile/", views.profile, name="profile"),
+    path("profile/personal/", views.profile_personal, name="profile_personal"),
 
-    # ============================
-    # Profil – 2FA on/off
-    # ============================
-    path('profil/2fa/activare/', views.enable_2fa,  name='enable_2fa'),
-    path('profil/2fa/dezactivare/', views.disable_2fa, name='disable_2fa'),
+    # ✅ Alias to stop 404s (remove after templates are migrated)
+    path("profile/data/", views.profile_personal, name="profile_data"),
 
-    # ============================
-    # Profil – măsurători
-    # ============================
-    path('profil/dimensiuni/', views.profile_dimensions, name='profile_dimensions'),
+    path("profile/security/", views.profile_security, name="profile_security"),
+    path("profile/dimensions/", views.profile_dimensions, name="profile_dimensions"),
 
-    # ============================
-    # 2FA – email, SMS + dispozitive de încredere
-    # ============================
-    path('profil/2fa/activare-email/', views.enable_2fa_email, name='enable_2fa_email'),
-    path('profil/2fa/activare-sms/', views.enable_2fa_sms, name='enable_2fa_sms'),
-    path('profil/securitate/dispozitiv/<int:pk>/revocare/', views.revoke_trusted_device, name='revoke_trusted_device'),
+    # Addresses
+    path("addresses/", views.address_list, name="address_list"),
+    path("addresses/add/", views.address_form, name="address_add"),
+    path("addresses/<int:pk>/edit/", views.address_form, name="address_edit"),
+    path("addresses/<int:pk>/delete/", views.address_delete, name="address_delete"),
 
-    # ============================
-    # Seller – setări + locații
-    # ============================
-    path('profil/vanzator/', views.seller_settings, name='seller_settings'),
-    path('profil/vanzator/locatie/adaugare/', views.seller_location_add, name='seller_location_add'),
-    path('profil/vanzator/locatie/<int:pk>/stergere/', views.seller_location_delete, name='seller_location_delete'),
-    path('profil/vanzator/locatie/<int:pk>/implicita/', views.seller_location_make_default, name='seller_location_default'),
+    # Seller
+    path("seller/settings/", views.seller_settings, name="seller_settings"),
+    path("seller/locations/add/", views.seller_location_add, name="seller_location_add"),
+    path("seller/locations/<int:pk>/delete/", views.seller_location_delete, name="seller_location_delete"),
+    path("seller/locations/<int:pk>/default/", views.seller_location_make_default, name="seller_location_make_default"),
 
-    # ============================
-    # KYC – documente utilizator
-    # ============================
-    path('profil/kyc/', views.kyc_center, name='kyc_center'),
-    path('profil/kyc/document/<int:pk>/stergere/', views.kyc_document_delete, name='kyc_document_delete'),
+    # KYC user
+    path("kyc/", views.kyc_center, name="kyc_center"),
+    path("kyc/documents/<int:pk>/delete/", views.kyc_document_delete, name="kyc_document_delete"),
 
-    # ============================
-    # Ștergere cont
-    # ============================
-    path('profil/stergere/', views.delete_account_request, name='delete_account_request'),
-    path('profil/stergere/confirmare/', views.delete_account_confirm, name='delete_account_confirm'),
+    # KYC staff
+    path("staff/kyc/", views.staff_kyc_queue, name="staff_kyc_queue"),
+    path("staff/kyc/<int:pk>/", views.staff_kyc_review, name="staff_kyc_review"),
+    path("staff/kyc/<int:pk>/approve/", views.staff_kyc_approve, name="staff_kyc_approve"),
+    path("staff/kyc/<int:pk>/reject/", views.staff_kyc_reject, name="staff_kyc_reject"),
+
+    # Roles
+    path("roles/", views.roles_center, name="roles_center"),
+    path("roles/upgrade-to-seller/", views.upgrade_to_seller, name="upgrade_to_seller"),
+    path("roles/downgrade/", views.downgrade_roles, name="downgrade_roles"),
+    path("roles/toggle-seller-can-buy/", views.toggle_seller_can_buy, name="toggle_seller_can_buy"),
+
+    # Email change
+    path("email/change/request/", views.email_change_request, name="email_change_request"),
+    path("email/change/confirm/<uidb64>/<token>/", views.email_change_confirm, name="email_change_confirm"),
+
+    # Sessions + GDPR
+    path("sessions/", views.sessions_center, name="sessions_center"),
+    path("sessions/logout-all/", views.logout_all_sessions, name="logout_all_sessions"),
+    path("gdpr/export/", views.gdpr_export, name="gdpr_export"),
+
+    # Delete account
+    path("delete/request/", views.delete_account_request, name="delete_account_request"),
+    path("delete/confirm/", views.delete_account_confirm, name="delete_account_confirm"),
 ]

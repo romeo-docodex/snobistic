@@ -1,3 +1,4 @@
+# snobistic/urls.py
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -8,6 +9,7 @@ urlpatterns = [
 
     # Aplicații interne
     path('', include('core.urls')),                              # homepage, despre-noi, contact etc.
+    path("auth/", include("allauth.urls")),
     path('cont/', include('accounts.urls')),                     # autentificare, profil, parole
     path('magazin/', include('catalog.urls')),                   # listă produse, categorii, produs
     path('cos/', include('cart.urls')),                          # coș de cumpărături

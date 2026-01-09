@@ -40,7 +40,7 @@
           <h6 class="title-account mb-0">
             Adresele mele ({{ addresses|length }})
           </h6>
-          <a href="{% url 'accounts:address_form' %}"
+          <a href="{% url 'accounts:address_add' %}"
              class="tf-btn btn-add-address animate-btn">
             Adaugă adresă nouă
           </a>
@@ -133,7 +133,7 @@
                     </div>
 
                     <div class="box-btn d-flex flex-wrap gap-2 mt-3">
-                      <a href="{% url 'accounts:address_form' pk=address.pk %}"
+                      <a href="{% url 'accounts:address_edit' pk=address.pk %}"
                          class="tf-btn btn-out-line-dark">
                         Editează
                       </a>
@@ -146,8 +146,6 @@
                           Șterge
                         </button>
                       </form>
-
-                      {# Setare implicită se face acum din formularul de editare #}
                     </div>
                   </div>
                 </li>
@@ -159,14 +157,14 @@
               <p class="text-xxs text-grey mb-2">
                 Adaugă o adresă de livrare pentru a comanda mai rapid data viitoare.
               </p>
-              <a href="{% url 'accounts:address_form' %}" class="tf-btn animate-btn">
+              <a href="{% url 'accounts:address_add' %}" class="tf-btn animate-btn">
                 Adaugă prima adresă
               </a>
             </div>
           {% endif %}
         </div>
-      </div> <!-- /my-acount-content -->
-    </div> <!-- /main-content-account -->
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

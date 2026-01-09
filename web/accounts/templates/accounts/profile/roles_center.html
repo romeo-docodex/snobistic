@@ -1,0 +1,188 @@
+{# templates/accounts/profile/roles_center.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Roluri & permisiuni – Snobistic{% endblock %}
+
+{% block content %}
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Roluri & permisiuni</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'accounts:profile' %}">Cont</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Roluri</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+      {% include "accounts/profile/_account_sidebar.html" with account_section="roles" %}
+
+      <div class="my-acount-content account-dashboard">
+
+        <div class="mb-4">
+          <h6 class="display-xs title-form mb-2">Centrul de roluri</h6>
+          <p class="text-xs text-muted mb-0">
+            Aici poți gestiona rolurile din contul tău: activare vânzător, downgrade și permisiunea
+            de a cumpăra ca vânzător.
+          </p>
+        </div>
+
+        {# ================================ #}
+        {# 1) STATUS ROLURI (din Profile)    #}
+        {# ================================ #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">Status roluri</p>
+              <h6 class="mb-3">Starea curentă a contului</h6>
+
+              <ul class="list-unstyled text-sm mb-0">
+                <li class="mb-2">
+                  <span class="text-muted">Vânzător</span><br>
+                  {% if profile.role_seller %}
+                    <span class="badge bg-success-subtle text-success">Activ</span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning">Inactiv</span>
+                  {% endif %}
+                </li>
+
+                <li class="mb-2">
+                  <span class="text-muted">Poate cumpăra ca vânzător</span><br>
+                  {% if profile.seller_can_buy %}
+                    <span class="badge bg-success-subtle text-success">Da</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">Nu</span>
+                  {% endif %}
+                  <p class="text-2xs text-muted mt-1 mb-0">
+                    Dacă e dezactivat, contul tău de vânzător nu va putea plasa comenzi ca buyer (util pentru separarea rolurilor).
+                  </p>
+                </li>
+
+                {# opțional: alte roluri dacă există în Profile (nu strică) #}
+                {% if profile.role_staff %}
+                  <li class="mb-0">
+                    <span class="text-muted">Staff</span><br>
+                    <span class="badge bg-primary-subtle text-primary">Da</span>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {# ================================ #}
+        {# 2) UPGRADE LA SELLER             #}
+        {# ================================ #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">Upgrade</p>
+              <h6 class="mb-2">Activează cont de vânzător</h6>
+              <p class="text-xs text-muted mb-3">
+                Dacă vrei să vinzi pe Snobistic, activează rolul de vânzător. Vei putea accesa setările de vânzător,
+                locațiile de marfă și dashboard-ul de seller.
+              </p>
+
+              <form method="post" action="{% url 'accounts:upgrade_to_seller' %}" class="d-flex flex-wrap gap-2">
+                {% csrf_token %}
+                <button type="submit"
+                        class="tf-btn animate-btn"
+                        {% if profile.role_seller %}disabled{% endif %}>
+                  {% if profile.role_seller %}Rol vânzător activ{% else %}Devino vânzător{% endif %}
+                </button>
+
+                {% if profile.role_seller %}
+                  <a href="{% url 'accounts:seller_settings' %}" class="tf-btn btn-out-line-dark">
+                    Deschide setările de vânzător
+                  </a>
+                {% endif %}
+              </form>
+
+              <p class="text-2xs text-muted mt-3 mb-0">
+                Notă: pentru a vinde fără restricții, este posibil să fie necesar KYC (în funcție de politicile platformei).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {# ================================ #}
+        {# 3) TOGGLE seller_can_buy         #}
+        {# ================================ #}
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1">Permisiuni</p>
+              <h6 class="mb-2">Cumpărare ca vânzător</h6>
+              <p class="text-xs text-muted mb-3">
+                Controlează dacă rolul de vânzător poate folosi și funcțiile de cumpărător (checkout, comenzi).
+              </p>
+
+              <form method="post" action="{% url 'accounts:toggle_seller_can_buy' %}" class="d-flex flex-wrap gap-2">
+                {% csrf_token %}
+                <button type="submit"
+                        class="tf-btn btn-out-line-dark"
+                        {% if not profile.role_seller %}disabled{% endif %}>
+                  {% if profile.seller_can_buy %}Dezactivează “seller can buy”{% else %}Activează “seller can buy”{% endif %}
+                </button>
+              </form>
+
+              {% if not profile.role_seller %}
+                <p class="text-2xs text-muted mt-3 mb-0">
+                  Pentru a modifica această setare, trebuie mai întâi să activezi rolul de vânzător.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# ================================ #}
+        {# 4) DOWNGRADE ROLES               #}
+        {# ================================ #}
+        <div class="row">
+          <div class="col-12">
+            <div class="p-3 p-md-4 rounded-4 border bg-body h-100">
+              <p class="text-xs text-uppercase text-muted fw-semibold mb-1 text-danger">Downgrade</p>
+              <h6 class="mb-2">Dezactivează rolurile avansate</h6>
+              <p class="text-xs text-muted mb-3">
+                Dacă nu mai vrei să folosești contul ca vânzător, poți face downgrade. Această acțiune poate
+                restricționa accesul la funcționalitățile de seller.
+              </p>
+
+              <form method="post" action="{% url 'accounts:downgrade_roles' %}" class="d-flex flex-wrap gap-2">
+                {% csrf_token %}
+                <button type="submit"
+                        class="tf-btn btn-out-line-dark"
+                        {% if not profile.role_seller %}disabled{% endif %}>
+                  Dezactivează rolul de vânzător
+                </button>
+              </form>
+
+              <p class="text-2xs text-muted mt-3 mb-0">
+                Recomandat doar dacă nu ai tranzacții active sau obligații în curs (comenzi, retururi, escrow).
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div> {# /.my-acount-content #}
+    </div> {# /.main-content-account #}
+  </div>
+</div>
+
+{% endblock %}

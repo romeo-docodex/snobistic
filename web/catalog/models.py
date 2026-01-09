@@ -5,10 +5,11 @@ import uuid
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -52,8 +53,6 @@ class Category(models.Model):
     - Îmbrăcăminte
     - Încălțăminte
     - Accesorii
-
-    (în DB poți avea și altele, dar pentru client cele 3 sunt „oficiale”)
     """
 
     class SizeGroup(models.TextChoices):
@@ -75,7 +74,6 @@ class Category(models.Model):
         ),
     )
 
-    # cover image pentru homepage / listări
     cover_image = models.ImageField(
         upload_to=category_cover_upload_to,
         max_length=255,
@@ -96,9 +94,6 @@ class Category(models.Model):
         return reverse("catalog:category_list", args=[self.slug])
 
     def get_effective_size_group(self):
-        """
-        Dacă nu are size_group setat, folosim GENERIC.
-        """
         if self.size_group:
             return self.size_group
         return self.SizeGroup.GENERIC
@@ -106,12 +101,7 @@ class Category(models.Model):
 
 class Subcategory(models.Model):
     """
-    Subcategorie:
-    - balerini, cizme și ghete, pantofi sport
-    - rochii, pulovere, blugi
-    etc.
-
-    Legată de o Category principală și, opțional, de o altă Subcategory (parent).
+    Subcategorie (cu suport de parent pentru sub-subcategorii).
     """
 
     class MeasurementProfile(models.TextChoices):
@@ -135,19 +125,15 @@ class Subcategory(models.Model):
         related_name="subcategories",
     )
 
-    # Sub-subcategorii prin parent
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="children",
-        help_text=_(
-            "Dacă este setat, această subcategorie este un nivel 2 (ex: 'Geci bomber' sub 'Geci')."
-        ),
+        help_text=_("Dacă este setat, această subcategorie este un nivel 2 (ex: 'Geci bomber' sub 'Geci')."),
     )
 
-    # Subcategorie specifică de gen (Femei / Bărbați / Unisex)
     gender = models.CharField(
         max_length=1,
         choices=Gender.choices,
@@ -162,9 +148,7 @@ class Subcategory(models.Model):
         max_length=20,
         choices=Category.SizeGroup.choices,
         blank=True,
-        help_text=_(
-            "Dacă este setat, suprascrie grupa de mărimi a categoriei principale."
-        ),
+        help_text=_("Dacă este setat, suprascrie grupa de mărimi a categoriei principale."),
     )
 
     measurement_profile = models.CharField(
@@ -177,15 +161,11 @@ class Subcategory(models.Model):
         ),
     )
 
-    # Flag pentru produse nereturnabile (ex: costume de baie, lenjerie intimă)
     is_non_returnable = models.BooleanField(
         default=False,
-        help_text=_(
-            "Dacă este bifat, produsele din această subcategorie sunt marcate ca nereturnabile."
-        ),
+        help_text=_("Dacă este bifat, produsele din această subcategorie sunt marcate ca nereturnabile."),
     )
 
-    # Greutate medie & impact CO₂ conform tabelelor clientului
     avg_weight_kg = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -241,18 +221,11 @@ class Subcategory(models.Model):
 
     @property
     def is_alt_type(self) -> bool:
-        """
-        True pentru subcategoriile generice de tip „Alt tip de …”.
-        """
         name = (self.name or "").strip().lower()
         return name.startswith("alt tip")
 
     @property
     def is_swimwear_or_lingerie(self) -> bool:
-        """
-        True pentru costume de baie / lenjerie intimă,
-        indiferent dacă sunt pe un singur entry sau pe două.
-        """
         lower_name = (self.name or "").lower()
         return any(
             phrase in lower_name
@@ -284,37 +257,20 @@ class Subcategory(models.Model):
     def clean(self):
         super().clean()
         if self.parent and self.parent.category_id != self.category_id:
-            raise ValidationError(
-                _("Categoria trebuie să fie aceeași cu a subcategoriei părinte.")
-            )
+            raise ValidationError(_("Categoria trebuie să fie aceeași cu a subcategoriei părinte."))
 
-        # orice subcategorie de tip costume de baie / lenjerie intimă este nereturnabilă
         if self.is_swimwear_or_lingerie:
             self.is_non_returnable = True
 
     def get_effective_impact_values(self):
-        """
-        Returnează un tuple (avg_weight_kg, co2_avoided_kg, trees_equivalent)
-        cu fallback pentru subcategoriile generice de tip „Alt tip de …”.
-
-        - Dacă această subcategorie are valori setate, le folosim.
-        - Dacă este „Alt tip de …” și nu are valori:
-          * încercăm să folosim parent;
-          * altfel luăm un frate non-„Alt tip de …” cu impact definit.
-        - Dacă nu găsim nimic, întoarcem (None, None, None) și UI-ul decide
-          dacă afișează sau nu secțiunea de impact.
-        """
         avg = self.avg_weight_kg
         co2 = self.co2_avoided_kg
         trees = self.trees_equivalent
 
-        # avem valori direct pe subcategorie -> le folosim
         if avg is not None or co2 is not None or trees is not None:
             return avg, co2, trees
 
-        # fallback doar pentru „Alt tip de …”
         if self.is_alt_type:
-            # 1) parent (dacă are impact definit)
             if self.parent:
                 parent = self.parent
                 if (
@@ -328,14 +284,11 @@ class Subcategory(models.Model):
                         parent.trees_equivalent,
                     )
 
-            # 2) frate non-„Alt tip de …” cu impact complet
             siblings_qs = self.__class__.objects.filter(category=self.category)
             if self.parent:
                 siblings_qs = siblings_qs.filter(parent=self.parent)
 
-            siblings_qs = siblings_qs.exclude(pk=self.pk).exclude(
-                name__istartswith="Alt tip"
-            )
+            siblings_qs = siblings_qs.exclude(pk=self.pk).exclude(name__istartswith="Alt tip")
             siblings_qs = siblings_qs.exclude(
                 avg_weight_kg__isnull=True,
                 co2_avoided_kg__isnull=True,
@@ -350,7 +303,6 @@ class Subcategory(models.Model):
                     sibling.trees_equivalent,
                 )
 
-        # fără date / fallback – lăsăm UI-ul să decidă
         return None, None, None
 
 
@@ -388,12 +340,6 @@ class Material(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        """
-        Mică heuristica la crearea unui material nou:
-        - dacă numele conține termeni tipici „verzi”, îl marcăm ca sustenabil;
-        - dacă numele este evident „gri” (poliester, acrilic etc.), îl marcăm ca non-sustenabil.
-        Nu suprascriem manualul: logica se aplică doar când obiectul este nou.
-        """
         if self.pk is None:
             normalized_name = (self.name or "").strip().lower()
 
@@ -415,7 +361,7 @@ class Material(models.Model):
                 "bamboo",
                 "cupro",
                 "in ",
-                " in",  # ca să acoperim „in 100%”
+                " in",
                 "linen",
                 "lenzing ecovero",
                 "ecovero",
@@ -449,9 +395,7 @@ class Material(models.Model):
 
 class Color(models.Model):
     name = models.CharField(max_length=40, unique=True)
-    hex_code = models.CharField(
-        max_length=7, blank=True, help_text="#RRGGBB (opțional)"
-    )
+    hex_code = models.CharField(max_length=7, blank=True, help_text="#RRGGBB (opțional)")
 
     class Meta:
         ordering = ["name"]
@@ -462,8 +406,7 @@ class Color(models.Model):
 
 class Brand(models.Model):
     """
-    Brand oficial (Max Mara Group, Armani etc.).
-    Pentru branduri încă nelistate folosim Product.brand_other.
+    Brand oficial. Pentru branduri nelistate -> Product.brand_other.
     """
 
     class BrandGroup(models.TextChoices):
@@ -486,9 +429,7 @@ class Brand(models.Model):
         choices=BrandGroup.choices,
         blank=True,
         db_index=True,
-        help_text=_(
-            "Gruparea brandului pentru filtre (Max Mara Group, Ralph Lauren, Fast fashion etc.)."
-        ),
+        help_text=_("Gruparea brandului pentru filtre (Max Mara Group, Ralph Lauren, Fast fashion etc.)."),
     )
 
     is_fast_fashion = models.BooleanField(
@@ -496,18 +437,14 @@ class Brand(models.Model):
         help_text=_("Setează True pentru branduri de tip fast fashion (Zara, H&M etc.)."),
     )
 
-    # control vizibilitate publică în filtre / listări
     is_visible_public = models.BooleanField(
         default=False,
         help_text=_("Dacă apare în filtrele/listările publice."),
     )
 
-    # pentru brandurile propuse de utilizatori, în așteptarea aprobării
     is_pending_approval = models.BooleanField(
         default=False,
-        help_text=_(
-            "Setat pentru brandurile noi propuse de utilizatori, până sunt aprobate de un admin."
-        ),
+        help_text=_("Setat pentru brandurile noi propuse de utilizatori, până sunt aprobate de un admin."),
     )
 
     class Meta:
@@ -520,12 +457,6 @@ class Brand(models.Model):
 
     @property
     def segment(self) -> str:
-        """
-        Segment „agregat” pentru analytics / filtre:
-        - FAST_FASHION -> 'fast_fashion'
-        - restul grupurilor definite -> 'premium_mid'
-        - OTHER / gol -> 'other'
-        """
         if self.group == self.BrandGroup.FAST_FASHION:
             return "fast_fashion"
         if self.group in {
@@ -547,7 +478,6 @@ class Brand(models.Model):
 
         normalized_name = (self.name or "").strip().lower()
 
-        # auto-setăm grupul pentru câteva branduri cheie, dacă nu este deja setat
         if not self.group:
             if "max mara" in normalized_name:
                 self.group = self.BrandGroup.MAX_MARA_GROUP
@@ -583,15 +513,33 @@ class Brand(models.Model):
             ):
                 self.group = self.BrandGroup.FAST_FASHION
 
-        # dacă grupul este FAST_FASHION, marcăm automat flag-ul
         if self.group == self.BrandGroup.FAST_FASHION:
             self.is_fast_fashion = True
 
         super().save(*args, **kwargs)
 
 
+class ProductQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True, is_archived=False)
+
+    def public(self):
+        return self.active().filter(moderation_status=Product.ModerationStatus.PUBLISHED)
+
+    def approved_not_published(self):
+        return self.active().filter(moderation_status=Product.ModerationStatus.APPROVED)
+
+    def pending(self):
+        return self.filter(moderation_status=Product.ModerationStatus.PENDING)
+
+    def rejected(self):
+        return self.filter(moderation_status=Product.ModerationStatus.REJECTED)
+
+    def sold(self):
+        return self.filter(moderation_status=Product.ModerationStatus.SOLD)
+
+
 class Product(models.Model):
-    # legacy: folosit ca grup de mărime / tip de selector în UI
     SIZE_CHOICES = [
         ("One Size", "One Size"),
         ("XXS", "XXS"),
@@ -641,6 +589,13 @@ class Product(models.Model):
         ("L", _("Mare – cutie pentru mutare")),
     ]
 
+    class ModerationStatus(models.TextChoices):
+        PENDING = "PENDING", _("În așteptare")
+        APPROVED = "APPROVED", _("Aprobat (validat)")
+        REJECTED = "REJECTED", _("Respins")
+        PUBLISHED = "PUBLISHED", _("Publicat")
+        SOLD = "SOLD", _("Vândut")
+
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -666,9 +621,7 @@ class Product(models.Model):
     )
     sku = models.CharField(max_length=100, unique=True, blank=True)
 
-    category = models.ForeignKey(
-        "Category", on_delete=models.PROTECT, related_name="products"
-    )
+    category = models.ForeignKey("Category", on_delete=models.PROTECT, related_name="products")
 
     subcategory = models.ForeignKey(
         "Subcategory",
@@ -694,30 +647,23 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=False)
 
-    # legacy: descrie tipul de selector (FR 28–58, EU 35–46.5 etc.)
     size = models.CharField(max_length=20, choices=SIZE_CHOICES)
 
-    # nou: mărimea literă aproximativă (XXS–3XL) sau One Size pentru accesorii
     size_alpha = models.CharField(
         max_length=8,
         blank=True,
         help_text=_("Mărimea literă aproximativă (XXS–3XL) sau One Size."),
     )
 
-    # opțional – pentru pantofi: 35–46.5 (pas 0.5)
     shoe_size_eu = models.DecimalField(
         max_digits=4,
         decimal_places=1,
         null=True,
         blank=True,
-        validators=[
-            MinValueValidator(Decimal("35.0")),
-            MaxValueValidator(Decimal("46.5")),
-        ],
+        validators=[MinValueValidator(Decimal("35.0")), MaxValueValidator(Decimal("46.5"))],
         help_text=_("Mărime încălțăminte EU (35–46.5, ex: 37.5)."),
     )
 
-    # mărimi numerice dedicate pe tabelele FR / IT / GB
     size_fr = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -742,7 +688,7 @@ class Product(models.Model):
         max_length=255,
     )
 
-    # Material principal
+    # ✅ SINGLE MATERIAL (no composition, no percents)
     material = models.ForeignKey(
         "Material",
         null=True,
@@ -791,34 +737,27 @@ class Product(models.Model):
     )
     auction_end_at = models.DateTimeField(null=True, blank=True)
 
-    # culoarea „de bază” folosită în filtre
     base_color = models.ForeignKey(
         "Color",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="base_products",
-        help_text=_("Culoarea principală a articolului (folosită în filtre)."),
+        help_text=_("Culoarea produsului (SINGURA culoare, folosită în filtre și UI)."),
     )
 
-    # denumirea reală a culorii (Burgundy, Dusty Pink etc.)
     real_color_name = models.CharField(
         max_length=80,
         blank=True,
         help_text=_("Nuanța reală (ex: Burgundy, Dusty Pink, Sage Green etc.)."),
     )
 
-    # legacy: M2M de culori – îl păstrăm pentru compatibilitate,
-    # dar în UI ne bazăm în principal pe base_color.
     colors = models.ManyToManyField("Color", blank=True, related_name="products")
 
-    condition = models.CharField(
-        max_length=12, choices=CONDITION_CHOICES, default="VERY_GOOD"
-    )
+    condition = models.CharField(max_length=12, choices=CONDITION_CHOICES, default="VERY_GOOD")
     condition_notes = models.CharField(max_length=200, blank=True)
     fit = models.CharField(max_length=8, choices=FIT_CHOICES, blank=True)
 
-    # dimensiuni text (legacy)
     shoulders = models.CharField(_("Umeri"), max_length=50, blank=True)
     bust = models.CharField(_("Bust"), max_length=50, blank=True)
     waist = models.CharField(_("Talie"), max_length=50, blank=True)
@@ -828,7 +767,6 @@ class Product(models.Model):
     inseam = models.CharField(_("Crac interior"), max_length=50, blank=True)
     outseam = models.CharField(_("Crac exterior"), max_length=50, blank=True)
 
-    # dimensiuni generice în cm (îmbrăcăminte)
     shoulders_cm = models.PositiveSmallIntegerField(null=True, blank=True)
     bust_cm = models.PositiveSmallIntegerField(null=True, blank=True)
     waist_cm = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -838,8 +776,6 @@ class Product(models.Model):
     inseam_cm = models.PositiveSmallIntegerField(null=True, blank=True)
     outseam_cm = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    # dimensiuni specifice pe tip de produs (plan 3.6)
-    # încălțăminte
     shoe_insole_length_cm = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -869,27 +805,14 @@ class Product(models.Model):
         help_text=_("Înălțimea totală a încălțămintei (de la talpă până sus) în cm."),
     )
 
-    # genți
     bag_width_cm = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Lățimea genții în cm."),
+        max_digits=5, decimal_places=2, null=True, blank=True, help_text=_("Lățimea genții în cm.")
     )
     bag_height_cm = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Înălțimea genții în cm."),
+        max_digits=5, decimal_places=2, null=True, blank=True, help_text=_("Înălțimea genții în cm.")
     )
     bag_depth_cm = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Adâncimea genții în cm."),
+        max_digits=5, decimal_places=2, null=True, blank=True, help_text=_("Adâncimea genții în cm.")
     )
     strap_length_cm = models.DecimalField(
         max_digits=5,
@@ -899,7 +822,6 @@ class Product(models.Model):
         help_text=_("Lungimea maximă a baretei/șnurului în cm."),
     )
 
-    # curele
     belt_length_total_cm = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -912,19 +834,12 @@ class Product(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text=_(
-            "Lungimea utilă a curelei în cm (de la cataramă până la ultima gaură)."
-        ),
+        help_text=_("Lungimea utilă a curelei în cm (de la cataramă până la ultima gaură)."),
     )
     belt_width_cm = models.DecimalField(
-        max_digits=4,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Lățimea curelei în cm."),
+        max_digits=4, decimal_places=2, null=True, blank=True, help_text=_("Lățimea curelei în cm.")
     )
 
-    # bijuterii / accesorii
     jewelry_chain_length_cm = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -968,7 +883,6 @@ class Product(models.Model):
         related_name="products",
     )
 
-    # Sustenabilitate: tag-uri + „Nici una”
     sustainability_tags = models.ManyToManyField(
         "SustainabilityTag",
         blank=True,
@@ -980,16 +894,15 @@ class Product(models.Model):
         help_text=_("Bifează dacă produsul NU are niciun element de sustenabilitate."),
     )
 
-    # Status produs: în așteptare, aprobat, respins, publicat, vândut
-    MOD_STATUS = [
-        ("PENDING", _("În așteptare")),
-        ("APPROVED", _("Aprobat (validat)")),
-        ("REJECTED", _("Respins")),
-        ("PUBLISHED", _("Publicat")),
-        ("SOLD", _("Vândut")),
-    ]
     moderation_status = models.CharField(
-        max_length=10, choices=MOD_STATUS, default="PENDING", db_index=True
+        max_length=10,
+        choices=ModerationStatus.choices,
+        default=ModerationStatus.PENDING,
+        db_index=True,
+        help_text=_(
+            "Workflow: PENDING (în așteptare) -> APPROVED (validat, dar nepublic) -> "
+            "PUBLISHED (public/vizibil). REJECTED (respins). SOLD (vândut)."
+        ),
     )
     moderation_notes = models.TextField(blank=True)
     moderated_by = models.ForeignKey(
@@ -1001,8 +914,12 @@ class Product(models.Model):
     )
     moderated_at = models.DateTimeField(null=True, blank=True)
 
+    published_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ProductQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -1014,7 +931,7 @@ class Product(models.Model):
             models.Index(fields=["moderation_status"]),
             models.Index(fields=["sale_type"]),
             models.Index(fields=["brand"]),
-            # opțional: indexuri pentru mărimile numerice
+            models.Index(fields=["published_at"]),
             models.Index(fields=["size_fr"]),
             models.Index(fields=["size_it"]),
             models.Index(fields=["size_gb"]),
@@ -1028,6 +945,30 @@ class Product(models.Model):
         return reverse("catalog:product_detail", args=[self.slug])
 
     @property
+    def color(self):
+        return self.base_color
+
+    def _sync_single_color_relations(self) -> None:
+        if not self.pk:
+            return
+
+        existing_ids = list(self.colors.values_list("id", flat=True)[:2])
+
+        if self.base_color_id:
+            if existing_ids != [self.base_color_id] or len(existing_ids) != 1:
+                self.colors.set([self.base_color_id])
+            return
+
+        if not existing_ids:
+            self.colors.clear()
+            return
+
+        chosen_id = existing_ids[0]
+        self.__class__.objects.filter(pk=self.pk).update(base_color_id=chosen_id)
+        self.base_color_id = chosen_id
+        self.colors.set([chosen_id])
+
+    @property
     def display_brand(self) -> str:
         if self.brand:
             return self.brand.name
@@ -1035,46 +976,101 @@ class Product(models.Model):
 
     @property
     def display_size(self) -> str:
-        """
-        Mărimea afișată în cardul de produs.
-        Preferință:
-        - size_alpha (S, M, 3XL etc. / One Size)
-        - fallback pe câmpul legacy `size` (grup selector).
-        """
         if self.size_alpha:
             return self.size_alpha
         return self.size or ""
-
 
     @property
     def is_new_condition(self) -> bool:
         return self.condition in {"NEW_TAG", "NEW_NO_TAG"}
 
     @property
+    def is_pending(self) -> bool:
+        return self.moderation_status == self.ModerationStatus.PENDING
+
+    @property
+    def is_approved(self) -> bool:
+        return self.moderation_status in {
+            self.ModerationStatus.APPROVED,
+            self.ModerationStatus.PUBLISHED,
+            self.ModerationStatus.SOLD,
+        }
+
+    @property
     def is_published(self) -> bool:
-        """
-        Produs listat efectiv în magazin (status + active + ne-arhivat).
-        """
         return (
-            self.moderation_status == "PUBLISHED"
+            self.moderation_status == self.ModerationStatus.PUBLISHED
             and self.is_active
             and not self.is_archived
         )
 
     @property
+    def is_public_listed(self) -> bool:
+        return self.is_published
+
+    @property
     def is_sold(self) -> bool:
-        """
-        Produs marcat ca vândut (de regulă după o comandă finalizată).
-        """
-        return self.moderation_status == "SOLD"
+        return self.moderation_status == self.ModerationStatus.SOLD
+
+    def can_be_published(self) -> bool:
+        if self.is_archived or not self.is_active:
+            return False
+        if self.moderation_status != self.ModerationStatus.APPROVED:
+            return False
+        return self.has_minimum_images()
+
+    def mark_pending(self, *, by=None, notes: str = "") -> None:
+        self.moderation_status = self.ModerationStatus.PENDING
+        self.moderation_notes = notes or ""
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
+        self.published_at = None
+
+    def approve(self, *, by=None, notes: str = "") -> None:
+        self.moderation_status = self.ModerationStatus.APPROVED
+        self.moderation_notes = notes or ""
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
+        if self.published_at and self.moderation_status != self.ModerationStatus.PUBLISHED:
+            self.published_at = None
+
+    def reject(self, *, by=None, notes: str = "") -> None:
+        self.moderation_status = self.ModerationStatus.REJECTED
+        self.moderation_notes = notes or ""
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
+        self.published_at = None
+
+    def publish(self, *, by=None, notes: str = "") -> None:
+        if self.moderation_status == self.ModerationStatus.PUBLISHED:
+            return
+        if self.moderation_status != self.ModerationStatus.APPROVED:
+            raise ValidationError({"moderation_status": _("Poți publica doar produse APPROVED.")})
+        if self.is_archived or not self.is_active:
+            raise ValidationError({"is_active": _("Nu poți publica un produs inactiv sau arhivat.")})
+        self.moderation_status = self.ModerationStatus.PUBLISHED
+        self.moderation_notes = notes or self.moderation_notes
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
+        self.published_at = self.published_at or timezone.now()
+
+    def unpublish(self, *, by=None, notes: str = "") -> None:
+        if self.moderation_status != self.ModerationStatus.PUBLISHED:
+            return
+        self.moderation_status = self.ModerationStatus.APPROVED
+        self.moderation_notes = notes or self.moderation_notes
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
+        self.published_at = None
+
+    def mark_sold(self, *, by=None, notes: str = "") -> None:
+        self.moderation_status = self.ModerationStatus.SOLD
+        self.moderation_notes = notes or self.moderation_notes
+        self.moderated_by = by
+        self.moderated_at = timezone.now()
 
     @property
     def has_authentication_badge(self) -> bool:
-        """
-        Integrare soft cu app-ul `authenticator`:
-        presupunem un OneToOne related_name='authentication'.
-        Dacă nu există modelul încă, pur și simplu întoarce False.
-        """
         auth_obj = getattr(self, "authentication", None)
         if not auth_obj:
             return False
@@ -1082,18 +1078,12 @@ class Product(models.Model):
 
     @property
     def has_sustainable_materials(self) -> bool:
-        """
-        True dacă produsul conține cel puțin un material marcat ca sustenabil,
-        fie ca material principal, fie în compoziție.
-        """
-        if self.material and getattr(self.material, "is_sustainable", False):
-            return True
-        return self.compositions.filter(material__is_sustainable=True).exists()
+        # ✅ ONLY single material now
+        return bool(self.material and getattr(self.material, "is_sustainable", False))
 
     def has_minimum_images(self) -> bool:
         extra = self.images.count()
         main = 1 if self.main_image else 0
-        # conform planului: minim 4 imagini (1 principală + 3 detalii)
         return (main + extra) >= 4
 
     def _clean_code(self, text: str, length: int = 3) -> str:
@@ -1136,19 +1126,12 @@ class Product(models.Model):
         return rate.delivery_days_min, rate.delivery_days_max
 
     def get_subcategory_impact(self):
-        """
-        Returnează (avg_weight_kg, co2_avoided_kg, trees_equivalent) efective,
-        cu fallback pentru subcategoriile generice de tip „Alt tip de …”.
-        """
         if not self.subcategory:
             return None, None, None
         return self.subcategory.get_effective_impact_values()
 
     @property
     def subcategory_has_impact_data(self) -> bool:
-        """
-        True dacă subcategoria are impact definit (direct sau prin fallback).
-        """
         if not self.subcategory:
             return False
         avg, co2, trees = self.subcategory.get_effective_impact_values()
@@ -1157,7 +1140,6 @@ class Product(models.Model):
     def clean(self):
         super().clean()
 
-        # validare gen vs subcategorie
         if self.subcategory and self.subcategory.gender:
             if not self.subcategory.allows_gender(self.gender):
                 raise ValidationError(
@@ -1173,15 +1155,18 @@ class Product(models.Model):
                     }
                 )
 
-        # real_color_name default = denumirea culorii de bază, dacă nu e completat
         if self.base_color and not self.real_color_name:
             self.real_color_name = self.base_color.name
 
-        # 🔹 IMPORTANT: nu valida câmpuri ManyToMany cât timp obiectul nu are încă pk
         if not self.pk:
             return
 
-        # logică de bază pentru sustenabilitate: „Nici una” exclusivă
+        color_ids = list(self.colors.values_list("id", flat=True))
+        if len(color_ids) > 1:
+            raise ValidationError({"colors": _("Produsul poate avea o singură culoare.")})
+        if self.base_color_id and color_ids and color_ids[0] != self.base_color_id:
+            raise ValidationError({"colors": _("Culoarea selectată trebuie să fie aceeași cu „base_color”.")})
+
         if self.sustainability_none and self.sustainability_tags.exists():
             raise ValidationError(
                 {
@@ -1191,44 +1176,32 @@ class Product(models.Model):
                 }
             )
 
-        # regula specială: „Materiale sustenabile” doar dacă avem materiale sustenabile
         if (
-            self.sustainability_tags.filter(
-                key=SustainabilityTag.Key.SUSTAINABLE_MATERIALS
-            ).exists()
+            self.sustainability_tags.filter(key=SustainabilityTag.Key.SUSTAINABLE_MATERIALS).exists()
             and not self.has_sustainable_materials
         ):
             raise ValidationError(
                 {
                     "sustainability_tags": _(
                         "Poți marca „Materiale sustenabile” doar dacă produsul "
-                        "are cel puțin un material marcat ca sustenabil în material principal "
-                        "sau în compoziție."
+                        "are material principal marcat ca sustenabil."
                     )
                 }
             )
 
     def _infer_garment_type(self) -> str:
-        """
-        Derivă automat garment_type din measurement_profile sau size_group.
-        Folosit în save() dacă garment_type nu este setat explicit.
-        """
-        # 1) Din subcategorie / measurement_profile
         mp = None
         if getattr(self, "subcategory", None):
             mp = self.subcategory.measurement_profile
 
         if mp:
             mp_to_gt = {
-                # îmbrăcăminte
                 Subcategory.MeasurementProfile.TOP: "TOP",
                 Subcategory.MeasurementProfile.DRESS: "DRESS",
-                Subcategory.MeasurementProfile.JUMPSUIT: "DRESS",  # outfit complet
+                Subcategory.MeasurementProfile.JUMPSUIT: "DRESS",
                 Subcategory.MeasurementProfile.PANTS: "BOTTOM",
                 Subcategory.MeasurementProfile.SKIRT: "BOTTOM",
-                # încălțăminte
                 Subcategory.MeasurementProfile.SHOES: "SHOES",
-                # accesorii
                 Subcategory.MeasurementProfile.BAGS: "ACCESSORY",
                 Subcategory.MeasurementProfile.BELTS: "ACCESSORY",
                 Subcategory.MeasurementProfile.JEWELRY: "ACCESSORY",
@@ -1237,7 +1210,6 @@ class Product(models.Model):
             if mp in mp_to_gt:
                 return mp_to_gt[mp]
 
-        # 2) Fallback din categoria principală
         cat = getattr(self, "category", None)
         if cat and hasattr(cat, "get_effective_size_group"):
             sg = cat.get_effective_size_group()
@@ -1251,7 +1223,6 @@ class Product(models.Model):
         return ""
 
     def save(self, *args, **kwargs):
-        # reținem vechiul slug (dacă există) pentru istoric
         old_slug = None
         if self.pk:
             try:
@@ -1260,7 +1231,10 @@ class Product(models.Model):
             except Product.DoesNotExist:
                 old_slug = None
 
-        # slug unic pe baza titlului
+        if self.pk is None and not getattr(self, "_skip_moderation_guard", False):
+            self.moderation_status = self.ModerationStatus.PENDING
+            self.published_at = None
+
         if not self.slug:
             base = slugify(self.title) or "produs"
             slug = base
@@ -1271,7 +1245,6 @@ class Product(models.Model):
                 slug = f"{base}-{counter}"
             self.slug = slug
 
-        # SKU pe baza seller, subcategorie/categorie, titlu, timestamp, mărime
         size_source = self.size_alpha or self.size
         if not self.sku:
             if self.subcategory_id and getattr(self, "subcategory", None):
@@ -1290,46 +1263,27 @@ class Product(models.Model):
             ]
             self.sku = "/".join(parts)
 
-        # dacă garment_type nu e setat, îl derivăm automat
         if not self.garment_type:
             inferred = self._infer_garment_type()
             if inferred:
                 self.garment_type = inferred
 
+        if self.moderation_status not in {self.ModerationStatus.PUBLISHED, self.ModerationStatus.SOLD}:
+            self.published_at = None
+        elif self.moderation_status == self.ModerationStatus.PUBLISHED and not self.published_at:
+            self.published_at = timezone.now()
+
         super().save(*args, **kwargs)
 
-        # după salvare, dacă slug-ul s-a schimbat, îl adăugăm în istoric
+        self._sync_single_color_relations()
+
         if old_slug and old_slug != self.slug:
-            ProductSlugHistory.objects.create(
-                product=self,
-                old_slug=old_slug,
-            )
-
-
-class ProductMaterial(models.Model):
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="compositions"
-    )
-    material = models.ForeignKey("Material", on_delete=models.CASCADE)
-    percent = models.DecimalField(
-        max_digits=5, decimal_places=2, help_text="0–100"
-    )
-
-    class Meta:
-        unique_together = (("product", "material"),)
-
-    def __str__(self):
-        return f"{self.product_id}: {self.material.name} {self.percent}%"
+            ProductSlugHistory.objects.create(product=self, old_slug=old_slug)
 
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="images"
-    )
-    image = models.ImageField(
-        upload_to=product_extra_image_upload_to,
-        max_length=255,
-    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to=product_extra_image_upload_to, max_length=255)
     position = models.PositiveIntegerField(default=0, db_index=True)
     alt_text = models.CharField(max_length=150, blank=True)
 
@@ -1341,16 +1295,6 @@ class ProductImage(models.Model):
 
 
 class SustainabilityTag(models.Model):
-    """
-    Tag-uri fixe de sustenabilitate:
-    - Deadstock / stoc nevândut
-    - Preloved / second hand
-    - Vintage
-    - Upcycled / recondiționat
-    - Materiale sustenabile
-    (Nici una = Boolean pe Product)
-    """
-
     class Key(models.TextChoices):
         DEADSTOCK = "DEADSTOCK", _("Deadstock / stoc nevândut")
         PRELOVED = "PRELOVED", _("Preloved / second hand")
@@ -1358,12 +1302,7 @@ class SustainabilityTag(models.Model):
         UPCYCLED = "UPCYCLED", _("Upcycled / recondiționat")
         SUSTAINABLE_MATERIALS = "SUSTAINABLE_MATERIALS", _("Materiale sustenabile")
 
-    key = models.CharField(
-        max_length=40,
-        choices=Key.choices,
-        unique=True,
-        db_index=True,
-    )
+    key = models.CharField(max_length=40, choices=Key.choices, unique=True, db_index=True)
     name = models.CharField(
         max_length=80,
         unique=True,
@@ -1398,15 +1337,11 @@ class Tag(models.Model):
         return self.name
 
 
-Product.add_to_class(
-    "tags", models.ManyToManyField("Tag", blank=True, related_name="products")
-)
+Product.add_to_class("tags", models.ManyToManyField("Tag", blank=True, related_name="products"))
 
 
 class ProductSlugHistory(models.Model):
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="slug_history"
-    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="slug_history")
     old_slug = models.SlugField(max_length=200, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -1420,9 +1355,7 @@ class Favorite(models.Model):
         on_delete=models.CASCADE,
         related_name="favorites",
     )
-    product = models.ForeignKey(
-        "Product", on_delete=models.CASCADE, related_name="favorited_by"
-    )
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="favorited_by")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

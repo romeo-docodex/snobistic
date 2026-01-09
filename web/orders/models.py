@@ -6,7 +6,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
 
-
 from accounts.models import Address
 
 
@@ -17,8 +16,7 @@ def _pct(amount: Decimal, percent: Decimal) -> Decimal:
     if amount is None:
         amount = Decimal("0.00")
     return (amount * percent / Decimal("100")).quantize(
-        Decimal("0.01",
-        ),
+        Decimal("0.01"),
         rounding=ROUND_HALF_UP,
     )
 
@@ -106,14 +104,12 @@ class Order(models.Model):
         default=Decimal("0.00"),
     )
 
-    # cost transport
     shipping_cost = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
-    # NOI – durata estimată de livrare
     shipping_days_min = models.PositiveSmallIntegerField(
         default=0,
         help_text="Număr minim de zile până la livrare (handling + curier).",
@@ -144,24 +140,14 @@ class Order(models.Model):
     def __str__(self):
         return f"Comanda #{self.pk} de {self.buyer}"
 
-    # -------------------
-    # Config percent
-    # -------------------
     @property
     def buyer_protection_percent(self) -> Decimal:
-        return Decimal(
-            getattr(settings, "SNOBISTIC_BUYER_PROTECTION_PERCENT", "5.0")
-        )
+        return Decimal(getattr(settings, "SNOBISTIC_BUYER_PROTECTION_PERCENT", "5.0"))
 
     @property
     def seller_commission_percent(self) -> Decimal:
-        return Decimal(
-            getattr(settings, "SNOBISTIC_SELLER_COMMISSION_PERCENT", "9.0")
-        )
+        return Decimal(getattr(settings, "SNOBISTIC_SELLER_COMMISSION_PERCENT", "9.0"))
 
-    # -------------------
-    # Helpers payment/escrow
-    # -------------------
     @cached_property
     def latest_payment(self):
         return self.payments.order_by("-created_at").first()
@@ -178,35 +164,35 @@ class Order(models.Model):
 
     @property
     def has_pending_return(self) -> bool:
-        """
-        True dacă există cel puțin un ReturnRequest PENDING.
-        Folosit pentru a bloca eliberarea escrow-ului.
-        """
-        return self.return_requests.filter(
-            status=ReturnRequest.STATUS_PENDING
-        ).exists()
+        from .models import ReturnRequest  # local import safe
+        return self.return_requests.filter(status=ReturnRequest.STATUS_PENDING).exists()
 
     def get_payment_url(self):
-        """
-        URL-ul către inițierea plății online (Stripe).
-        """
         return reverse("payments:payment_confirm", args=[self.id])
 
     def mark_as_paid(self):
         """
         Marcată ca plătită după confirmarea procesatorului de plăți.
         În acest moment banii se consideră blocați în escrow.
+        + TRUST wiring (idempotent).
         """
+        if self.payment_status == self.PAYMENT_PAID and self.escrow_status == self.ESCROW_HELD:
+            # Already in paid+held state; safe no-op
+            return
+
         self.payment_status = self.PAYMENT_PAID
         self.escrow_status = self.ESCROW_HELD
         self.save(update_fields=["payment_status", "escrow_status"])
 
+        # TRUST wiring
+        try:
+            from .services.trust_hooks import on_order_paid
+            on_order_paid(self)
+        except Exception:
+            # nu blocăm flow-ul de plată din cauza trust-ului
+            pass
+
     def _payout_sellers_from_escrow(self):
-        """
-        Distribuie banii net (după comision) din escrow către wallet-urile sellerilor.
-        Aici NU se fac verificări de business (retur, dispute) – acestea se fac
-        în release_escrow().
-        """
         from collections import defaultdict
         from payments.models import Wallet, WalletTransaction
 
@@ -250,14 +236,7 @@ class Order(models.Model):
     def release_escrow(self, *, force: bool = False):
         """
         Eliberează fondurile din escrow și plătește sellerii în Wallet.
-
-        Reguli standard (force=False):
-        - escrow_status trebuie să fie HELD
-        - comanda trebuie să fie marcată ca SHIPPED
-        - nu trebuie să existe ReturnRequest PENDING
-
-        force=True se poate folosi doar din procese administrative
-        foarte controlate (ex: migrare, corecție manuală).
+        + TRUST wiring (idempotent) când escrow devine RELEASED.
         """
         if self.escrow_status != self.ESCROW_HELD:
             return
@@ -272,11 +251,14 @@ class Order(models.Model):
         self.escrow_status = self.ESCROW_RELEASED
         self.save(update_fields=["escrow_status"])
 
+        # TRUST wiring (treat as completed)
+        try:
+            from .services.trust_hooks import on_escrow_released
+            on_escrow_released(self)
+        except Exception:
+            pass
+
     def mark_escrow_disputed(self):
-        """
-        Marchează escrow-ul ca fiind în dispută. Se apelează când există
-        retur / dispută deschisă de buyer.
-        """
         if self.escrow_status in (self.ESCROW_HELD, self.ESCROW_PENDING):
             self.escrow_status = self.ESCROW_DISPUTED
             self.save(update_fields=["escrow_status"])
@@ -293,12 +275,6 @@ class Order(models.Model):
         shipping_days_min=None,
         shipping_days_max=None,
     ):
-        """
-        Creează o comandă din conținutul `cart`, setează adresa și metoda de transport,
-        calculează subtotal, buyer protection, comision, total, apoi golește coșul.
-
-        shipping_cost, shipping_days_min/max vin din calculatorul de logistică.
-        """
         if order_type is None:
             order_type = cls.TYPE_STANDARD
 

@@ -9,27 +9,15 @@ from orders.models import Order
 from .forms import ShipmentCreateForm
 from .models import Shipment, Courier
 from .services.curiera import create_shipment_for_order
+from .services.status import mark_handed_to_courier
 
 
 def _is_seller(user) -> bool:
-    """
-    Aceeași logică ca în orders._is_seller:
-    presupunem că user.profile.role_seller există.
-    """
     prof = getattr(user, "profile", None)
     return bool(prof and getattr(prof, "role_seller", False))
 
 
 def _can_generate_awb(order: Order) -> bool:
-    """
-    Pe Snobistic, AWB se generează DOAR dacă:
-      - comanda este plătită
-      - fondurile sunt în escrow (ESCROW_HELD)
-
-    Nu permitem AWB pentru:
-      - comenzi neplătite
-      - comenzi fără escrow (pending/released/disputed)
-    """
     return (
         order.payment_status == Order.PAYMENT_PAID
         and order.escrow_status == Order.ESCROW_HELD
@@ -38,24 +26,13 @@ def _can_generate_awb(order: Order) -> bool:
 
 @login_required
 def generate_awb_view(request, order_id):
-    """
-    Seller generează AWB prin Curiera pentru o comandă:
-      - verificăm că userul este seller
-      - verificăm că are produse în comanda respectivă
-      - verificăm că ORDER este plătită + escrow HELD (nu acceptăm ramburs)
-      - dacă nu există Shipment -> îl creăm prin API Curiera
-      - dacă există Shipment -> îi permitem doar să vadă/resalveze pozele (nu regenerezi AWB)
-    """
     user = request.user
     order = get_object_or_404(Order, pk=order_id)
 
-    # verificăm că este seller și că în comanda asta are produse
     if not _is_seller(user) or not order.items.filter(product__owner=user).exists():
         messages.error(request, "Nu ai permisiunea să generezi AWB pentru această comandă.")
         return redirect("orders:order_detail", pk=order.pk)
 
-    # 🔒 ESCROW GATE:
-    # Nu generăm AWB decât dacă banii sunt deja plătiți și ținuți în escrow Snobistic.
     if not _can_generate_awb(order):
         messages.error(
             request,
@@ -63,7 +40,6 @@ def generate_awb_view(request, order_id):
         )
         return redirect("orders:order_detail", pk=order.pk)
 
-    # curierul principal: Curiera
     courier, _ = Courier.objects.get_or_create(
         slug="curiera",
         defaults={
@@ -82,38 +58,28 @@ def generate_awb_view(request, order_id):
         if form.is_valid():
             cleaned = form.cleaned_data
 
-            # 🔒 NO COD (Ramburs) – TOTUL prin escrow:
             if cleaned.get("cash_on_delivery"):
                 messages.error(
                     request,
                     "Pe Snobistic toate plățile se fac prin escrow. Rambursul la curier nu este permis."
                 )
-                # nu trimitem nimic la Curiera dacă cineva încearcă COD
                 return render(
                     request,
                     "logistics/generate_awb.html",
-                    {
-                        "order": order,
-                        "form": form,
-                        "shipment": shipment,
-                    },
+                    {"order": order, "form": form, "shipment": shipment},
                 )
 
             if shipment is None:
                 weight_kg = cleaned.get("weight_kg") or Decimal("1.00")
                 service_name = cleaned.get("service_name") or "Standard"
 
-                # forțăm COD OFF în integrarea Curiera
-                cod = False
-                cod_amount = Decimal("0.00")
-
                 result = create_shipment_for_order(
                     order=order,
                     seller=user,
                     weight_kg=weight_kg,
                     service_name=service_name,
-                    cash_on_delivery=cod,
-                    cod_amount=cod_amount,
+                    cash_on_delivery=False,
+                    cod_amount=Decimal("0.00"),
                 )
 
                 if not result.success:
@@ -124,11 +90,7 @@ def generate_awb_view(request, order_id):
                     return render(
                         request,
                         "logistics/generate_awb.html",
-                        {
-                            "order": order,
-                            "form": form,
-                            "shipment": shipment,
-                        },
+                        {"order": order, "form": form, "shipment": shipment},
                     )
 
                 shipment = form.save(commit=False)
@@ -141,26 +103,17 @@ def generate_awb_view(request, order_id):
                 shipment.tracking_url = result.tracking_url or ""
                 shipment.label_url = result.label_url or ""
                 shipment.status = Shipment.Status.LABEL_GENERATED
-                # asigurare suplimentară că nu rămâne COD în model
                 shipment.cash_on_delivery = False
                 shipment.cod_amount = Decimal("0.00")
                 shipment.save()
             else:
-                # dacă shipment există deja, doar actualizăm pozele/opțiunile locale,
-                # dar NU modificăm AWB-ul și NU activăm COD.
                 instance = form.save(commit=False)
                 instance.cash_on_delivery = False
                 instance.cod_amount = Decimal("0.00")
                 instance.save()
                 shipment = instance
 
-            # marcăm comanda ca trimisă (MVP – când AWB e generat)
-            try:
-                order.shipping_status = Order.SHIPPING_SHIPPED
-                order.save(update_fields=["shipping_status"])
-            except Exception:
-                pass
-
+            # IMPORTANT: NU setăm Order.SHIPPED aici.
             messages.success(request, "AWB generat și salvat pentru această comandă.")
             return redirect("orders:order_detail", pk=order.pk)
     else:
@@ -169,9 +122,30 @@ def generate_awb_view(request, order_id):
     return render(
         request,
         "logistics/generate_awb.html",
-        {
-            "order": order,
-            "form": form,
-            "shipment": shipment,
-        },
+        {"order": order, "form": form, "shipment": shipment},
     )
+
+
+@login_required
+def hand_to_courier_view(request, order_id: int):
+    """
+    Seller marchează expediția ca 'Predat curierului'.
+    Asta setează:
+      - Shipment.status = HANDED_TO_COURIER + shipped_at
+      - Order.shipping_status = SHIPPED
+      - trust hooks seller (+2 on-time / -3 late) (idempotent)
+    """
+    user = request.user
+    order = get_object_or_404(Order, pk=order_id)
+
+    if not _is_seller(user) or not order.items.filter(product__owner=user).exists():
+        messages.error(request, "Nu ai permisiunea să marchezi această comandă ca trimisă.")
+        return redirect("orders:order_detail", pk=order.pk)
+
+    ok = mark_handed_to_courier(order_id=order.id, seller_id=user.id)
+    if not ok:
+        messages.error(request, "Nu există un Shipment pentru această comandă (generează AWB întâi).")
+        return redirect("orders:order_detail", pk=order.pk)
+
+    messages.success(request, "Comanda a fost marcată ca predată curierului.")
+    return redirect("orders:order_detail", pk=order.pk)

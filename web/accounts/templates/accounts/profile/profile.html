@@ -1,4 +1,3 @@
-{# accounts/templates/accounts/profile/dashboard.html #}
 {% extends "base.html" %}
 {% load static %}
 
@@ -7,226 +6,272 @@
 {% block content %}
 <!-- Title Page -->
 <section class="tf-page-title">
-    <div class="container">
-        <div class="box-title text-center">
-            <h4 class="title">Contul meu</h4>
-            <div class="breadcrumb-list">
-                <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
-                <div class="breadcrumb-item dot"><span></span></div>
-                <div class="breadcrumb-item current">Cont</div>
-            </div>
-        </div>
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Contul meu</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Cont</div>
+      </div>
     </div>
+  </div>
 </section>
 
 <!-- Main Content -->
 <div class="flat-spacing-13">
-    <div class="container-7">
-        <div class="btn-sidebar-mb d-lg-none">
-            <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
-                <i class="icon icon-sidebar"></i>
-            </button>
+  <div class="container-7">
+
+    <div class="btn-sidebar-mb d-lg-none">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+
+      <!-- Sidebar -->
+      {% include "accounts/profile/_account_sidebar.html" with account_section="dashboard" %}
+
+      <!-- Dashboard / Hub de cont -->
+      <div class="my-acount-content account-dashboard">
+
+        <!-- Bun venit + butoane scurtătură -->
+        <div class="box-account-title">
+          <p class="hello-name display-sm fw-medium">
+            Bun venit, {{ request.user.first_name|default:"utilizator" }}!
+          </p>
+          <p class="notice text-sm mb-3">
+            De aici poți gestiona datele personale, adresele, măsurătorile, securitatea și setările de vânzător.
+          </p>
+
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:buyer_dashboard' %}" class="tf-btn animate-btn">
+              Vezi comenzi
+            </a>
+
+            {% if request.user.profile.role_seller %}
+              <a href="{% url 'dashboard:seller_dashboard' %}#sold-items" class="tf-btn btn-out-line-dark">
+                Vezi articole vândute
+              </a>
+            {% endif %}
+          </div>
         </div>
 
-        <div class="main-content-account">
-            <!-- Sidebar -->
-            {% include "accounts/profile/_account_sidebar.html" with account_section="dashboard" %}
+        <div class="content-account">
 
-            <!-- Dashboard / Hub de cont -->
-            <div class="my-acount-content account-dashboard">
-
-                <!-- Bun venit + butoane scurtătură -->
-                <div class="box-account-title">
-                    <p class="hello-name display-sm fw-medium">
-                        Bun venit, {{ request.user.first_name|default:"utilizator" }}!
-                    </p>
-                    <p class="notice text-sm mb-3">
-                        De aici poți gestiona datele personale, adresele, măsurătorile și setările de vânzător.
-                    </p>
-
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{% url 'dashboard:buyer_dashboard' %}"
-                           class="tf-btn animate-btn">
-                            Vezi comenzi
-                        </a>
-
-                        {% if request.user.is_seller %}
-                            <a href="{% url 'dashboard:seller_dashboard' %}#sold-items"
-                               class="tf-btn btn-out-line-dark">
-                                Vezi articole vândute
-                            </a>
-                        {% endif %}
-                    </div>
+          {# Shortcuts vizuale #}
+          <ul class="box-check-list flex-sm-nowrap mb-4">
+            <li>
+              <a href="{% url 'dashboard:buyer_dashboard' %}" class="box-check text-center">
+                <div class="icon">
+                  <i class="icon-order"></i>
+                  <span class="count-number text-sm text-white fw-medium">—</span>
                 </div>
+                <div class="text">
+                  <div class="name-type text-xl fw-medium">Comenzi</div>
+                  <p class="sub-type text-sm">Istoric comenzi</p>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'catalog:favorites' %}" class="box-check text-center">
+                <div class="icon">
+                  <i class="icon-heart"></i>
+                  <span class="count-number text-sm text-white fw-medium">
+                    <span class="count-box">{{ favorites_count|default:0 }}</span>
+                  </span>
+                </div>
+                <div class="text">
+                  <div class="name-type text-xl fw-medium">Favorite</div>
+                  <p class="sub-type text-sm">Lista de dorințe</p>
+                </div>
+              </a>
+            </li>
+          </ul>
 
-                <div class="content-account">
+          <!-- Rezumat cont -->
+          <div class="mb-3">
+            <h6 class="title-account mb-2">Rezumat cont</h6>
+            <p class="text-sm text-muted mb-0">
+              O privire rapidă asupra informațiilor esențiale din contul tău.
+            </p>
+          </div>
 
-                    {# Carduri scurte pentru Comenzi & Favorite (shortcut vizual) #}
-                    <ul class="box-check-list flex-sm-nowrap mb-4">
-                        <li>
-                            <a href="{% url 'dashboard:buyer_dashboard' %}" class="box-check text-center">
-                                <div class="icon">
-                                    <i class="icon-order"></i>
-                                    <span class="count-number text-sm text-white fw-medium">
-                                        <!-- Poți pune aici număr comenzi dacă îl vei avea în context -->
-                                        —
-                                    </span>
-                                </div>
-                                <div class="text">
-                                    <div class="name-type text-xl fw-medium">Comenzi</div>
-                                    <p class="sub-type text-sm">Istoric comenzi</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'catalog:favorites' %}" class="box-check text-center">
-                                <div class="icon">
-                                    <i class="icon-heart"></i>
-                                    <span class="count-number text-sm text-white fw-medium">
-                                        <span class="count-box">{{ favorites_count|default:0 }}</span>
-                                    </span>
-                                </div>
-                                <div class="text">
-                                    <div class="name-type text-xl fw-medium">Favorite</div>
-                                    <p class="sub-type text-sm">Lista de dorințe</p>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
+          <!-- Card: Date personale -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Date personale</p>
+                <p class="text-sm text-muted mb-2">
+                  Nume, prenume, telefon, data nașterii și avatar.
+                </p>
+                <a href="{% url 'accounts:profile_personal' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Editează datele personale
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Rezumat cont: Date personale, Adrese, Dimensiuni, Vânzător -->
-                    <div class="mb-3">
-                        <h6 class="title-account mb-2">Rezumat cont</h6>
-                        <p class="text-sm text-muted mb-0">
-                            O privire rapidă asupra informațiilor esențiale din contul tău.
-                        </p>
-                    </div>
+          <!-- Card: Securitate -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Securitate</p>
+                <p class="text-sm text-muted mb-2">
+                  Parolă, 2FA, dispozitive de încredere, schimbare email, ștergere cont.
+                </p>
+                <a href="{% url 'accounts:profile_security' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Deschide setările de securitate
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    {# Fiecare card pe propriul rând, full width #}
+          <!-- Card: Adrese -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Adrese</p>
+                <p class="text-sm text-muted mb-1">
+                  Ai <strong>{{ addresses_count|default:0 }}</strong> adresă/adrese salvate.
+                </p>
+                <p class="text-xs text-muted mb-2">
+                  Setează adrese implicite pentru livrare și facturare.
+                </p>
+                <a href="{% url 'accounts:address_list' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Gestionează adresele
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Card: Date personale -->
-                    <div class="account-address-item mb-3">
-                        <div class="info-detail">
-                            <div class="box-infor">
-                                <p class="text-md fw-medium mb-1">Date personale</p>
-                                <p class="text-sm text-muted mb-2">
-                                    Nume, prenume, telefon, data nașterii și avatar.
-                                </p>
-                                <a href="{% url 'accounts:profile_data' %}"
-                                   class="text-sm text-primary text-decoration-underline">
-                                    Editează datele personale
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+          <!-- Card: Măsurători -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Măsurători</p>
+                {% if dimensions_complete %}
+                  <p class="text-sm mb-1">
+                    <span class="badge bg-success-subtle text-success">Complet</span>
+                  </p>
+                  <p class="text-sm text-muted mb-2">
+                    Măsurătorile tale sunt salvate și pot fi folosite ca ghid pentru potrivirea produselor.
+                  </p>
+                {% else %}
+                  <p class="text-sm mb-1">
+                    <span class="badge bg-warning-subtle text-warning">Incomplet</span>
+                  </p>
+                  <p class="text-sm text-muted mb-2">
+                    Completează-ți măsurătorile pentru recomandări mai bune și pentru a evita retururile.
+                  </p>
+                {% endif %}
+                <a href="{% url 'accounts:profile_dimensions' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Gestionează măsurătorile
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Card: Adrese -->
-                    <div class="account-address-item mb-3">
-                        <div class="info-detail">
-                            <div class="box-infor">
-                                <p class="text-md fw-medium mb-1">Adrese</p>
-                                <p class="text-sm text-muted mb-1">
-                                    Ai <strong>{{ addresses_count|default:0 }}</strong> adresă/adrese salvate.
-                                </p>
-                                <p class="text-xs text-muted mb-2">
-                                    Setează adrese implicite pentru livrare și facturare.
-                                </p>
-                                <a href="{% url 'accounts:address_list' %}"
-                                   class="text-sm text-primary text-decoration-underline">
-                                    Gestionează adresele
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+          <!-- Card: KYC -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Verificare identitate (KYC)</p>
+                <p class="text-sm text-muted mb-2">
+                  Încarcă documente și urmărește statusul verificării.
+                </p>
+                <a href="{% url 'accounts:kyc_center' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Deschide centrul KYC
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Card: Măsurători -->
-                    <div class="account-address-item mb-3">
-                        <div class="info-detail">
-                            <div class="box-infor">
-                                <p class="text-md fw-medium mb-1">Măsurători</p>
-                                {% if dimensions_complete %}
-                                    <p class="text-sm mb-1">
-                                        <span class="badge bg-success-subtle text-success">
-                                            Complet
-                                        </span>
-                                    </p>
-                                    <p class="text-sm text-muted mb-2">
-                                        Măsurătorile tale sunt salvate și pot fi folosite ca ghid
-                                        pentru potrivirea produselor.
-                                    </p>
-                                {% else %}
-                                    <p class="text-sm mb-1">
-                                        <span class="badge bg-warning-subtle text-warning">
-                                            Incomplet
-                                        </span>
-                                    </p>
-                                    <p class="text-sm text-muted mb-2">
-                                        Completează-ți măsurătorile pentru recomandări mai bune și 
-                                        pentru a evita retururile.
-                                    </p>
-                                {% endif %}
-                                <a href="{% url 'accounts:profile_dimensions' %}"
-                                   class="text-sm text-primary text-decoration-underline">
-                                    Gestionează măsurătorile
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+          <!-- Card: Roluri -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Roluri cont</p>
+                <p class="text-sm text-muted mb-2">
+                  Upgrade/downgrade seller, setări „seller can buy”.
+                </p>
+                <a href="{% url 'accounts:roles_center' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Gestionează rolurile
+                </a>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Card: Profil vânzător -->
-                    <div class="account-address-item mb-3">
-                        <div class="info-detail">
-                            <div class="box-infor">
-                                <p class="text-md fw-medium mb-1">Profil vânzător</p>
+          <!-- Card: Sesiuni -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Sesiuni & dispozitive</p>
+                <p class="text-sm text-muted mb-2">
+                  Vezi dispozitivele de încredere și deconectează-te din toate sesiunile.
+                </p>
+                <a href="{% url 'accounts:sessions_center' %}"
+                   class="text-sm text-primary text-decoration-underline">
+                  Deschide centrul de sesiuni
+                </a>
+              </div>
+            </div>
+          </div>
 
-                                {% if request.user.is_seller %}
-                                    <ul class="list-unstyled text-sm mb-2">
-                                        <li class="mb-1">
-                                            <span class="text-muted">Nivel vânzător:</span>
-                                            <strong>
-                                                {{ seller_level_label|default:"N/A" }}
-                                            </strong>
-                                        </li>
-                                        <li class="mb-1">
-                                            <span class="text-muted">Comision:</span>
-                                            <strong>
-                                                {{ seller_commission_label|default:"—" }}
-                                            </strong>
-                                        </li>
-                                        <li class="mb-1">
-                                            <span class="text-muted">Trust score:</span>
-                                            <strong>
-                                                {{ seller_trust_score|default:"—" }}
-                                            </strong>
-                                        </li>
-                                        <li class="mb-1">
-                                            <span class="text-muted">KYC status:</span>
-                                            <strong>
-                                                {{ seller_kyc_status_label|default:"Neînceput" }}
-                                            </strong>
-                                        </li>
-                                    </ul>
-                                    <a href="{% url 'accounts:seller_settings' %}"
-                                       class="text-sm text-primary text-decoration-underline">
-                                        Deschide setările de vânzător
-                                    </a>
-                                {% else %}
-                                    <p class="text-sm text-muted mb-2">
-                                        Nu ai încă un profil de vânzător activ.
-                                    </p>
-                                    <a href="{% url 'accounts:profile_data' %}"
-                                       class="text-sm text-primary text-decoration-underline">
-                                        Actualizează-ți datele și aplică pentru cont de vânzător
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+          <!-- Card: Profil vânzător -->
+          <div class="account-address-item mb-3">
+            <div class="info-detail">
+              <div class="box-infor">
+                <p class="text-md fw-medium mb-1">Profil vânzător</p>
 
-                </div> {# /content-account #}
-            </div> {# /my-acount-content #}
-        </div> {# /main-content-account #}
+                {% if request.user.profile.role_seller %}
+                  <ul class="list-unstyled text-sm mb-2">
+                    <li class="mb-1">
+                      <span class="text-muted">Nivel vânzător:</span>
+                      <strong>{{ seller_level_label|default:"N/A" }}</strong>
+                    </li>
+                    <li class="mb-1">
+                      <span class="text-muted">Comision:</span>
+                      <strong>{{ seller_commission_label|default:"—" }}</strong>
+                    </li>
+                    <li class="mb-1">
+                      <span class="text-muted">Trust score:</span>
+                      <strong>{{ seller_trust_score|default:"—" }}</strong>
+                    </li>
+                    <li class="mb-1">
+                      <span class="text-muted">KYC status:</span>
+                      <strong>{{ seller_kyc_status_label|default:"Neînceput" }}</strong>
+                    </li>
+                  </ul>
 
-    </div>
+                  <a href="{% url 'accounts:seller_settings' %}"
+                     class="text-sm text-primary text-decoration-underline">
+                    Deschide setările de vânzător
+                  </a>
+                {% else %}
+                  <p class="text-sm text-muted mb-2">
+                    Nu ai încă un profil de vânzător activ.
+                  </p>
+                  <a href="{% url 'accounts:roles_center' %}"
+                     class="text-sm text-primary text-decoration-underline">
+                    Vezi opțiunile de activare vânzător
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+        </div> {# /content-account #}
+      </div> {# /my-acount-content #}
+    </div> {# /main-content-account #}
+
+  </div>
 </div>
 {% endblock %}

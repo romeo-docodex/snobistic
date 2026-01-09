@@ -8,20 +8,14 @@
 {% block content %}
 
 <style>
-  /* Ascunde săgețile la input-urile numerice Bootstrap (.form-control) */
-
-  /* Chrome, Edge, Safari */
   input.form-control[type="number"]::-webkit-outer-spin-button,
   input.form-control[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-
-  /* Firefox */
   input.form-control[type="number"] {
     -moz-appearance: textfield;
   }
-
   .input-group-text {
     background: transparent;
     font-size: 12px;
@@ -37,9 +31,10 @@
           <div class="small text-secondary mb-1">
             Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}
           </div>
-          <h4>Mărime, măsurători, stare & detalii</h4>
+          <h4>Mărime, stare & detalii</h4>
           <p class="small text-secondary mb-0">
-            Completează mărimea, câteva măsurători esențiale, starea produsului, materialul și culoarea de bază.
+            Completează mărimea, starea produsului, materialul și culoarea de bază.
+            Măsurătorile se completează în pasul următor.
           </p>
         </div>
 
@@ -61,16 +56,33 @@
             <!-- Mărime & stare -->
             <div class="mb-4">
               <h6 class="mb-2">Mărime & stare</h6>
+
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="body-text-1 mb-1 d-block">
-                    {{ form.size.label }} <span class="text-danger">*</span>
-                  </label>
-                  {{ form.size }}
-                  {% for error in form.size.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
+
+                  {% if form.size.is_hidden %}
+                    {{ form.size }}
+                    <label class="body-text-1 mb-1 d-block">Mărime</label>
+                    <div class="alert alert-info py-2 mb-0 small">
+                      Tip mărime: <strong>{{ form.size_mode_label }}</strong>
+                    </div>
+                  {% else %}
+                    <label class="body-text-1 mb-1 d-block">
+                      {{ form.size.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.size }}
+                    {% for error in form.size.errors %}
+                      <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                    {% if form.size_mode_label %}
+                      <div class="form-text small text-muted mt-1">
+                        Selectat automat: <strong>{{ form.size_mode_label }}</strong>
+                      </div>
+                    {% endif %}
+                  {% endif %}
+
                 </div>
+
                 <div class="col-md-6">
                   <label class="body-text-1 mb-1 d-block">
                     {{ form.condition.label }} <span class="text-danger">*</span>
@@ -81,6 +93,12 @@
                   {% endfor %}
                 </div>
               </div>
+
+              {% if form.size_alpha %}
+                {% if form.size_alpha.is_hidden %}
+                  {{ form.size_alpha }}
+                {% endif %}
+              {% endif %}
 
               <div class="mt-3">
                 <label class="body-text-1 mb-1 d-block">
@@ -93,9 +111,83 @@
               </div>
             </div>
 
-            <!-- Material & culori -->
+            <!-- Mărimi numerice / pantofi -->
+            {% if form.show_numeric_block %}
+              <div class="mb-4">
+                <h6 class="mb-2">Mărimi numerice</h6>
+                <div class="row g-3">
+
+                  {% if form.shoe_size_eu %}
+                    <div class="col-md-6" id="wrap-shoe-eu">
+                      {% if form.shoe_size_eu.is_hidden %}
+                        {{ form.shoe_size_eu }}
+                      {% else %}
+                        <label class="body-text-1 mb-1 d-block">
+                          {{ form.shoe_size_eu.label }}
+                        </label>
+                        {{ form.shoe_size_eu }}
+                        {% for error in form.shoe_size_eu.errors %}
+                          <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if form.size_fr %}
+                    <div class="col-md-4" id="wrap-size-fr">
+                      {% if form.size_fr.is_hidden %}
+                        {{ form.size_fr }}
+                      {% else %}
+                        <label class="body-text-1 mb-1 d-block">{{ form.size_fr.label }}</label>
+                        {{ form.size_fr }}
+                        {% for error in form.size_fr.errors %}
+                          <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if form.size_it %}
+                    <div class="col-md-4" id="wrap-size-it">
+                      {% if form.size_it.is_hidden %}
+                        {{ form.size_it }}
+                      {% else %}
+                        <label class="body-text-1 mb-1 d-block">{{ form.size_it.label }}</label>
+                        {{ form.size_it }}
+                        {% for error in form.size_it.errors %}
+                          <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if form.size_gb %}
+                    <div class="col-md-4" id="wrap-size-gb">
+                      {% if form.size_gb.is_hidden %}
+                        {{ form.size_gb }}
+                      {% else %}
+                        <label class="body-text-1 mb-1 d-block">{{ form.size_gb.label }}</label>
+                        {{ form.size_gb }}
+                        {% for error in form.size_gb.errors %}
+                          <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                </div>
+
+                {% if not form.size.is_hidden %}
+                  <div class="form-text small text-muted mt-2">
+                    Dacă produsul este numeric, alege sistemul (FR/GB/IT) din selectorul de mărime.
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Material & culoare -->
             <div class="mb-4">
-              <h6 class="mb-2">Material & culori</h6>
+              <h6 class="mb-2">Material & culoare</h6>
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="body-text-1 mb-1 d-block">
@@ -105,24 +197,24 @@
                   {% for error in form.material.errors %}
                     <div class="text-danger small mt-1">{{ error }}</div>
                   {% endfor %}
+                  <div class="form-text small text-muted mt-1">
+                    Alege <strong>un singur material</strong>.
+                  </div>
                 </div>
 
-                <!-- CULOARE cu cub colorat (culoare de bază) -->
                 <div class="col-md-6">
                   <label class="body-text-1 mb-1 d-block">
-                    {{ form.colors.label }}
+                    {{ form.base_color.label }}
                   </label>
 
                   <select
-                      name="{{ form.colors.html_name }}"
-                      id="{{ form.colors.id_for_label }}"
+                      name="{{ form.base_color.html_name }}"
+                      id="{{ form.base_color.id_for_label }}"
                       class="form-select js-color-select">
-                    <option value="">
-                      ---------
-                    </option>
+                    <option value="">---------</option>
 
-                    {% with current_value=form.colors.value|stringformat:"s" %}
-                      {% for color in form.fields.colors.queryset %}
+                    {% with current_value=form.base_color.value|stringformat:"s" %}
+                      {% for color in form.fields.base_color.queryset %}
                         <option
                           value="{{ color.pk }}"
                           data-hex="{{ color.hex_code }}"
@@ -134,7 +226,7 @@
                     {% endwith %}
                   </select>
 
-                  {% for error in form.colors.errors %}
+                  {% for error in form.base_color.errors %}
                     <div class="text-danger small mt-1">{{ error }}</div>
                   {% endfor %}
                   <div class="form-text small text-muted mt-1">
@@ -143,14 +235,15 @@
                 </div>
               </div>
             </div>
+
           </form>
         </div>
       </div>
 
       <div class="right">
-        <h4 class="mb_8">De ce contează măsurătorile?</h4>
+        <h4 class="mb_8">De ce contează detaliile?</h4>
         <p class="small text-secondary mb-3">
-          Măsurătorile clare ajută cumpărătorul să decidă mai repede și reduc drastic retururile.
+          Mărimea corectă + materialul și o culoare de bază cresc conversia și reduc retururile.
         </p>
         <div class="button-submit d-flex gap-2">
           <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
@@ -175,21 +268,16 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // === CULOARE cu Select2 ===
     if (!window.jQuery || !jQuery.fn.select2) {
       console.warn('Select2 nu este încărcat.');
     } else {
       function formatColorOption (state) {
-        if (!state.id) {
-          return state.text;
-        }
+        if (!state.id) return state.text;
 
         var hex = $(state.element).data('hex');
         var text = state.text || '';
 
-        if (!hex) {
-          return text;
-        }
+        if (!hex) return text;
 
         var $container = $(
           '<span class="snobistic-color-option">' +
@@ -218,6 +306,24 @@
         templateSelection: formatColorOption,
         minimumResultsForSearch: -1
       });
+    }
+
+    var sizeEl = document.getElementById('{{ form.size.id_for_label }}');
+    var wrapFR = document.getElementById('wrap-size-fr');
+    var wrapIT = document.getElementById('wrap-size-it');
+    var wrapGB = document.getElementById('wrap-size-gb');
+
+    function toggleNumericBySize() {
+      if (!sizeEl) return;
+      var v = sizeEl.value;
+      if (wrapFR) wrapFR.style.display = (v === 'FR 28–58') ? '' : 'none';
+      if (wrapIT) wrapIT.style.display = (v === 'IT 32–66') ? '' : 'none';
+      if (wrapGB) wrapGB.style.display = (v === 'GB 2–30') ? '' : 'none';
+    }
+
+    if (sizeEl) {
+      sizeEl.addEventListener('change', toggleNumericBySize);
+      toggleNumericBySize();
     }
   });
 </script>

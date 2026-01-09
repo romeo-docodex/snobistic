@@ -455,11 +455,10 @@ def upload_package_photos(request, order_id, item_id):
 @login_required
 @user_passes_test(is_seller)
 def mark_sent(request, order_id, item_id):
-    messages.info(
-        request,
-        "Marcarea coletului ca trimis va fi disponibilă în curând.",
-    )
-    return redirect("dashboard:sold_list")
+    """
+    Marchează comanda ca predată curierului + aplică trust scoring.
+    """
+    return redirect("logistics:hand_to_courier", order_id=order_id)
 
 
 @login_required

@@ -1,68 +1,75 @@
+# core/admin.py
 from django.contrib import admin
-from .models import ContactMessage
+from django.utils import timezone
+
+from .models import ContactMessage, SiteSetting, PageSEO
+
+
+@admin.register(SiteSetting)
+class SiteSettingAdmin(admin.ModelAdmin):
+    list_display = ("site_name", "contact_email", "privacy_policy_version", "updated_at")
+
+
+@admin.register(PageSEO)
+class PageSEOAdmin(admin.ModelAdmin):
+    list_display = ("key", "meta_title", "updated_at")
+    search_fields = ("key", "meta_title", "meta_description")
 
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
-        'subject',
-        'name',
-        'email',
-        'created_at',
-        'is_processed',
-        'processed_by',
+        "id",
+        "subject",
+        "name",
+        "email",
+        "created_at",
+        "is_processed",
+        "processed_by",
     )
-    list_display_links = ('id', 'subject')
-    list_filter = (
-        'is_processed',
-        'created_at',
-        'processed_by',
-    )
+    list_display_links = ("id", "subject")
+    list_filter = ("is_processed", "created_at", "processed_by")
     search_fields = (
-        'name',
-        'email',
-        'subject',
-        'message',
-        'ip_address',
-        'user__username',
-        'user__email',
+        "name",
+        "email",
+        "subject",
+        "message",
+        "ip_address",
+        "user__username",
+        "user__email",
     )
     readonly_fields = (
-        'name',
-        'email',
-        'subject',
-        'message',
-        'created_at',
-        'ip_address',
-        'user_agent',
-        'user',
-        'processed_at',
-        'processed_by',
+        "name",
+        "email",
+        "subject",
+        "message",
+        "consent",
+        "consent_at",
+        "privacy_policy_version",
+        "created_at",
+        "ip_address",
+        "user_agent",
+        "user",
+        "processed_at",
+        "processed_by",
     )
-    date_hierarchy = 'created_at'
-    ordering = ('-created_at',)
+    date_hierarchy = "created_at"
+    ordering = ("-created_at",)
     list_per_page = 50
 
-    actions = ['mark_as_processed', 'mark_as_unprocessed']
+    actions = ["mark_as_processed", "mark_as_unprocessed"]
 
     fieldsets = (
-        ("Detalii mesaj", {
-            'fields': ('name', 'email', 'subject', 'message', 'created_at'),
-        }),
-        ("Meta & tracking", {
-            'fields': ('ip_address', 'user_agent', 'user'),
-            'classes': ('collapse',),
-        }),
-        ("Procesare suport", {
-            'fields': ('is_processed', 'processed_at', 'processed_by'),
-        }),
+        ("Detalii mesaj", {"fields": ("name", "email", "subject", "message", "created_at")}),
+        ("GDPR / audit", {"fields": ("consent", "consent_at", "privacy_policy_version")}),
+        ("Meta & tracking", {"fields": ("ip_address", "user_agent", "user"), "classes": ("collapse",)}),
+        ("Procesare suport", {"fields": ("is_processed", "processed_at", "processed_by")}),
     )
 
     def mark_as_processed(self, request, queryset):
         updated = queryset.update(
             is_processed=True,
-            processed_at=None,  # poți schimba în timezone.now() dacă vrei să setezi aici
+            processed_at=timezone.now(),
             processed_by=request.user,
         )
         self.message_user(request, f"{updated} mesaj(e) marcate ca procesate.")

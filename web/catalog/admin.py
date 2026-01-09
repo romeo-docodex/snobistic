@@ -100,13 +100,6 @@ class ProductImageInline(admin.TabularInline):
     ordering = ("position", "id")
 
 
-class ProductMaterialInline(admin.TabularInline):
-    model = models.ProductMaterial
-    extra = 0
-    fields = ("material", "percent")
-    autocomplete_fields = ("material",)
-
-
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -174,7 +167,6 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("owner", "pickup_location")
     autocomplete_fields = ("category", "subcategory", "brand", "material", "base_color")
-    inlines = [ProductImageInline, ProductMaterialInline]
     readonly_fields = ("sku", "created_at", "updated_at")
     filter_horizontal = ("colors", "tags", "sustainability_tags")
     date_hierarchy = "created_at"

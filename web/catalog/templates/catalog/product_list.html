@@ -681,11 +681,18 @@
                                     </form>
 
                                     <!-- Favorite -->
-                                    <a href="{% url 'catalog:toggle_favorite' product.pk %}"
-                                       class="box-icon hover-tooltip btn-mobile-icon {% if product.pk in favorite_ids %}active{% endif %}"
-                                       data-toggle-fav>
-                                        <span class="icon icon-heart2"></span>
-                                    </a>
+                                    <form method="post"
+                                        action="{% url 'catalog:toggle_favorite' product.pk %}"
+                                        class="js-fav-form m-0 p-0"
+                                        data-product-id="{{ product.pk }}">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="box-icon hover-tooltip btn-mobile-icon {% if product.pk in favorite_ids %}active{% endif %}"
+                                                data-toggle-fav
+                                                aria-pressed="{% if product.pk in favorite_ids %}true{% else %}false{% endif %}">
+                                            <span class="icon icon-heart2"></span>
+                                        </button>
+                                    </form>
                                 </div>
 
                             </div>
@@ -729,18 +736,25 @@
                                             </form>
                                         </li>
                                         <li class="wishlist">
-                                            <a href="{% url 'catalog:toggle_favorite' product.pk %}"
-                                               class="box-icon hover-tooltip {% if product.pk in favorite_ids %}active{% endif %}"
-                                               data-toggle-fav>
-                                                <span class="icon icon-heart2"></span>
-                                                <span class="tooltip">
-                                                    {% if product.pk in favorite_ids %}
-                                                        Șterge de la favorite
-                                                    {% else %}
-                                                        Adaugă la favorite
-                                                    {% endif %}
-                                                </span>
-                                            </a>
+                                            <form method="post"
+                                                action="{% url 'catalog:toggle_favorite' product.pk %}"
+                                                class="js-fav-form"
+                                                data-product-id="{{ product.pk }}">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="box-icon hover-tooltip {% if product.pk in favorite_ids %}active{% endif %}"
+                                                        data-toggle-fav
+                                                        aria-pressed="{% if product.pk in favorite_ids %}true{% else %}false{% endif %}">
+                                                    <span class="icon icon-heart2"></span>
+                                                    <span class="tooltip">
+                                                        {% if product.pk in favorite_ids %}
+                                                            Șterge de la favorite
+                                                        {% else %}
+                                                            Adaugă la favorite
+                                                        {% endif %}
+                                                    </span>
+                                                </button>
+                                            </form>
                                         </li>
                                         <li>
                                             <a href="{{ product.get_absolute_url }}"
