@@ -20,72 +20,91 @@
     <div class="row">
       <div class="col-xl-8">
         <div class="tf-page-cart-main">
-          <form method="post" class="form-cart">
-            {% csrf_token %}
-            <table class="table-page-cart">
-              <thead>
-                <tr>
-                  <th>Produs</th>
-                  <th>Preț</th>
-                  <th>Acțiune</th>
-                </tr>
-              </thead>
-              <tbody>
-              {% for item in cart.items.all %}
-                <tr class="tf-cart-item file-delete" data-price="{{ item.product.price }}" data-id="{{ item.id }}">
-                  <td class="tf-cart-item_product">
-                    <a href="{{ item.product.get_absolute_url }}" class="img-box">
+
+          <table class="table-page-cart">
+            <thead>
+              <tr>
+                <th>Produs</th>
+                <th>Preț</th>
+                <th>Acțiune</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in cart.items.all %}
+              <tr class="tf-cart-item file-delete" data-id="{{ item.id }}">
+                <td class="tf-cart-item_product">
+                  <a href="{{ item.product.get_absolute_url }}" class="img-box">
+                    {% if item.product.main_image %}
                       <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
+                    {% endif %}
+                  </a>
+                  <div class="cart-info">
+                    <a href="{{ item.product.get_absolute_url }}" class="name text-md link fw-medium">
+                      {{ item.product.title }}
                     </a>
-                    <div class="cart-info">
-                      <a href="{{ item.product.get_absolute_url }}" class="name text-md link fw-medium">
-                        {{ item.product.title }}
-                      </a>
-                      <div class="variants">
-                        {% if item.product.size %}<strong>Mărime:</strong> {{ item.product.size }}<br>{% endif %}
-                        {% if item.product.material %}<strong>Material:</strong> {{ item.product.material }}<br>{% endif %}
-                        {% if item.product.sku %}<strong>SKU:</strong> {{ item.product.sku }}{% endif %}
-                      </div>
+                    <div class="variants">
+                      {% if item.product.size %}<strong>Mărime:</strong> {{ item.product.size }}<br>{% endif %}
+                      {% if item.product.material %}<strong>Material:</strong> {{ item.product.material }}<br>{% endif %}
+                      {% if item.product.sku %}<strong>SKU:</strong> {{ item.product.sku }}{% endif %}
                     </div>
-                  </td>
-                  <td class="tf-cart-item_price text-center">
-                    <span class="cart-price price-on-sale text-md fw-medium">{{ item.product.price }} RON</span>
-                  </td>
-                  <td class="tf-cart-item_product text-center">
+                  </div>
+                </td>
+
+                <td class="tf-cart-item_price text-center">
+                  <span class="cart-price price-on-sale text-md fw-medium">{{ item.product.price }} RON</span>
+                </td>
+
+                <td class="tf-cart-item_product text-center">
+                  <form method="post"
+                        action="{% url 'cart:remove' item.id %}"
+                        class="js-cart-remove-form">
+                    {% csrf_token %}
                     <button type="submit"
-                            name="action"
-                            value="remove_{{ item.id }}"
                             class="w-100 remove-cart text-danger btn btn-link p-0"
-                            title="Șterge produsul">
+                            title="Șterge produsul"
+                            data-remove-url="{% url 'cart:remove' item.id %}">
                       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                         <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                       </svg>
                     </button>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
 
-            <div class="cart-actions mt-4 d-flex justify-content-between">
-              <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark-2">Continuă cumpărăturile</a>
-              {# Nu mai avem buton „Actualizează coșul” pentru că nu există cantități de modificat #}
-            </div>
+          <div class="cart-actions mt-4 d-flex justify-content-between">
+            <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark-2">Continuă cumpărăturile</a>
+          </div>
 
-            <div class="cart-note mt-5">
-              <label for="note" class="text-md fw-medium">Instrucțiuni extra pentru vânzător</label>
-              <textarea id="note"></textarea>
-            </div>
-          </form>
+          <div class="cart-note mt-5">
+            <label for="note" class="text-md fw-medium">Instrucțiuni extra pentru vânzător</label>
+            <textarea id="note" name="note"></textarea>
+          </div>
+
         </div>
       </div>
 
       <div class="col-xl-4">
         <div class="tf-page-cart-sidebar">
+
           <form class="cart-box shipping-cart-box" onsubmit="return false;">
             <div class="text-lg title fw-medium">Estimare transport</div>
-            <div class="row">
+
+            {% if shipping_cost %}
+              <div class="mt-2 text-sm">
+                <strong>Estimare:</strong> {{ shipping_cost }} RON
+                {% if shipping_days_min and shipping_days_max %}
+                  <div class="text-xs text-muted">Livrare: {{ shipping_days_min }}–{{ shipping_days_max }} zile</div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="mt-2 text-xs text-muted">Estimarea se calculează automat (sau la checkout).</div>
+            {% endif %}
+
+            <div class="row mt-3">
               <div class="col-xl-6">
                 <fieldset class="field">
                   <label for="country" class="text-sm">Țară</label>
@@ -117,19 +136,18 @@
                 </fieldset>
               </div>
             </div>
-            <button type="button" class="tf-btn btn-dark2 animate-btn w-100 mt-3">Estimează</button>
+            <button type="button" class="tf-btn btn-dark2 animate-btn w-100 mt-3" disabled>Estimează</button>
           </form>
 
-          {# Formular cupon #}
+          {# cupon #}
           <form method="post" class="cart-box mt-4">
             {% csrf_token %}
             <div class="text-lg title fw-medium">Cupon de reducere</div>
             <div class="d-flex gap-2 mt-2">
               {{ coupon_form.code }}
-              <button type="submit" name="apply_coupon" class="tf-btn btn-dark2">
-                Aplică
-              </button>
+              <button type="submit" name="apply_coupon" class="tf-btn btn-dark2">Aplică</button>
             </div>
+
             {% if cart.coupon %}
               <p class="text-sm text-success mt-2">
                 Cupon aplicat: {{ cart.coupon.code }} (-{{ cart.coupon.discount }}%)
@@ -142,16 +160,32 @@
 
           <div class="cart-box checkout-cart-box mt-4">
             <div class="cart-head">
-              <div class="total-discount text-xl fw-medium d-flex justify-content-between">
-                <span>Total:</span>
-                <span class="total">{{ cart.get_total_price }} RON</span>
+              <div class="d-flex justify-content-between text-sm mb-2">
+                <span>Subtotal</span>
+                <span class="fw-semibold">{{ totals.subtotal_before_discount }} RON</span>
               </div>
-              {% if cart.coupon %}
-                <p class="text-sm text-success mt-1">
-                  Reducere aplicată prin cuponul {{ cart.coupon.code }}.
-                </p>
+
+              {% if totals.discount_amount and totals.discount_amount > 0 %}
+                <div class="d-flex justify-content-between text-sm mb-2">
+                  <span>Reducere</span>
+                  <span class="text-success fw-semibold">-{{ totals.discount_amount }} RON</span>
+                </div>
               {% endif %}
-              <p class="text-sm text-dark-4 mt-1">Taxele și livrarea se calculează în pagina de finalizare comandă.</p>
+
+              <div class="d-flex justify-content-between text-sm mb-2">
+                <span>Buyer protection</span>
+                <span class="fw-semibold">{{ totals.buyer_protection_fee }} RON</span>
+              </div>
+
+              <div class="d-flex justify-content-between text-sm mb-2">
+                <span>Transport</span>
+                <span class="fw-semibold">{{ totals.shipping_cost }} RON</span>
+              </div>
+
+              <div class="total-discount text-xl fw-medium d-flex justify-content-between mt-3">
+                <span>Total estimat</span>
+                <span class="total">{{ totals.total }} RON</span>
+              </div>
             </div>
 
             <div class="check-agree">
@@ -177,6 +211,7 @@
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -191,12 +226,24 @@
   </div>
 </div>
 
-{# Gate checkout pentru guest (login offcanvas) #}
 <script>
   window.APP_IS_AUTH = {{ request.user.is_authenticated|yesno:'true,false' }};
+
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('[data-checkout]');
     if (!btn) return;
+
+    // 1) terms gate (anchor nu respectă required)
+    const agree = document.querySelector('#check-agree');
+    if (agree && !agree.checked) {
+      e.preventDefault();
+      agree.focus();
+      agree.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      alert('Te rog acceptă termenii și condițiile înainte de a continua.');
+      return;
+    }
+
+    // 2) guest gate (login offcanvas)
     if (!window.APP_IS_AUTH) {
       e.preventDefault();
       const offcanvasEl = document.querySelector('#login');
@@ -206,6 +253,32 @@
         window.location.href = btn.getAttribute('href');
       }
     }
+  });
+
+  // AJAX remove (fallback clasic dacă nu merge)
+  document.addEventListener('submit', async function (e) {
+    const form = e.target.closest('.js-cart-remove-form');
+    if (!form) return;
+
+    e.preventDefault();
+
+    const url = form.querySelector('[data-remove-url]')?.getAttribute('data-remove-url') || form.action;
+    const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrf,
+      },
+    });
+
+    if (!res.ok) {
+      form.submit();
+      return;
+    }
+
+    window.location.reload();
   });
 </script>
 

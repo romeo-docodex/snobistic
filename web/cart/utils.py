@@ -23,19 +23,28 @@ def _ensure_session_key(request) -> str:
     return request.session.session_key
 
 
-def _normalize_items(raw: dict) -> dict[int, int]:
-    """Ensure keys are ints and quantities are sane (>=1). Aggregates duplicates."""
-    out: dict[int, int] = {}
-    for k, v in (raw or {}).items():
+def _normalize_product_ids(raw: dict) -> list[int]:
+    """
+    Legacy session dict: {product_id: qty}
+    qty=1 policy => ignorăm qty, păstrăm doar product_id valid.
+    """
+    out: list[int] = []
+    for k in (raw or {}).keys():
         try:
             pid = int(k)
-            qty = int(v)
         except (TypeError, ValueError):
             continue
-        if qty < 1:
+        if pid > 0:
+            out.append(pid)
+    # unique, stable
+    seen = set()
+    uniq = []
+    for pid in out:
+        if pid in seen:
             continue
-        out[pid] = out.get(pid, 0) + qty
-    return out
+        seen.add(pid)
+        uniq.append(pid)
+    return uniq
 
 
 def _load_session_store(session_key: str):
@@ -50,7 +59,7 @@ def get_cart(request) -> Optional[Cart]:
     """
     Return the current cart without creating a new one.
     - Authenticated: user's cart
-    - Anonymous: cart by session_key (if your Cart has that field)
+    - Anonymous: cart by session_key
     """
     if request.user.is_authenticated:
         return Cart.objects.filter(user=request.user).first()
@@ -59,11 +68,9 @@ def get_cart(request) -> Optional[Cart]:
     if not sk:
         return None
 
-    # Prefer Cart.session_key if it exists
     if _has_field(Cart, "session_key"):
         return Cart.objects.filter(session_key=sk, user__isnull=True).first()
 
-    # No session_key field on Cart -> no DB cart for guests
     return None
 
 
@@ -71,8 +78,7 @@ def get_or_create_cart(request) -> Cart:
     """
     Return a cart, creating one if needed.
     - Authenticated: Cart(user=request.user)
-    - Anonymous: Cart(session_key=<session>) if model supports it; otherwise
-      falls back to creating a single anonymous Cart (user=None).
+    - Anonymous: Cart(session_key=<session>)
     """
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -84,8 +90,7 @@ def get_or_create_cart(request) -> Cart:
         cart, _ = Cart.objects.get_or_create(session_key=sk, defaults={"user": None})
         return cart
 
-    # Fallback (no session_key on Cart). This avoids crashes, but will
-    # not isolate carts per visitor. Consider adding a session_key field.
+    # Fallback (should not be hit since your Cart DOES have session_key)
     cart, _ = Cart.objects.get_or_create(user=None)
     return cart
 
@@ -94,14 +99,13 @@ def get_or_create_cart(request) -> Cart:
 
 def merge_session_cart_to_user(user, request_session, pre_login_session_key: str | None = None):
     """
-    Merge any guest carts into the user's DB cart.
-    - If Cart has a `session_key` field, merge carts from BOTH the previous
-      session (pre_login_session_key) and the current one.
-    - Also supports legacy simple-session dict under SESSION_CART_KEY.
+    qty=1 policy:
+    - dacă produsul există deja în coșul userului: nu faci nimic
+    - dacă nu există: îl adaugi o singură dată
     """
     cart, _ = Cart.objects.get_or_create(user=user)
 
-    # 1) Merge DB-based anonymous carts (if Cart.session_key exists)
+    # 1) Merge DB-based anonymous carts (Cart.session_key)
     if _has_field(Cart, "session_key"):
         for sk in filter(None, [pre_login_session_key, request_session.session_key]):
             try:
@@ -114,34 +118,24 @@ def merge_session_cart_to_user(user, request_session, pre_login_session_key: str
                 continue
 
             with transaction.atomic():
-                # move/merge items
-                for item in CartItem.objects.select_for_update().filter(cart=anon):
-                    existing, created = CartItem.objects.get_or_create(
+                for item in CartItem.objects.select_for_update().filter(cart=anon).select_related("product"):
+                    CartItem.objects.get_or_create(
                         cart=cart,
                         product=item.product,
-                        defaults={"quantity": item.quantity},
                     )
-                    if not created:
-                        existing.quantity += item.quantity
-                        existing.save(update_fields=["quantity"])
-                # remove the anonymous cart
                 anon.delete()
 
     # 2) Merge legacy simple-session dict cart (if any)
-    legacy = _normalize_items(request_session.get(SESSION_CART_KEY) or {})
-    if legacy:
-        products = Product.objects.filter(id__in=legacy.keys(), is_active=True).in_bulk(field_name="id")
+    legacy_pids = _normalize_product_ids(request_session.get(SESSION_CART_KEY) or {})
+    if legacy_pids:
+        products = Product.objects.filter(id__in=legacy_pids, is_active=True).in_bulk(field_name="id")
         with transaction.atomic():
-            for pid, qty in legacy.items():
+            for pid in legacy_pids:
                 product = products.get(pid)
                 if not product:
                     continue
-                ci, created = CartItem.objects.select_for_update().get_or_create(
+                CartItem.objects.get_or_create(
                     cart=cart,
                     product=product,
-                    defaults={"quantity": qty},
                 )
-                if not created:
-                    ci.quantity += qty
-                    ci.save(update_fields=["quantity"])
         request_session.pop(SESSION_CART_KEY, None)

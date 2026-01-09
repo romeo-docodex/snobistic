@@ -1,29 +1,24 @@
 {# cart/partials/cart_offcanvas.html – dropdown mini-cart #}
-<div class="dropdown-cart dropdown-login mini-cart-dropdown">
-  {% if cart_items_count and cart_items_count > 0 and cart %}
-    <div class="tf-mini-cart-wrap">
+<div id="mini-cart-container">
+  <div class="dropdown-cart dropdown-login mini-cart-dropdown">
+    {% if cart_items_count and cart_items_count > 0 and cart %}
+      <div class="tf-mini-cart-wrap">
 
-      {# HEADER #}
-      <div class="tf-mini-cart-header d-flex justify-content-between align-items-center">
-        <span class="title text-sm fw-semibold">
-          Coșul tău
-        </span>
-        <span class="text-xs text-muted">
-          {{ cart.items.count }} articole
-        </span>
-      </div>
+        <div class="tf-mini-cart-header d-flex justify-content-between align-items-center">
+          <span class="title text-sm fw-semibold">Coșul tău</span>
+          <span class="text-xs text-muted">{{ cart.items.count }} articole</span>
+        </div>
 
-      {# LISTĂ PRODUSE #}
-      <div class="tf-mini-cart-main" style="max-height:260px; overflow-y:auto; padding:8px 0 4px;">
-        <form method="post" class="form-cart" action="{% url 'cart:cart' %}">
-          {% csrf_token %}
+        <div class="tf-mini-cart-main" style="max-height:260px; overflow-y:auto; padding:8px 0 4px;">
           {% for item in cart.items.all %}
             <div class="tf-mini-cart-item mini-cart-item d-flex mt-3" data-id="{{ item.id }}">
               <div class="mini-cart-thumb" style="width:64px; flex-shrink:0;">
                 <a href="{{ item.product.get_absolute_url }}">
-                  <img src="{{ item.product.main_image.url }}"
-                       alt="{{ item.product.title }}"
-                       style="width:100%;height:auto;">
+                  {% if item.product.main_image %}
+                    <img src="{{ item.product.main_image.url }}"
+                         alt="{{ item.product.title }}"
+                         style="width:100%;height:auto;">
+                  {% endif %}
                 </a>
               </div>
 
@@ -34,63 +29,111 @@
                     {{ item.product.title }}
                   </a>
 
-                  <button type="submit"
-                          name="action"
-                          value="remove_{{ item.id }}"
-                          class="btn btn-sm text-muted p-0 mini-cart-remove"
-                          title="Șterge produsul" style="color:red !important;">
-                    <i class="icon icon-close fs-12"></i>
-                  </button>
+                  <form method="post"
+                        action="{% url 'cart:remove' item.id %}"
+                        class="js-mini-cart-remove-form d-inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-sm text-muted p-0 mini-cart-remove"
+                            title="Șterge produsul"
+                            data-remove-url="{% url 'cart:remove' item.id %}"
+                            style="color:red !important;">
+                      <i class="icon icon-close fs-12"></i>
+                    </button>
+                  </form>
                 </div>
 
                 <div class="mini-cart-meta d-flex justify-content-between align-items-center mt-1">
                   <span class="text-xs text-muted">
-                    Marime: {{ item.product.size }}
+                    {% if item.product.size %}Mărime: {{ item.product.size }}{% endif %}
                   </span>
-                  <span class="text-sm fw-semibold">
-                    {{ item.product.price }} RON
-                  </span>
+                  <span class="text-sm fw-semibold">{{ item.product.price }} RON</span>
                 </div>
               </div>
             </div>
           {% empty %}
             <p class="text-xs text-muted mt-2">Nu există produse în coș.</p>
           {% endfor %}
-        </form>
-      </div>
+        </div>
 
-      {# FOOTER: total + butoane #}
-      <div class="tf-mini-cart-bottom mini-cart-footer">
-        <div class="tf-mini-cart-bottom-wrap">
-          <div class="tf-cart-totals-discounts d-flex justify-content-between align-items-center mb-1">
-            <div class="tf-cart-total text-sm fw-medium">Total</div>
-            <div class="tf-totals-total-value text-sm fw-semibold">
-              {{ cart.get_total_price }} RON
+        <div class="tf-mini-cart-bottom mini-cart-footer">
+          <div class="tf-mini-cart-bottom-wrap">
+            <div class="tf-cart-totals-discounts d-flex justify-content-between align-items-center mb-1">
+              <div class="tf-cart-total text-sm fw-medium">Subtotal</div>
+              <div class="tf-totals-total-value text-sm fw-semibold">
+                {{ totals.subtotal }} RON
+              </div>
+            </div>
+
+            <div class="tf-cart-tax text-xs text-muted mb-2">
+              Taxele sunt calculate la finalizare.
+            </div>
+
+            <div class="tf-mini-cart-view-checkout d-grid gap-2">
+              <a href="{% url 'cart:cart' %}"
+                 class="tf-btn btn-out-line-dark2 w-100 justify-content-center mini-cart-btn">
+                Vezi coșul
+              </a>
+              <a href="{% url 'cart:checkout' %}"
+                 class="tf-btn animate-btn d-inline-flex bg-dark-2 w-100 justify-content-center mini-cart-btn"
+                 data-checkout>
+                <span>Finalizează comanda</span>
+              </a>
             </div>
           </div>
-          <div class="tf-cart-tax text-xs text-muted mb-2">
-            Taxele sunt calculate la finalizare.
-          </div>
-          <div class="tf-mini-cart-view-checkout d-grid gap-2">
-            <a href="{% url 'cart:cart' %}"
-               class="tf-btn btn-out-line-dark2 w-100 justify-content-center mini-cart-btn">
-              Vezi coșul
-            </a>
-            <a href="{% url 'cart:checkout' %}"
-               class="tf-btn animate-btn d-inline-flex bg-dark-2 w-100 justify-content-center mini-cart-btn"
-               data-checkout>
-              <span>Finalizează comanda</span>
-            </a>
-          </div>
         </div>
+
       </div>
-    </div>
-  {% else %}
-    <div class="p-3 text-center mini-cart-empty">
-      <p class="mb-2 text-sm">Coșul tău este gol.</p>
-      <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark2 w-100 mini-cart-btn">
-        Începe cumpărăturile
-      </a>
-    </div>
-  {% endif %}
+    {% else %}
+      <div class="p-3 text-center mini-cart-empty">
+        <p class="mb-2 text-sm">Coșul tău este gol.</p>
+        <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark2 w-100 mini-cart-btn">
+          Începe cumpărăturile
+        </a>
+      </div>
+    {% endif %}
+  </div>
 </div>
+
+<script>
+  if (!window.__SNOB_CART_REMOVE_BOUND) {
+    window.__SNOB_CART_REMOVE_BOUND = true;
+
+    document.addEventListener('submit', async function (e) {
+      const form = e.target.closest('.js-mini-cart-remove-form');
+      if (!form) return;
+
+      e.preventDefault();
+
+      const url = form.querySelector('[data-remove-url]')?.getAttribute('data-remove-url') || form.action;
+      const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrf,
+        },
+      });
+
+      if (!res.ok) {
+        form.submit();
+        return;
+      }
+
+      const data = await res.json();
+
+      // Înlocuire stabilă
+      const container = document.querySelector('#mini-cart-container');
+      if (container && data.html) {
+        container.outerHTML = data.html;
+      }
+
+      // Update badge
+      const badge = document.querySelector('#cart-count') || document.querySelector('.cart-count');
+      if (badge && typeof data.count !== 'undefined') {
+        badge.textContent = data.count;
+      }
+    });
+  }
+</script>

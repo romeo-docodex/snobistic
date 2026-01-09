@@ -24,17 +24,20 @@
             <div class="title text-lg fw-medium">Informații de facturare</div>
             <div class="grid-2 mb_16">
               <div class="tf-field style-2 style-3">
-                <input class="tf-field-input tf-input" id="firstname" placeholder=" " type="text" name="first_name" value="{{ request.user.first_name }}">
+                <input class="tf-field-input tf-input" id="firstname" placeholder=" " type="text" name="first_name" value="{{ request.user.first_name|default:'' }}">
                 <label class="tf-field-label" for="firstname">Prenume</label>
               </div>
               <div class="tf-field style-2 style-3">
-                <input class="tf-field-input tf-input" id="lastname" placeholder=" " type="text" name="last_name" value="{{ request.user.last_name }}">
+                <input class="tf-field-input tf-input" id="lastname" placeholder=" " type="text" name="last_name" value="{{ request.user.last_name|default:'' }}">
                 <label class="tf-field-label" for="lastname">Nume</label>
               </div>
             </div>
 
             <fieldset class="tf-field style-2 style-3 mb_16">
               {{ form.address }}
+              {% if form.address.errors %}
+                <p class="text-danger text-sm mt-1">{{ form.address.errors.0 }}</p>
+              {% endif %}
             </fieldset>
 
             <a href="{% url 'accounts:address_form' %}" class="text-sm link mb-3 d-inline-block">Adaugă sau modifică adresa</a>
@@ -45,11 +48,11 @@
               <div class="text-lg fw-medium">Informații de contact</div>
             </div>
             <fieldset class="tf-field style-2 style-3">
-              <input class="tf-field-input tf-input" id="email" placeholder=" " type="email" name="email" value="{{ request.user.email }}">
+              <input class="tf-field-input tf-input" id="email" placeholder=" " type="email" name="email" value="{{ request.user.email|default:'' }}">
               <label class="tf-field-label" for="email">Email</label>
             </fieldset>
             <fieldset class="tf-field style-2 style-3 mt-3">
-              <input class="tf-field-input tf-input" id="phone" placeholder=" " type="text" name="phone" value="{{ request.user.profile.phone }}">
+              <input class="tf-field-input tf-input" id="phone" placeholder=" " type="text" name="phone" value="{{ request.user.profile.phone|default:'' }}">
               <label class="tf-field-label" for="phone">Telefon</label>
             </fieldset>
           </div>
@@ -64,6 +67,9 @@
               </label>
             </fieldset>
             {% endfor %}
+            {% if form.shipping_method.errors %}
+              <p class="text-danger text-sm mt-1">{{ form.shipping_method.errors.0 }}</p>
+            {% endif %}
           </div>
 
           <div class="box-ip-payment">
@@ -78,10 +84,14 @@
               </label>
             </fieldset>
             {% endfor %}
+            {% if form.payment_method.errors %}
+              <p class="text-danger text-sm mt-1">{{ form.payment_method.errors.0 }}</p>
+            {% endif %}
             <p class="text-dark-6 text-sm">
               Datele tale sunt protejate. Vezi <a href="{% url 'core:privacy' %}" class="fw-medium text-decoration-underline link text-sm">politica de confidențialitate</a>.
             </p>
           </div>
+
           {% if wallet %}
             <p class="text-dark-6 text-sm mt-2">
               Sold disponibil în Wallet Snobistic:
@@ -99,19 +109,21 @@
               {% for item in cart.items.all %}
               <li class="order-item">
                 <figure class="img-product">
-                  <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
-                  <span class="quantity">{{ item.quantity }}</span>
+                  {% if item.product.main_image %}
+                    <img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
+                  {% endif %}
                 </figure>
                 <div class="content">
                   <div class="info">
                     <p class="name text-sm fw-medium">{{ item.product.title }}</p>
                     {% if item.product.sku %}<span class="variant">SKU: {{ item.product.sku }}</span>{% endif %}
                   </div>
-                  <span class="price text-sm fw-medium">{{ item.get_cost }} RON</span>
+                  <span class="price text-sm fw-medium">{{ item.product.price }} RON</span>
                 </div>
               </li>
               {% endfor %}
             </ul>
+
             <ul class="list-total">
               <li class="total-item d-flex justify-content-between text-sm">
                 <span>Subtotal:</span><span>{{ cart.get_subtotal }} RON</span>
@@ -127,6 +139,7 @@
               </li>
               {% endif %}
             </ul>
+
             <div class="subtotal d-flex justify-content-between text-lg fw-medium">
               <span>Total produse:</span>
               <span class="total-price-order">
@@ -157,6 +170,7 @@
             <div class="btn-order mt-3">
               <button type="submit" class="tf-btn btn-dark2 animate-btn w-100 text-transform-none">Plasează comanda</button>
             </div>
+
             <p class="mt-3 text-sm text-center text-dark-4">
               <a href="{% url 'cart:cart' %}" class="text-decoration-underline">Revino la coș</a>
             </p>

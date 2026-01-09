@@ -171,25 +171,17 @@ class Order(models.Model):
         return reverse("payments:payment_confirm", args=[self.id])
 
     def mark_as_paid(self):
-        """
-        Marcată ca plătită după confirmarea procesatorului de plăți.
-        În acest moment banii se consideră blocați în escrow.
-        + TRUST wiring (idempotent).
-        """
         if self.payment_status == self.PAYMENT_PAID and self.escrow_status == self.ESCROW_HELD:
-            # Already in paid+held state; safe no-op
             return
 
         self.payment_status = self.PAYMENT_PAID
         self.escrow_status = self.ESCROW_HELD
         self.save(update_fields=["payment_status", "escrow_status"])
 
-        # TRUST wiring
         try:
             from .services.trust_hooks import on_order_paid
             on_order_paid(self)
         except Exception:
-            # nu blocăm flow-ul de plată din cauza trust-ului
             pass
 
     def _payout_sellers_from_escrow(self):
@@ -234,10 +226,6 @@ class Order(models.Model):
             )
 
     def release_escrow(self, *, force: bool = False):
-        """
-        Eliberează fondurile din escrow și plătește sellerii în Wallet.
-        + TRUST wiring (idempotent) când escrow devine RELEASED.
-        """
         if self.escrow_status != self.ESCROW_HELD:
             return
 
@@ -251,7 +239,6 @@ class Order(models.Model):
         self.escrow_status = self.ESCROW_RELEASED
         self.save(update_fields=["escrow_status"])
 
-        # TRUST wiring (treat as completed)
         try:
             from .services.trust_hooks import on_escrow_released
             on_escrow_released(self)
@@ -290,14 +277,17 @@ class Order(models.Model):
 
         subtotal = Decimal("0.00")
 
-        for cart_item in cart.items.all():
+        for cart_item in cart.items.select_related("product").all():
+            price = cart_item.product.price or Decimal("0.00")
+
+            # qty=1 policy in cart => order_item.quantity = 1
             OrderItem.objects.create(
                 order=order,
                 product=cart_item.product,
-                quantity=cart_item.quantity,
-                price=cart_item.product.price,
+                quantity=1,
+                price=price,
             )
-            subtotal += cart_item.product.price * cart_item.quantity
+            subtotal += price
 
         buyer_protection_fee = _pct(subtotal, order.buyer_protection_percent)
         seller_commission = _pct(subtotal, order.seller_commission_percent)
