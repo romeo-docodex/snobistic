@@ -1,8 +1,13 @@
+{# templates/auctions/auction_detail.html #}
 {% extends "base.html" %}
 {% load static %}
 {% block title %}{{ auction.product.title }} – Licitație{% endblock %}
 
 {% block content %}
+
+{% with p=auction.product %}
+{% with first_extra=p.images.first %}
+
 <!-- Breadcrumb -->
 <div class="breadcrumb-sec">
   <div class="container">
@@ -10,20 +15,21 @@
       <div class="breadcrumb-list">
         <a class="breadcrumb-item" href="{% url 'auctions:auction_list' %}">Licitații</a>
         <div class="breadcrumb-item dot"><span></span></div>
-        {% if auction.product.category.parent %}
-          <a class="breadcrumb-item" href="{{ auction.product.category.parent.get_absolute_url }}">{{ auction.product.category.parent.name }}</a>
+
+        <a class="breadcrumb-item" href="{{ p.category.get_absolute_url }}">{{ p.category.name }}</a>
+
+        {% if p.subcategory %}
           <div class="breadcrumb-item dot"><span></span></div>
+          <span class="breadcrumb-item">{{ p.subcategory.get_breadcrumb }}</span>
         {% endif %}
-        <a class="breadcrumb-item" href="{{ auction.product.category.get_absolute_url }}">{{ auction.product.category.name }}</a>
+
         <div class="breadcrumb-item dot"><span></span></div>
-        <div class="breadcrumb-item current">{{ auction.product.title }}</div>
-      </div>
-      <div class="breadcrumb-prev-next">
-        <a href="{% url 'auctions:auction_list' %}" class="breadcrumb-back"><i class="icon icon-shop"></i></a>
+        <div class="breadcrumb-item current">{{ p.title }}</div>
       </div>
     </div>
   </div>
 </div>
+<!-- /Breadcrumb -->
 
 <!-- Main -->
 <section class="flat-single-product">
@@ -31,31 +37,68 @@
     <div class="container">
       <div class="row">
 
-        <!-- Media -->
+        <!-- Images (identic product_detail.html, cu fallback) -->
         <div class="col-md-6">
           <div class="tf-product-media-wrap sticky-top">
             <div class="product-thumbs-slider">
               <div class="flat-wrap-media-product">
                 <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
                   <div class="swiper-wrapper">
-                    {% with cover=auction.images.first %}
+
+                    {% if p.main_image %}
+                      <!-- main image -->
                       <div class="swiper-slide">
-                        <a href="{{ cover.image.url|default:auction.product.main_image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                        <a href="{{ p.main_image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
                           <img class="tf-image-zoom lazyload"
-                               data-zoom="{{ cover.image.url|default:auction.product.main_image.url }}"
-                               data-src="{{ cover.image.url|default:auction.product.main_image.url }}"
-                               src="{{ cover.image.url|default:auction.product.main_image.url }}"
-                               alt="{{ auction.product.title }}">
+                               data-zoom="{{ p.main_image.url }}"
+                               data-src="{{ p.main_image.url }}"
+                               src="{{ p.main_image.url }}"
+                               alt="{{ p.title }}">
                         </a>
                       </div>
-                    {% endwith %}
-                    {% for img in auction.images.all %}
+
+                      <!-- extra images -->
+                      {% for img in p.images.all %}
+                        {% if img.image %}
+                        <div class="swiper-slide">
+                          <a href="{{ img.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                            <img class="tf-image-zoom lazyload"
+                                 data-zoom="{{ img.image.url }}"
+                                 data-src="{{ img.image.url }}"
+                                 src="{{ img.image.url }}"
+                                 alt="{{ img.alt_text|default:p.title }}">
+                          </a>
+                        </div>
+                        {% endif %}
+                      {% endfor %}
+
+                    {% elif first_extra and first_extra.image %}
+                      <!-- main fallback -->
                       <div class="swiper-slide">
-                        <a href="{{ img.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
-                          <img class="tf-image-zoom lazyload" data-zoom="{{ img.image.url }}" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ auction.product.title }}">
+                        <a href="{{ first_extra.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                          <img class="tf-image-zoom lazyload"
+                               data-zoom="{{ first_extra.image.url }}"
+                               data-src="{{ first_extra.image.url }}"
+                               src="{{ first_extra.image.url }}"
+                               alt="{{ p.title }}">
                         </a>
                       </div>
-                    {% endfor %}
+
+                      {% for img in p.images.all|slice:"1:" %}
+                        {% if img.image %}
+                        <div class="swiper-slide">
+                          <a href="{{ img.image.url }}" target="_blank" class="item" data-pswp-width="1200" data-pswp-height="1200">
+                            <img class="tf-image-zoom lazyload"
+                                 data-zoom="{{ img.image.url }}"
+                                 data-src="{{ img.image.url }}"
+                                 src="{{ img.image.url }}"
+                                 alt="{{ img.alt_text|default:p.title }}">
+                          </a>
+                        </div>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
+
                   </div>
                 </div>
                 <div class="swiper-button-next nav-swiper thumbs-next"></div>
@@ -64,109 +107,134 @@
 
               <div dir="ltr" class="swiper tf-product-media-thumbs other-image-zoom" data-preview="4" data-direction="vertical">
                 <div class="swiper-wrapper stagger-wrap">
-                  {% with cover=auction.images.first %}
+
+                  {% if p.main_image %}
+                    <!-- thumbs main -->
                     <div class="swiper-slide stagger-item">
                       <div class="item">
-                        <img class="lazyload" data-src="{{ cover.image.url|default:auction.product.main_image.url }}" src="{{ cover.image.url|default:auction.product.main_image.url }}" alt="{{ auction.product.title }}">
+                        <img class="lazyload" data-src="{{ p.main_image.url }}" src="{{ p.main_image.url }}" alt="{{ p.title }}">
                       </div>
                     </div>
-                  {% endwith %}
-                  {% for img in auction.images.all %}
+                    <!-- thumbs extras -->
+                    {% for img in p.images.all %}
+                      {% if img.image %}
+                      <div class="swiper-slide stagger-item">
+                        <div class="item">
+                          <img class="lazyload" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ img.alt_text|default:p.title }}">
+                        </div>
+                      </div>
+                      {% endif %}
+                    {% endfor %}
+
+                  {% elif first_extra and first_extra.image %}
                     <div class="swiper-slide stagger-item">
                       <div class="item">
-                        <img class="lazyload" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ auction.product.title }}">
+                        <img class="lazyload" data-src="{{ first_extra.image.url }}" src="{{ first_extra.image.url }}" alt="{{ p.title }}">
                       </div>
                     </div>
-                  {% endfor %}
+                    {% for img in p.images.all|slice:"1:" %}
+                      {% if img.image %}
+                      <div class="swiper-slide stagger-item">
+                        <div class="item">
+                          <img class="lazyload" data-src="{{ img.image.url }}" src="{{ img.image.url }}" alt="{{ img.alt_text|default:p.title }}">
+                        </div>
+                      </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+
                 </div>
               </div>
 
             </div>
           </div>
         </div>
-        <!-- /Media -->
+        <!-- /Images -->
 
-        <!-- Info -->
+        <!-- Info (dreapta) — copiat ca structură din product_detail.html + bid form -->
         <div class="col-md-6">
           <div class="tf-zoom-main"></div>
           <div class="tf-product-info-wrap other-image-zoom">
             <div class="tf-product-info-list">
 
+              <!-- Heading -->
               <div class="tf-product-heading">
-                {% if auction.product.brand %}
-                  <span class="brand-product">{{ auction.product.brand.name }}</span>
-                {% endif %}
-                <h5 class="product-name fw-medium">{{ auction.product.title }}</h5>
+                <div class="row align-items-start">
+                  <div class="col-12">
 
-                <div class="product-price">
-                  <div class="display-sm price-new">{{ auction.current_price }} RON</div>
-                  {% if auction.start_price and auction.current_price != auction.start_price %}
-                    <div class="display-sm price-old">{{ auction.start_price }} RON</div>
-                  {% endif %}
-                  {% if auction.min_price %}
-                    <span class="badge-sale">Rezervă: {{ auction.min_price }} RON</span>
-                  {% endif %}
-                </div>
+                    {% if p.display_brand %}
+                      <span class="brand-product">{{ p.display_brand }}</span>
+                    {% elif p.brand %}
+                      <span class="brand-product">{{ p.brand.name }}</span>
+                    {% endif %}
 
-                <div class="product-stock">
-                  {% if auction.is_active %}
-                    <span class="stock in-stock">Licitație activă</span>
-                    <span class="text-dark ms-2">Se încheie în: {{ auction.end_time|timeuntil }}</span>
-                  {% else %}
-                    <span class="stock out-stock">Încheiată</span>
-                    <span class="text-dark ms-2">Acum {{ auction.end_time|timesince }}</span>
-                  {% endif %}
-                </div>
+                    <h5 class="product-name fw-medium">{{ p.title }}</h5>
 
-                <div class="product-progress-sale">
-                  <div class="title-hurry-up">
-                    <span class="text-primary fw-medium">OFERTĂ</span>
-                    {{ auction.bids.count }} {% if auction.bids.count == 1 %}ofertă{% else %}oferte{% endif %} plasate
+                    <div class="product-price mt-3">
+                      <div class="display-sm price-new price-on-sale">
+                        {{ auction.current_price }} RON
+                      </div>
+
+                      {% if auction.start_price and auction.current_price != auction.start_price %}
+                        <div class="display-sm price-old">{{ auction.start_price }} RON</div>
+                      {% endif %}
+
+                      {% if auction.reserve_price %}
+                        <span class="badge-sale">Rezervă: {{ auction.reserve_price }} RON</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="product-stock mt-1">
+                      {% if auction.is_live %}
+                        <span class="stock in-stock">Licitație activă</span>
+                        <span class="text-dark ms-2">Se încheie în: {{ auction.end_time|timeuntil }}</span>
+                      {% else %}
+                        <span class="stock out-stock">Încheiată</span>
+                        <span class="text-dark ms-2">
+                          Acum {{ auction.ended_at|default:auction.end_time|timesince }}
+                        </span>
+                      {% endif %}
+                    </div>
+
+                    <div class="product-progress-sale mt-2">
+                      <div class="title-hurry-up">
+                        <span class="text-primary fw-medium">OFERTĂ</span>
+                        {{ auction.bids.count }} {% if auction.bids.count == 1 %}ofertă{% else %}oferte{% endif %} plasate
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
+              <!-- /Heading -->
 
-              <!-- Attributes -->
-              <div class="tf-product-variant">
-                {% if auction.size %}
-                  <div class="variant-picker-item variant-size">
-                    <div class="variant-picker-label">
-                      <div>Mărime:<span class="variant-picker-label-value value-currentSize">{{ auction.size }}</span></div>
-                      <a href="#sizeGuide" data-bs-toggle="modal" class="size-guide link">Ghid mărimi</a>
-                    </div>
-                    <div class="variant-picker-values">
-                      <span class="size-btn active">{{ auction.size }}</span>
-                    </div>
-                  </div>
-                {% endif %}
-
-                {% if auction.materials.all %}
-                  <div class="variant-picker-item">
-                    <div class="variant-picker-label">Materiale:</div>
-                    <div class="variant-picker-values d-flex flex-wrap gap-2">
-                      {% for m in auction.materials.all %}
-                        <span class="badge bg-light text-dark border">{{ m.name }}</span>
-                      {% endfor %}
-                    </div>
-                  </div>
-                {% endif %}
-              </div>
-
-              <!-- Bid box -->
+              <!-- BID (păstrăm formularul) -->
               <div class="tf-product-total-quantity">
-                {% if auction.is_active %}
+                {% if auction.is_live %}
                   {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'auctions:place_bid' auction.pk %}" class="group-btn">
+                    <form method="post" action="{% url 'auctions:place_bid' auction.pk %}" class="w-100">
                       {% csrf_token %}
-                      <div class="w-100">
-                        {% if bid_form.non_field_errors %}<div class="text-danger small mb-1">{{ bid_form.non_field_errors }}</div>{% endif %}
-                        <label class="form-label mb-1">{{ bid_form.amount.label|default:"Sumă ofertă" }}</label>
-                        <div class="d-flex gap-2 align-items-start">
-                          {{ bid_form.amount }}
-                          <button type="submit" class="tf-btn btn-primary animate-btn">Plasează oferta</button>
-                        </div>
-                        {% if bid_form.amount.errors %}<div class="text-danger small mt-1">{{ bid_form.amount.errors|join:", " }}</div>{% endif %}
-                        <div class="text-sm text-main-4 mt-1">Minim: {{ auction.current_price }} RON</div>
+
+                      <div class="group-btn flex-column w-100">
+                        {% if bid_form and bid_form.non_field_errors %}
+                          <div class="text-danger small mb-2">{{ bid_form.non_field_errors }}</div>
+                        {% endif %}
+
+                        {% if bid_form %}
+                          <label class="form-label mb-1">Minim: {{ auction.current_price }} RON</label>
+                          <div class="d-flex gap-2 align-items-start w-100">
+                            {{ bid_form.amount }}
+                            <button type="submit" class="tf-btn btn-primary animate-btn w-100">
+                              Plasează oferta
+                            </button>
+                          </div>
+
+                          {% if bid_form.amount.errors %}
+                            <div class="text-danger small mt-1">{{ bid_form.amount.errors|join:", " }}</div>
+                          {% endif %}
+                        {% else %}
+                          <div class="alert alert-warning mb-0">Formularul de licitare nu este disponibil.</div>
+                        {% endif %}
                       </div>
                     </form>
                   {% else %}
@@ -175,24 +243,181 @@
                     </a>
                   {% endif %}
                 {% else %}
-                  <div class="alert alert-secondary">Licitația este încheiată.</div>
+                  <div class="alert alert-secondary mb-0">Licitația este încheiată.</div>
                 {% endif %}
 
-                {% if user.is_authenticated and user == auction.creator and auction.is_active %}
-                  <a href="{% url 'auctions:close_auction' auction.product.slug %}" class="tf-btn btn-dark2 w-100 mt-2">Închide licitația</a>
+                {% if user.is_authenticated and user == auction.creator and auction.is_live %}
+                  <form method="post" action="{% url 'auctions:close_auction' p.slug %}" class="mt-2">
+                    {% csrf_token %}
+                    <button type="submit" class="tf-btn btn-outline-secondary w-100">Închide licitația</button>
+                  </form>
                 {% endif %}
               </div>
+              <!-- /BID -->
 
-              <!-- Meta -->
-              <ul class="tf-product-cate-sku text-md">
-                <li class="item-cate-sku"><span class="label">SKU:</span><span class="value">{{ auction.product.sku }}</span></li>
-                <li class="item-cate-sku"><span class="label">Categorie:</span><span class="value">{{ auction.product.category.name }}</span></li>
-                <li class="item-cate-sku"><span class="label">Condiție:</span><span class="value">{{ auction.product.get_condition_display }}</span></li>
+              <!-- Variants (culoare + mărime + material) — ca product_detail -->
+              <div class="tf-product-variant">
+
+                {% if p.base_color or p.colors.all %}
+                <div class="variant-picker-item variant-color">
+                  <div class="variant-picker-label">
+                    Culoare:
+                    <span class="variant-picker-label-value value-currentColor">
+                      {% firstof p.real_color_name p.base_color.name p.colors.first.name "—" %}
+                    </span>
+                  </div>
+
+                  <div class="variant-picker-values">
+                    {% if p.base_color %}
+                      <div class="hover-tooltip tooltip-bot color-btn active">
+                        <span class="check-color" style="background: {{ p.base_color.hex_code|default:'#eee' }};"></span>
+                        <span class="tooltip">{% firstof p.real_color_name p.base_color.name %}</span>
+                      </div>
+                    {% else %}
+                      {% for c in p.colors.all|slice:":1" %}
+                        <div class="hover-tooltip tooltip-bot color-btn active">
+                          <span class="check-color" style="background: {{ c.hex_code|default:'#eee' }};"></span>
+                          <span class="tooltip">{% firstof p.real_color_name c.name %}</span>
+                        </div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+
+              </div>
+              <!-- /Variants -->
+
+              <!-- SKU & Categories (identic product_detail) -->
+              <ul class="tf-product-cate-sku text-md tf-product-heading">
+                <li class="item-cate-sku">
+                  <span class="label">Mărime:</span>
+                  <span class="value">
+                    {% if p.shoe_size_eu %}EU {{ p.shoe_size_eu }}
+                    {% elif p.size_fr %}FR {{ p.size_fr }}
+                    {% elif p.size_it %}IT {{ p.size_it }}
+                    {% elif p.size_gb %}GB {{ p.size_gb }}
+                    {% else %}{{ p.display_size }}{% endif %}
+                  </span>
+                </li>
+
+                {% if p.material %}
+                <li class="item-cate-sku">
+                  <span class="label">Material:</span>
+                  <span class="value">{{ p.material.name }}</span>
+                </li>
+                {% endif %}
+
+                <li class="item-cate-sku">
+                  <span class="label">SKU:</span>
+                  <span class="value">{{ p.sku }}</span>
+                </li>
+
+                <li class="item-cate-sku">
+                  <span class="label">Categorie:</span>
+                  <span class="value">{{ p.category.name }}</span>
+                </li>
+
+                {% if p.subcategory %}
+                  <li class="item-cate-sku">
+                    <span class="label">Subcategorie:</span>
+                    <span class="value">{{ p.subcategory.name }}</span>
+                  </li>
+                {% endif %}
+
+                {% if p.display_brand %}
+                  <li class="item-cate-sku">
+                    <span class="label">Brand:</span>
+                    <span class="value">{{ p.display_brand }}</span>
+                  </li>
+                {% elif p.brand %}
+                  <li class="item-cate-sku">
+                    <span class="label">Brand:</span>
+                    <span class="value">{{ p.brand.name }}</span>
+                  </li>
+                {% endif %}
+
+                <li class="item-cate-sku">
+                  <span class="label">Condiție:</span>
+                  <span class="value">{{ p.get_condition_display }}</span>
+                </li>
               </ul>
 
-              <!-- Trust -->
+              <!-- VÂNDUT DE (în dreapta, ca product_detail.html) -->
+              <div class="product-seller d-flex flex-column gap-1 tf-product-heading">
+                <span class="text-sm text-main-4 py-3">Vândut de:</span>
+
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar-seller rounded-circle overflow-hidden">
+                    {% if p.owner.profile and p.owner.profile.avatar %}
+                      <img src="{{ p.owner.profile.avatar.url }}"
+                           alt="{{ p.owner.full_name }}"
+                           width="30" height="30" class="img-fluid">
+                    {% else %}
+                      <img src="{% static 'images/placeholders/avatar-default.png' %}"
+                           alt="{{ p.owner.full_name|default:p.owner.email }}"
+                           width="30" height="30"
+                           class="img-fluid">
+                    {% endif %}
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-medium text-md">
+                      {{ p.owner.full_name|default:p.owner.email }}
+                    </span>
+
+                    {% with sp=p.owner.sellerprofile %}
+                      {% if sp %}
+                        <span
+                          class="ms-1 has-tip"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          data-bs-title="Trust Seller {{ sp.seller_trust_score }}/100 ({{ sp.seller_trust_class }})"
+                          aria-label="Trust Seller {{ sp.seller_trust_score }}/100 ({{ sp.seller_trust_class }})"
+                          tabindex="0">
+
+                          {% if sp.seller_trust_class == 'A' %}
+                            <img src="{% static 'images/badge/trust_seller_a.png' %}"
+                                 alt="Trust Seller A"
+                                 class="badge-icon">
+                          {% elif sp.seller_trust_class == 'B' %}
+                            <img src="{% static 'images/badge/trust_seller_b.png' %}"
+                                 alt="Trust Seller B"
+                                 class="badge-icon">
+                          {% elif sp.seller_trust_class == 'C' %}
+                            <img src="{% static 'images/badge/trust_seller_c.png' %}"
+                                 alt="Trust Seller C"
+                                 class="badge-icon">
+                          {% else %}
+                            <img src="{% static 'images/badge/trust_seller_d.png' %}"
+                                 alt="Trust Seller D"
+                                 class="badge-icon">
+                          {% endif %}
+                        </span>
+                      {% endif %}
+                    {% endwith %}
+
+                    {% with prof=p.owner.profile %}
+                      {% if prof.has_kyc_badge %}
+                        <span
+                          class="badge-icon badge-icon--kyc ms-1 has-tip"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          data-bs-title="KYC verificat"
+                          aria-label="KYC verificat"
+                          tabindex="0">
+                          <img src="{% static 'images/badge/kyc_verified.png' %}"
+                               alt="KYC Verified badge"
+                               loading="lazy">
+                        </span>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trust badges -->
               <div class="tf-product-trust-seal text-center">
-                <p class="text-md text-dark-2 text-seal fw-medium">Plată sigură:</p>
                 <ul class="list-card">
                   <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Visa.png" alt="Visa"></li>
                   <li class="card-item"><img src="https://themesflat.co/html/vineta/images/payment/Mastercard.png" alt="Mastercard"></li>
@@ -203,6 +428,7 @@
                 </ul>
               </div>
 
+              <!-- Livrare -->
               <div class="tf-product-delivery-return">
                 <div class="product-delivery">
                   <div class="icon icon-car2"></div>
@@ -222,52 +448,10 @@
       </div>
     </div>
   </div>
-
-  <!-- Sticky bid bar -->
-  <div class="tf-sticky-btn-atc">
-    <div class="container">
-      <div class="tf-height-observer w-100 d-flex align-items-center">
-        <div class="tf-sticky-atc-product d-flex align-items-center">
-          <div class="tf-sticky-atc-img">
-            <img class="lazyload"
-                 data-src="{{ auction.images.first.image.url|default:auction.product.main_image.url }}"
-                 src="{{ auction.images.first.image.url|default:auction.product.main_image.url }}"
-                 alt="{{ auction.product.title }}">
-          </div>
-          <div class="tf-sticky-atc-title fw-5 d-xl-block d-none">{{ auction.product.title }}</div>
-        </div>
-        <div class="tf-sticky-atc-infos">
-          {% if auction.is_active %}
-            <form method="post" action="{% url 'auctions:place_bid' auction.pk %}">
-              {% csrf_token %}
-              <div class="tf-sticky-atc-variant-price text-center tf-select">
-                <select disabled>
-                  <option selected>Preț curent: {{ auction.current_price }} RON — Se încheie în {{ auction.end_time|timeuntil }}</option>
-                </select>
-              </div>
-              <div class="tf-sticky-atc-btns">
-                <div class="tf-product-info-quantity">
-                  <!-- dummy to keep spacing consistent -->
-                  <div class="wg-quantity invisible">
-                    <button class="btn-quantity minus-btn" type="button">-</button>
-                    <input class="quantity-product font-4" type="text" value="1">
-                    <button class="btn-quantity plus-btn" type="button">+</button>
-                  </div>
-                </div>
-                {{ bid_form.amount }}
-                <button class="tf-btn animate-btn d-inline-flex justify-content-center" type="submit">Plasează oferta</button>
-              </div>
-            </form>
-          {% else %}
-            <div class="text-sm">Licitația este încheiată.</div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
 </section>
+<!-- /Main -->
 
-<!-- Description / Bids -->
+<!-- Description / Details -->
 <section class="flat-spacing pt-0">
   <div class="container">
 
@@ -281,21 +465,251 @@
       <div id="description" class="collapse">
         <div class="accordion-body widget-desc">
           {% if auction.description %}
-            <p class="item">{{ auction.description|linebreaks }}</p>
-          {% elif auction.product.description %}
-            <p class="item">{{ auction.product.description|linebreaks }}</p>
+            <div class="item">
+              <p class="mb-0">{{ auction.description|linebreaksbr }}</p>
+            </div>
+          {% elif p.description %}
+            <div class="item">
+              <p class="mb-0">{{ p.description|linebreaksbr }}</p>
+            </div>
           {% endif %}
+
+          <div class="item">
+            <p class="fw-medium title mb-2">Detalii licitație</p>
+            <ul class="mb-0">
+              {% if auction.start_price %}<li>Preț start: <strong>{{ auction.start_price }} RON</strong></li>{% endif %}
+              <li>Preț curent: <strong>{{ auction.current_price }} RON</strong></li>
+              {% if auction.reserve_price %}<li>Rezervă: <strong>{{ auction.reserve_price }} RON</strong></li>{% endif %}
+              <li>Oferte: <strong>{{ auction.bids.count }}</strong></li>
+              <li>Se încheie la: <strong>{{ auction.end_time|date:"d.m.Y H:i" }}</strong></li>
+              <li>Status: <strong>{% if auction.is_live %}Activă{% else %}Încheiată{% endif %}</strong></li>
+            </ul>
+          </div>
 
           {% if auction.dimensions %}
             <div class="item">
               <p class="fw-medium title">Măsuri</p>
-              <ul>
+              <ul class="mb-0">
                 {% for k,v in auction.dimensions.items %}
                   <li>{{ k }}: {{ v }}</li>
                 {% endfor %}
               </ul>
             </div>
           {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Informații suplimentare -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#addInformation" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="addInformation" role="button">
+        <span>Informații suplimentare</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="addInformation" class="collapse">
+        <div class="accordion-body">
+          <table class="tb-info-product text-md">
+            <tbody>
+
+              {% if p.material %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Material</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.material.name }}</p></td>
+              </tr>
+              {% endif %}
+
+              {% if p.real_color_name or p.base_color %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Culoare</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if p.real_color_name %}
+                      {{ p.real_color_name }}
+                      {% if p.base_color and p.base_color.name and p.base_color.name != p.real_color_name %}
+                        ({{ p.base_color.name }})
+                      {% endif %}
+                    {% else %}
+                      {{ p.base_color.name }}
+                    {% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {% if p.display_brand %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Brand</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.display_brand }}</p></td>
+              </tr>
+              {% elif p.brand %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Brand</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.brand.name }}</p></td>
+              </tr>
+              {% endif %}
+
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Categorie</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.category.name }}</p></td>
+              </tr>
+
+              {% if p.subcategory %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Subcategorie</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.subcategory.get_breadcrumb }}</p></td>
+              </tr>
+              {% endif %}
+
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Mărime</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if p.shoe_size_eu %}EU {{ p.shoe_size_eu }}
+                    {% elif p.size_fr %}FR {{ p.size_fr }}
+                    {% elif p.size_it %}IT {{ p.size_it }}
+                    {% elif p.size_gb %}GB {{ p.size_gb }}
+                    {% else %}{{ p.display_size }}{% endif %}
+                  </p>
+                </td>
+              </tr>
+
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Condiție</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.get_condition_display }}</p></td>
+              </tr>
+
+              {% if p.condition_notes %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Detalii condiție</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.condition_notes }}</p></td>
+              </tr>
+              {% endif %}
+
+              {% if p.get_gender_display %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Gen</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.get_gender_display }}</p></td>
+              </tr>
+              {% endif %}
+
+              {% if p.package_size %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Dimensiune colet</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.get_package_size_display }}</p></td>
+              </tr>
+              {% endif %}
+
+              {% if p.weight_g %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Greutate</th>
+                <td class="tb-attr-value"><p class="mb-0">{{ p.weight_g }} g</p></td>
+              </tr>
+              {% endif %}
+
+              {% if p.pickup_location %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Locație ridicare</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">{% firstof p.pickup_location.label p.pickup_location.code "—" %}</p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {% if p.sustainability_none or p.sustainability_tags.all %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Sustenabilitate</th>
+                <td class="tb-attr-value">
+                  <p class="mb-0">
+                    {% if p.sustainability_none %}
+                      Nici una
+                    {% else %}
+                      {% for tag in p.sustainability_tags.all %}
+                        {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </p>
+                </td>
+              </tr>
+              {% endif %}
+
+              {% if p.subcategory and p.subcategory.is_non_returnable %}
+              <tr class="tb-attr-item">
+                <th class="tb-attr-label">Retur</th>
+                <td class="tb-attr-value"><p class="mb-0">Nereturnabil (categorie specială)</p></td>
+              </tr>
+              {% endif %}
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informații vânzător (detaliat) -->
+    <div class="widget-accordion wd-product-descriptions">
+      <div class="accordion-title collapsed" data-bs-target="#sellerInfo" data-bs-toggle="collapse"
+           aria-expanded="true" aria-controls="sellerInfo" role="button">
+        <span>Informații vânzător</span>
+        <span class="icon icon-arrow-down"></span>
+      </div>
+      <div id="sellerInfo" class="collapse">
+        <div class="accordion-body wd-customer-review">
+          <div class="review-heading">
+            <h6 class="title">Despre vânzător</h6>
+          </div>
+
+          <div class="seller-info">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="avatar-seller rounded-circle overflow-hidden">
+                {% if p.owner.profile and p.owner.profile.avatar %}
+                  <img src="{{ p.owner.profile.avatar.url }}"
+                       alt="{{ p.owner.full_name }}"
+                       width="60" height="60" class="img-fluid">
+                {% else %}
+                  <img src="{% static 'images/placeholders/avatar-default.png' %}"
+                       alt="{{ p.owner.full_name|default:p.owner.email }}"
+                       width="60" height="60" class="img-fluid">
+                {% endif %}
+              </div>
+
+              <div>
+                <div class="fw-medium text-md mb-1">
+                  {{ p.owner.full_name|default:p.owner.email }}
+                </div>
+
+                {% with sp=p.owner.sellerprofile %}
+                  {% if sp %}
+                    <div class="text-sm text-main-4 mb-1">
+                      {{ sp.get_seller_type_display }} · {{ sp.get_seller_level_display }}
+                      {% if sp.has_kyc_badge %}
+                        <span class="badge bg-success ms-1">KYC</span>
+                      {% endif %}
+                    </div>
+                    <div class="text-sm text-main-4">
+                      Trust score: {{ sp.seller_trust_score }}/100
+                      <span class="hover-tooltip"
+                            data-bs-toggle="tooltip"
+                            title="A = foarte de încredere, D = risc ridicat.">
+                        (Clasă {{ sp.seller_trust_class }})
+                        <span class="tooltip">Scor calculat automat din istoricul de vânzări.</span>
+                      </span>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+
+            {% with sp=p.owner.sellerprofile %}
+            <ul class="list-unstyled text-sm text-main-4 mb-0">
+              <li><strong>Membru din:</strong> {{ p.owner.date_joined|date:"d.m.Y" }}</li>
+              {% if sp and sp.default_location %}
+                <li><strong>Locație principală:</strong> {{ sp.default_location.label|default:sp.default_location.code }}</li>
+              {% endif %}
+              <li><strong>Anunțuri postate:</strong> {{ p.owner.products.all|length }}</li>
+            </ul>
+            {% endwith %}
+          </div>
         </div>
       </div>
     </div>
@@ -309,7 +723,7 @@
       </div>
       <div id="bids" class="collapse">
         <div class="accordion-body">
-          {% if auction.bids.all %}
+          {% if auction.bids.count %}
             <ul class="list-unstyled">
               {% for b in auction.bids.all|slice:":10" %}
                 <li class="py-2 d-flex justify-content-between border-bottom">
@@ -327,4 +741,44 @@
 
   </div>
 </section>
+<!-- /Description / Details -->
+
+<!-- === INIT SWIPER PENTRU GALLERY === -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Swiper === 'undefined') {
+      console.warn('Swiper JS nu este încărcat.');
+      return;
+    }
+
+    // Thumbs
+    var thumbsSwiper = new Swiper('.tf-product-media-thumbs', {
+      spaceBetween: 8,
+      slidesPerView: 4,
+      direction: 'vertical',
+      watchSlidesProgress: true,
+      watchSlidesVisibility: true,
+      freeMode: true,
+      breakpoints: {
+        0: { direction: 'horizontal' },
+        768: { direction: 'vertical' }
+      }
+    });
+
+    // Main gallery
+    var mainSwiper = new Swiper('#gallery-swiper-started', {
+      spaceBetween: 10,
+      navigation: {
+        nextEl: '.thumbs-next',
+        prevEl: '.thumbs-prev',
+      },
+      thumbs: { swiper: thumbsSwiper }
+    });
+  });
+</script>
+<!-- /INIT SWIPER -->
+
+{% endwith %} {# first_extra #}
+{% endwith %} {# p #}
+
 {% endblock %}

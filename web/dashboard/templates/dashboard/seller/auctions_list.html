@@ -110,6 +110,11 @@
                   <i class="fas fa-file-csv me-1"></i>
                   Export CSV
                 </a>
+                <a href="{% url 'auctions:wizard_create' %}"
+                   class="tf-btn btn-fill">
+                  <i class="fas fa-plus me-1"></i>
+                  Creează licitație
+                </a>
               </div>
             </div>
 
@@ -120,12 +125,13 @@
                   <tr>
                     <th>Imagine</th>
                     <th>Titlu</th>
-                    <th>Status validare</th>
+                    <th>Status produs</th>
+                    <th>Status licitație</th>
                     <th>Creat la</th>
-                    <th>Validat la</th>
-                    <th>Start licitație</th>
+                    <th>Start</th>
+                    <th>Final</th>
                     <th>Timp rămas</th>
-                    <th>Preț actual</th>
+                    <th>Preț curent</th>
                     <th>Preț pornire</th>
                     <th>Preț minim</th>
                     <th>SKU</th>
@@ -133,7 +139,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% now "UTC" as now %}
+
                   {% for a in auctions %}
                   <tr>
                     <td style="width: 80px;">
@@ -147,85 +153,122 @@
                              alt="Fără imagine" />
                       {% endif %}
                     </td>
+
                     <td>
                       <a href="{% url 'auctions:auction_detail' a.pk %}"
                          class="link-primary text-sm fw-medium">
                         {{ a.product.title }}
                       </a>
                     </td>
+
+                    {# ✅ Status produs = validare catalog (Product.is_active) #}
                     <td>
-                      {% if a.is_active %}
+                      {% if a.product.is_active %}
                         <span class="badge bg-success text-xs">Validat</span>
                       {% else %}
                         <span class="badge bg-warning text-dark text-xs">În validare</span>
                       {% endif %}
                     </td>
+
+                    {# ✅ Status licitație = Auction.status #}
+                    <td>
+                      {% if a.status == "ACTIVE" %}
+                        <span class="badge bg-success text-xs">Activă</span>
+                      {% elif a.status == "PENDING" %}
+                        <span class="badge bg-secondary text-xs">În așteptare</span>
+                      {% elif a.status == "ENDED" %}
+                        <span class="badge bg-dark text-xs">Încheiată</span>
+                      {% elif a.status == "CANCELED" %}
+                        <span class="badge bg-danger text-xs">Anulată</span>
+                      {% else %}
+                        <span class="badge bg-light text-dark text-xs">{{ a.status }}</span>
+                      {% endif %}
+                    </td>
+
                     <td class="text-xs text-grey">
                       {{ a.created_at|date:"Y-m-d H:i" }}
                     </td>
+
                     <td class="text-xs text-grey">
-                      {% if a.is_active %}
-                        {{ a.updated_at|date:"Y-m-d H:i" }}
+                      {{ a.start_time|date:"Y-m-d H:i" }}
+                    </td>
+
+                    <td class="text-xs text-grey">
+                      {% if a.end_time %}
+                        {{ a.end_time|date:"Y-m-d H:i" }}
                       {% else %}
                         —
                       {% endif %}
                     </td>
+
                     <td class="text-xs text-grey">
-                      {{ a.start_time|date:"Y-m-d H:i" }}
-                    </td>
-                    <td class="text-xs text-grey">
-                      {% if a.end_time and a.end_time > now %}
+                      {% if a.end_time and now and a.end_time > now %}
                         {{ a.end_time|timeuntil:now }}
                       {% else %}
                         —
                       {% endif %}
                     </td>
+
                     <td class="text-sm">
                       {{ a.current_price }} RON
                     </td>
+
                     <td class="text-sm">
                       {{ a.start_price }} RON
                     </td>
+
                     <td class="text-sm">
-                      {{ a.min_price }} RON
+                      {{ a.effective_reserve_price }} RON
                     </td>
+
                     <td class="text-xs">
                       <code>{{ a.product.sku }}</code>
                     </td>
+
                     <td class="text-end text-nowrap">
-                      {% if not a.is_active %}
-                        {# Edit metadata licitație #}
-                        <a href="{% url 'auctions:step1_metadata' a.product.slug %}"
-                           class="btn btn-sm btn-outline-primary me-1">
+                      {# ✅ Permitem edit doar cât timp e PENDING (nu e activă) #}
+                      {% if a.status == "PENDING" %}
+                        <a href="{% url 'auctions:wizard_edit' a.product.pk %}"
+                           class="btn btn-sm btn-outline-primary me-1"
+                           title="Editează licitația">
                           <i class="fas fa-edit"></i>
                         </a>
-                        {# Activează / pornește licitația #}
-                        <a href="{% url 'auctions:create_auction' a.product.slug %}"
-                           class="btn btn-sm btn-outline-success me-1">
-                          <i class="fas fa-play"></i>
-                        </a>
-                        {# Ștergere licitație #}
-                        <form action="{% url 'auctions:delete' a.pk %}"
+
+                        <form action="{% url 'auctions:cancel_auction' a.product.slug %}"
                               method="post"
                               class="d-inline">
                           {% csrf_token %}
                           <button class="btn btn-sm btn-outline-danger"
-                                  onclick="return confirm('Ștergi această licitație?')">
-                            <i class="fas fa-trash"></i>
+                                  title="Anulează"
+                                  onclick="return confirm('Anulezi această licitație?')">
+                            <i class="fas fa-ban"></i>
+                          </button>
+                        </form>
+                      {% elif a.status == "ACTIVE" %}
+                        <form action="{% url 'auctions:close_auction' a.product.slug %}"
+                              method="post"
+                              class="d-inline">
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-dark"
+                                  title="Închide licitația"
+                                  onclick="return confirm('Închizi licitația acum?')">
+                            <i class="fas fa-stop"></i>
                           </button>
                         </form>
                       {% else %}
-                        <span class="text-muted text-xs">Licitație activă</span>
+                        <span class="text-muted text-xs">—</span>
                       {% endif %}
                     </td>
                   </tr>
+
                   {% empty %}
                   <tr>
-                    <td colspan="12" class="text-center text-muted py-4">
+                    <td colspan="13" class="text-center text-muted py-4">
                       Nu ai nicio licitație postată în acest moment.
                     </td>
                   </tr>
                   {% endfor %}
+
                 </tbody>
               </table>
             </div>

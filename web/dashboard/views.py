@@ -66,6 +66,7 @@ def is_buyer(user):
 @user_passes_test(is_seller)
 def seller_dashboard(request):
     user = request.user
+    now = timezone.now()
 
     # ---- Seller profile + profil user (pentru KYC & 2FA) ----
     seller = getattr(user, "sellerprofile", None)
@@ -116,9 +117,19 @@ def seller_dashboard(request):
     has_kyc_badge = profile.has_kyc_badge if profile else False
     two_factor_enabled = profile.two_factor_enabled if profile else False
 
-    # ---- Statistici de vânzător (ce aveai deja) ----
+    # ---- Statistici de vânzător ----
     total_products = Product.objects.filter(owner=user).count()
-    active_auctions = Auction.objects.filter(creator=user, is_active=True).count()
+
+    # ✅ FIX: nu există Auction.is_active -> folosim status + fereastra timp
+    active_auctions = (
+        Auction.objects.filter(
+            creator=user,
+            status=Auction.Status.ACTIVE,
+            start_time__lte=now,
+            end_time__gt=now,
+        ).count()
+    )
+
     sold_products = (
         Order.objects.filter(
             items__product__owner=user,
@@ -229,7 +240,14 @@ def products_list(request):
 @login_required
 @user_passes_test(is_seller)
 def auctions_list(request):
-    qs = Auction.objects.filter(creator=request.user)
+    user = request.user
+    now = timezone.now()
+
+    qs = (
+        Auction.objects.filter(creator=user)
+        .select_related("product")
+        .order_by("-created_at")
+    )
 
     # CSV export
     if request.GET.get("export") == "csv":
@@ -240,48 +258,53 @@ def auctions_list(request):
             [
                 "Titlu",
                 "SKU",
-                "Status",
+                "Status produs (validare)",
+                "Status licitație",
                 "Creat la",
-                "Validat la",
                 "Start licitație",
+                "Sfârșit licitație",
                 "Timp rămas",
-                "Preț actual",
+                "Preț curent",
                 "Preț pornire",
-                "Preț minim vânzare",
+                "Preț rezervă (minim)",
                 "URL imagine",
             ]
         )
-        now = timezone.now()
+
         for a in qs:
             title = a.product.title
             sku = a.product.sku
-            status = "Validat" if a.is_active else "În Validare"
+
+            product_status = "Validat" if getattr(a.product, "is_active", False) else "În validare"
+            auction_status = a.get_status_display()
+
             created = a.created_at.strftime("%Y-%m-%d %H:%M")
-            validated = (
-                a.validated_at.strftime("%Y-%m-%d %H:%M")
-                if a.is_active and getattr(a, "validated_at", None)
-                else ""
-            )
-            start_dt = a.start_time.strftime("%Y-%m-%d %H:%M")
-            remaining = (
-                str(a.end_time - now).split(".")[0] if a.end_time > now else "00:00:00"
-            )
-            current = getattr(a, "current_bid_amount", None) or ""
-            start_amt = getattr(a, "starting_price", None) or ""
-            reserve = getattr(a, "reserve_price", None) or ""
+            start_dt = a.start_time.strftime("%Y-%m-%d %H:%M") if a.start_time else ""
+            end_dt = a.end_time.strftime("%Y-%m-%d %H:%M") if a.end_time else ""
+
+            remaining = ""
+            if a.end_time:
+                remaining = str(max(a.end_time - now, timezone.timedelta())).split(".")[0]
+
+            current = a.current_price or ""
+            start_amt = a.start_price or ""
+            reserve = a.reserve_price if a.reserve_price is not None else a.start_price
+
             img_url = (
                 request.build_absolute_uri(a.product.main_image.url)
                 if a.product.main_image
                 else ""
             )
+
             writer.writerow(
                 [
                     title,
                     sku,
-                    status,
+                    product_status,
+                    auction_status,
                     created,
-                    validated,
                     start_dt,
+                    end_dt,
                     remaining,
                     current,
                     start_amt,
@@ -294,7 +317,10 @@ def auctions_list(request):
     return render(
         request,
         "dashboard/seller/auctions_list.html",
-        {"auctions": qs},
+        {
+            "auctions": qs,
+            "now": now,  # ✅ folosit în template la timeuntil / comparații
+        },
     )
 
 

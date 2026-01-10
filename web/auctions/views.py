@@ -1,33 +1,108 @@
 # auctions/views.py
-from django.shortcuts import render, get_object_or_404, redirect
+from __future__ import annotations
+
+from decimal import Decimal
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseForbidden
 
-from .models import Auction
 from catalog.models import Product
-from .forms import (
-    AuctionStep1Form, AuctionStep2Form, AuctionStep3Form,
-    AuctionStep4Form, AuctionStep5Form, BidForm,
-    AuctionProductCreateForm,
-)
+from .forms import BidForm
+from .models import Auction
+
+
+def _user_is_seller(user) -> bool:
+    """
+    Source of truth:
+    - profile.role_seller preferred
+    - fallback user.is_seller
+    """
+    try:
+        prof = getattr(user, "profile", None)
+        if prof is not None and getattr(prof, "role_seller", False):
+            return True
+    except Exception:
+        pass
+    return bool(getattr(user, "is_seller", False))
+
+
+def _expire_due_auctions():
+    """
+    Lightweight safety: close auctions that passed end_time.
+    (In prod: management command / cron / celery beat.)
+    """
+    qs = Auction.objects.due_to_expire().only("id")
+    ids = list(qs.values_list("id", flat=True)[:200])  # soft cap
+    if not ids:
+        return
+    for a in Auction.objects.filter(id__in=ids).select_related("product").iterator():
+        a.settle_if_needed()
+
+
+@login_required
+def create_auction_for_product_view(request, product_slug):
+    """
+    Start auction for an EXISTING product:
+    - creates Auction (PENDING) if missing
+    - redirects to wizard_edit (so user configures it)
+    """
+    if not _user_is_seller(request.user):
+        return HttpResponseForbidden("Doar vânzătorii pot porni licitații.")
+
+    product = get_object_or_404(Product, slug=product_slug, owner=request.user)
+
+    # if already has auction -> go there / edit
+    existing = Auction.objects.filter(product=product).first()
+    if existing:
+        if existing.status == Auction.Status.PENDING:
+            return redirect("auctions:wizard_edit", pk=product.pk)
+        return redirect("auctions:auction_detail", pk=existing.pk)
+
+    # sanity: product must have images etc (wizard step will enforce anyway)
+    start_price = product.price if product.price is not None else Decimal("10.00")
+
+    auction = Auction.objects.create(
+        product=product,
+        creator=request.user,
+        start_price=start_price,
+        reserve_price=None,
+        duration_days=7,
+        min_increment_percent=10,
+        payment_window_hours=48,
+        start_time=timezone.now(),
+        status=Auction.Status.PENDING,
+    )
+
+    messages.info(request, "Am creat licitația în așteptare. Configureaz-o și finalizează.")
+    return redirect("auctions:wizard_edit", pk=product.pk)
 
 
 def auction_list_view(request):
+    _expire_due_auctions()
+
     now = timezone.now()
-    state = request.GET.get("state", "active")
+    state = request.GET.get("state", "active").lower()
+
     qs = (
         Auction.objects.all()
-        .select_related("product")
-        .prefetch_related("images", "bids")
+        .select_related("product", "creator", "winner", "winning_bid")
+        .prefetch_related("images", "product__images")
     )
+
     if state == "ended":
-        qs = qs.filter(end_time__lte=now)
+        qs = qs.filter(status=Auction.Status.ENDED)
     elif state == "upcoming":
-        qs = qs.filter(start_time__gt=now)
+        qs = qs.filter(status=Auction.Status.PENDING, start_time__gt=now)
+    elif state == "canceled":
+        qs = qs.filter(status=Auction.Status.CANCELED)
     else:  # active
-        qs = qs.filter(end_time__gt=now, start_time__lte=now, is_active=True)
+        qs = qs.filter(status=Auction.Status.ACTIVE, start_time__lte=now, end_time__gt=now)
+
     return render(
         request,
         "auctions/auction_list.html",
@@ -36,193 +111,81 @@ def auction_list_view(request):
 
 
 def auction_detail_view(request, pk):
+    _expire_due_auctions()
+
     auction = get_object_or_404(
-        Auction.objects.select_related("product", "category", "creator")
-        .prefetch_related("images", "materials", "bids__user"),
+        Auction.objects.select_related("product", "creator", "winner", "winning_bid").prefetch_related(
+            "images", "product__images"
+        ),
         pk=pk,
     )
-    bid_form = BidForm(initial={"user": request.user}, auction=auction)
+
+    bid_form = BidForm(auction=auction, user=request.user)
+
     return render(
         request,
         "auctions/auction_detail.html",
-        {
-            "auction": auction,
-            "bid_form": bid_form,
-        },
+        {"auction": auction, "bid_form": bid_form},
     )
 
 
 @login_required
 @require_POST
 def place_bid_view(request, pk):
-    auction = get_object_or_404(
-        Auction, pk=pk, end_time__gt=timezone.now(), is_active=True
-    )
+    _expire_due_auctions()
+
+    auction = get_object_or_404(Auction.objects.select_related("product", "creator"), pk=pk)
     form = BidForm(request.POST, auction=auction, user=request.user)
-    if form.is_valid():
-        form.save()
-    return redirect("auctions:auction_detail", pk=pk)
 
-
-# 0 – CREARE PRODUS NOU PENTRU LICITAȚIE
-@login_required
-def auction_start_new_product(request):
-    """
-    Pas 0: creează un Product nou, folosit exclusiv pentru licitație.
-    După salvare, redirect la step1 (metadata imagini licitație).
-    """
-    if request.method == "POST":
-        form = AuctionProductCreateForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(owner=request.user)
-            return redirect("auctions:create_auction", product_slug=product.slug)
-    else:
-        form = AuctionProductCreateForm()
-
-    return render(
-        request,
-        "auctions/auction_create_steps/start_product.html",
-        {"form": form},
-    )
-
-
-# 5-Step creation flow:
-@login_required
-def auction_step1_metadata(request, product_slug):
-    # only the product owner can start an auction on their product
-    product = get_object_or_404(Product, slug=product_slug, owner=request.user)
-
-    if request.method == "POST":
-        # bind to an instance that already has creator/product/category
-        instance = Auction(
-            product=product, category=product.category, creator=request.user
-        )
-        form = AuctionStep1Form(request.POST, request.FILES, instance=instance)
-        if form.is_valid():
-            auction = form.save(commit=True)  # saves and creates AuctionImage rows
-            return redirect("auctions:step2_size", pk=auction.pk)
-    else:
-        form = AuctionStep1Form(
-            initial={
-                "product": product.pk,
-                "category": product.category.pk,
-            }
+    if not form.is_valid():
+        return render(
+            request,
+            "auctions/auction_detail.html",
+            {"auction": auction, "bid_form": form},
         )
 
-    return render(
-        request,
-        "auctions/auction_create_steps/step1_metadata.html",
-        {
-            "form": form,
-            "product": product,
-        },
-    )
+    try:
+        auction.place_bid(user=request.user, amount=form.cleaned_data["amount"])
+        messages.success(request, "Oferta ta a fost înregistrată.")
+        return redirect("auctions:auction_detail", pk=pk)
+    except ValidationError as e:
+        msg = None
+        try:
+            msg = e.messages[0]
+        except Exception:
+            msg = str(e)
+        form.add_error("amount", msg)
+        return render(
+            request,
+            "auctions/auction_detail.html",
+            {"auction": auction, "bid_form": form},
+        )
 
 
 @login_required
-def auction_step2_size(request, pk):
-    auction = get_object_or_404(Auction, pk=pk, creator=request.user)
-    if request.method == "POST":
-        form = AuctionStep2Form(request.POST, instance=auction)
-        if form.is_valid():
-            form.save()
-            return redirect("auctions:step3_dimensions", pk=pk)
-    else:
-        form = AuctionStep2Form(instance=auction)
-    return render(
-        request,
-        "auctions/auction_create_steps/step2_size.html",
-        {"form": form, "auction": auction},
-    )
-
-
-@login_required
-def auction_step3_dimensions(request, pk):
-    auction = get_object_or_404(Auction, pk=pk, creator=request.user)
-    if request.method == "POST":
-        form = AuctionStep3Form(request.POST, instance=auction)
-        if form.is_valid():
-            form.save()
-            return redirect("auctions:step4_materials_description", pk=pk)
-    else:
-        form = AuctionStep3Form(instance=auction)
-    return render(
-        request,
-        "auctions/auction_create_steps/step3_dimensions.html",
-        {"form": form, "auction": auction},
-    )
-
-
-@login_required
-def auction_step4_materials_description(request, pk):
-    auction = get_object_or_404(Auction, pk=pk, creator=request.user)
-    if request.method == "POST":
-        form = AuctionStep4Form(request.POST, instance=auction)
-        if form.is_valid():
-            form.save()
-            return redirect("auctions:step5_auction_settings", pk=pk)
-    else:
-        form = AuctionStep4Form(instance=auction)
-    return render(
-        request,
-        "auctions/auction_create_steps/step4_materials_description.html",
-        {"form": form, "auction": auction},
-    )
-
-
-@login_required
-def auction_step5_auction_settings(request, pk):
-    auction = get_object_or_404(Auction, pk=pk, creator=request.user)
-    if request.method == "POST":
-        form = AuctionStep5Form(request.POST, instance=auction)
-        if form.is_valid():
-            auction = form.save(commit=False)
-
-            # activăm licitația
-            auction.is_active = True
-            auction.save()
-
-            # ── sincronizăm produsul asociat ────────────────────────────────
-            product = auction.product
-            # marchează-l ca listat prin licitație
-            product.sale_type = "AUCTION"
-            # prețul de referință în catalog = preț de pornire
-            product.price = auction.start_price
-            product.quantity = 1
-
-            # populăm câmpurile de auction din Product pentru consistență
-            product.auction_start_price = auction.start_price
-            product.auction_reserve_price = auction.min_price
-            product.auction_end_at = auction.end_time
-
-            product.save(
-                update_fields=[
-                    "sale_type",
-                    "price",
-                    "quantity",
-                    "auction_start_price",
-                    "auction_reserve_price",
-                    "auction_end_at",
-                ]
-            )
-            # ────────────────────────────────────────────────────────────────
-
-            return redirect("auctions:auction_detail", pk=pk)
-    else:
-        form = AuctionStep5Form(instance=auction)
-    return render(
-        request,
-        "auctions/auction_create_steps/step5_auction_settings.html",
-        {"form": form, "auction": auction},
-    )
-
-
-@login_required
+@require_POST
 def close_auction_view(request, product_slug):
     auction = get_object_or_404(
-        Auction, product__slug=product_slug, creator=request.user
+        Auction.objects.select_related("product"),
+        product__slug=product_slug,
+        creator=request.user,
     )
+    if auction.status != Auction.Status.ACTIVE:
+        return redirect("auctions:auction_detail", pk=auction.pk)
+
     auction.end_time = timezone.now()
-    auction.is_active = False
-    auction.save(update_fields=["end_time", "is_active"])
+    auction.save(update_fields=["end_time", "updated_at"])
+    auction.settle_if_needed()
+    return redirect("auctions:auction_detail", pk=auction.pk)
+
+
+@login_required
+@require_POST
+def cancel_auction_view(request, product_slug):
+    auction = get_object_or_404(
+        Auction.objects.select_related("product"),
+        product__slug=product_slug,
+        creator=request.user,
+    )
+    auction.cancel(by_user=request.user)
     return redirect("auctions:auction_detail", pk=auction.pk)

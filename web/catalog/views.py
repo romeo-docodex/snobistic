@@ -234,12 +234,10 @@ class ProductListView(ListView):
         if brand_ids:
             qs = qs.filter(brand_id__in=brand_ids)
 
+        # ✅ FIX: SINGLE MATERIAL => fără compositions (nu mai există)
         material_ids = [int(x) for x in g.getlist("material") if x.isdigit()]
         if material_ids:
-            qs = qs.filter(
-                Q(material_id__in=material_ids)
-                | Q(compositions__material_id__in=material_ids)
-            ).distinct()
+            qs = qs.filter(material_id__in=material_ids)
 
         color_ids = [int(x) for x in g.getlist("color") if x.isdigit()]
         if color_ids:

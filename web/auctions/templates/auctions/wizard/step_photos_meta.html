@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ mode_headline }} — Imagini & metadata{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap position-relative">
+
+      <!-- STÂNGA: TITLU + DESCRIERE (și, la create, upload) -->
+      <div class="left">
+        <div class="heading mb-3">
+          <div class="small text-secondary mb_8">Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}</div>
+          <div class="title text-lg fw-medium mb_16">Imagini + metadata</div>
+
+          {% if editing %}
+            <p class="text-sm text-main mb_0">
+              Folosești <strong>doar imaginile existente</strong> ale produsului.
+              Poți schimba <strong>ordinea</strong> și seta o imagine ca <strong>MAIN</strong>.
+            </p>
+          {% else %}
+            <p class="text-sm text-main mb_0">
+              Încarcă minim <strong>4 fotografii</strong> + completează titlu și descriere.
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="wrap">
+          <form id="wizardForm" method="post" enctype="multipart/form-data" class="form-login" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {# hidden ordering + main selection #}
+            {{ form.photos_order }}
+            {{ form.main_choice }}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb_16">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            {% if not editing %}
+              <div class="mb_16">
+                <label class="body-text-1 mb-1 d-block">{{ form.main_image.label }} <span class="text-danger">*</span></label>
+                {{ form.main_image }}
+                {% for error in form.main_image.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+              </div>
+
+              <div class="mb_16">
+                <label class="body-text-1 mb-1 d-block">{{ form.extra_images.label }}</label>
+                {{ form.extra_images }}
+                {% if form.extra_images.help_text %}<div class="form-text small text-muted">{{ form.extra_images.help_text }}</div>{% endif %}
+                {% for error in form.extra_images.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+              </div>
+
+              <hr class="my-3"/>
+            {% endif %}
+
+            <div class="mb_16">
+              <label class="body-text-1 mb-1 d-block">{{ form.title.label }}</label>
+              {{ form.title }}
+              {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              <label class="body-text-1 mb-1 d-block">{{ form.description.label }}</label>
+              {{ form.description }}
+              {% for error in form.description.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          </form>
+
+          {# Mobile buttons (right e ascuns) #}
+          <div class="button-submit d-flex gap-2 mt-3 d-md-none justify-content-end">
+            <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none"><span class="text">Renunță</span></a>
+            <button class="tf-btn btn-fill text-transform-none" type="submit" form="wizardForm" style="min-width: 180px;">
+              <span class="text text-button">Continuă</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DREAPTA: PREVIEW + ORDINE + MAIN + BUTOANE -->
+      <div class="right">
+        <div class="tf-page-cart-sidebar">
+          <div class="cart-box order-box mb_20">
+            <div class="title text-lg fw-medium mb_12">Previzualizare imagini</div>
+
+            <div class="mb_16">
+              <p class="text-sm text-main mb_8">Imagine principală</p>
+              <div id="main-image-preview"
+                   class="border rounded-3 p-2 d-flex align-items-center justify-content-center"
+                   style="min-height: 180px; background: #fafafa;">
+                <span class="text-sm text-muted">Selectează o imagine ca MAIN.</span>
+              </div>
+              <div class="form-text small text-muted mt-2">
+                Tip: click pe un thumbnail pentru MAIN, drag & drop pentru ordine.
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb_8">
+                <p class="text-sm text-main mb-0">Imagini (drag pentru ordine)</p>
+                <small class="text-muted">Drag & drop + click pentru “MAIN”</small>
+              </div>
+
+              <div id="all-images-preview"
+                   class="border rounded-3 p-2 d-flex flex-wrap gap-2"
+                   style="min-height: 120px; background: #fafafa;">
+
+                {% if editing %}
+                  {% if photos_items %}
+                    {% for it in photos_items %}
+                      <div class="sn-thumb {% if it.is_main %}sn-main{% endif %}"
+                           draggable="true"
+                           data-key="{{ it.key }}">
+                        <img src="{{ it.url }}" alt="preview">
+                        <div class="sn-badge">{% if it.is_main %}MAIN{% else %}IMG{% endif %}</div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <span class="text-sm text-muted">Nu există imagini pe produs.</span>
+                  {% endif %}
+                {% else %}
+                  <span class="text-sm text-muted">Selectează imagini din stânga.</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="cart-box order-box">
+            <div class="title text-lg fw-medium mb_8">Hint</div>
+            <ul class="text-secondary text-sm mb_20">
+              <li class="mb-1">Prima poziție din listă nu contează (MAIN se setează prin click).</li>
+              <li class="mb-1">Poți pune în față pozele „față / spate / detalii / etichetă”.</li>
+            </ul>
+
+            {# Desktop buttons (mutate în dreapta) #}
+            <div class="button-submit d-none d-md-flex gap-2 justify-content-end">
+              <a href="{{ cancel_url }}" class="tf-btn btn-outline text-transform-none">
+                <span class="text">Renunță</span>
+              </a>
+              <button class="tf-btn btn-fill text-transform-none"
+                      type="submit"
+                      form="wizardForm"
+                      style="min-width: 200px;">
+                <span class="text text-button">Continuă</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.login-wrap -->
+  </div>
+</section>
+
+<style>
+  .sn-thumb {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.08);
+    background: #fff;
+    cursor: grab;
+    user-select: none;
+  }
+  .sn-thumb:active { cursor: grabbing; }
+  .sn-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .sn-thumb .sn-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    line-height: 1.4;
+    background: rgba(0,0,0,.72);
+    color: #fff;
+  }
+  .sn-thumb.sn-main {
+    outline: 2px solid rgba(0,0,0,.65);
+    outline-offset: 1px;
+  }
+  .sn-drop-hint {
+    outline: 2px dashed rgba(0,0,0,.35);
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const allPreview = document.querySelector('#all-images-preview');
+    const mainPreview = document.querySelector('#main-image-preview');
+
+    const orderField = document.querySelector('input[name$="-photos_order"]');
+    const mainChoiceField = document.querySelector('input[name$="-main_choice"]');
+
+    // CREATE flow uses file inputs + its own JS (ca în catalog).
+    // Aici implementăm UI complet pentru EDIT (imagini existente deja în DOM).
+    const isEditing = {{ editing|yesno:"true,false" }};
+
+    if (!isEditing) {
+      return; // la create păstrezi JS-ul tău separat (dacă vrei îl copiezi din catalog)
+    }
+
+    if (!allPreview) return;
+
+    let currentMainKey = (mainChoiceField && mainChoiceField.value) ? mainChoiceField.value : null;
+    let dragSrcEl = null;
+
+    function setHiddenOrderFromDOM() {
+      if (!orderField) return;
+      const keys = Array.from(allPreview.querySelectorAll('[data-key]'))
+        .map(el => el.getAttribute('data-key'))
+        .filter(Boolean);
+      orderField.value = keys.join(',');
+    }
+
+    function setMainKey(key) {
+      currentMainKey = key;
+      if (mainChoiceField) mainChoiceField.value = key;
+
+      Array.from(allPreview.querySelectorAll('.sn-thumb')).forEach(el => {
+        const k = el.getAttribute('data-key');
+        el.classList.toggle('sn-main', k === currentMainKey);
+
+        const badge = el.querySelector('.sn-badge');
+        if (badge) badge.textContent = (k === currentMainKey) ? 'MAIN' : 'IMG';
+      });
+
+      const chosen = allPreview.querySelector(`.sn-thumb[data-key="${CSS.escape(key)}"] img`);
+      if (chosen && mainPreview) {
+        mainPreview.innerHTML = '';
+        const big = document.createElement('img');
+        big.src = chosen.src;
+        big.className = 'img-fluid rounded';
+        big.style.maxHeight = '240px';
+        big.style.objectFit = 'cover';
+        mainPreview.appendChild(big);
+      }
+    }
+
+    function ensureDefaultMain() {
+      const keys = Array.from(allPreview.querySelectorAll('[data-key]')).map(el => el.getAttribute('data-key'));
+      if (!keys.length) return;
+
+      if (currentMainKey && keys.includes(currentMainKey)) return;
+      currentMainKey = keys[0];
+      if (mainChoiceField) mainChoiceField.value = currentMainKey;
+    }
+
+    function onDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.getAttribute('data-key') || '');
+      this.classList.add('sn-drop-hint');
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function onDragEnter() {
+      this.classList.add('sn-drop-hint');
+    }
+
+    function onDragLeave() {
+      this.classList.remove('sn-drop-hint');
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!dragSrcEl || dragSrcEl === this) return false;
+
+      const parent = this.parentNode;
+      const src = dragSrcEl;
+      const tgt = this;
+
+      const srcNext = src.nextSibling === tgt ? src : src.nextSibling;
+      parent.insertBefore(src, tgt);
+      parent.insertBefore(tgt, srcNext);
+
+      setHiddenOrderFromDOM();
+      return false;
+    }
+
+    function onDragEnd() {
+      Array.from(allPreview.querySelectorAll('.sn-thumb')).forEach(el => {
+        el.classList.remove('sn-drop-hint');
+      });
+      setHiddenOrderFromDOM();
+    }
+
+    function bindThumb(el) {
+      el.addEventListener('click', function () {
+        setMainKey(el.getAttribute('data-key'));
+      });
+
+      el.addEventListener('dragstart', onDragStart);
+      el.addEventListener('dragover', onDragOver);
+      el.addEventListener('dragenter', onDragEnter);
+      el.addEventListener('dragleave', onDragLeave);
+      el.addEventListener('drop', onDrop);
+      el.addEventListener('dragend', onDragEnd);
+    }
+
+    Array.from(allPreview.querySelectorAll('.sn-thumb')).forEach(bindThumb);
+
+    ensureDefaultMain();
+    setHiddenOrderFromDOM();
+    if (currentMainKey) setMainKey(currentMainKey);
+  });
+</script>
+{% endblock %}

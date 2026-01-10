@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ mode_headline }} — Setări licitație{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap position-relative">
+
+      <div class="left">
+        <div class="heading mb-3">
+          <div class="small text-secondary mb_8">Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}</div>
+          <div class="title text-lg fw-medium mb_16">Setări licitație</div>
+          <div class="text-sm text-muted">Configurează prețurile, durata, incrementul și startul.</div>
+        </div>
+
+        <div class="wrap">
+          <form id="wizardForm" method="post" class="form-login" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb_16">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb_16">
+              {{ form.start_price.label_tag }} {{ form.start_price }}
+              {% for e in form.start_price.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.reserve_price.label_tag }} {{ form.reserve_price }}
+              {% for e in form.reserve_price.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.duration_days.label_tag }} {{ form.duration_days }}
+              {% for e in form.duration_days.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.min_increment_percent.label_tag }} {{ form.min_increment_percent }}
+              {% for e in form.min_increment_percent.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.payment_window_hours.label_tag }} {{ form.payment_window_hours }}
+              {% for e in form.payment_window_hours.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.start_time.label_tag }} {{ form.start_time }}
+              {% if form.start_time.help_text %}<div class="form-text small text-muted">{{ form.start_time.help_text }}</div>{% endif %}
+              {% for e in form.start_time.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+          </form>
+
+          {# ====== BUTOANE PE MOBILE ====== #}
+          <div class="button-submit d-flex gap-2 mt-3 flex-wrap d-md-none">
+            <button class="tf-btn btn-outline text-transform-none"
+                    type="submit"
+                    form="wizardForm"
+                    name="wizard_cancel"
+                    value="1">
+              <span class="text">Renunță</span>
+            </button>
+
+            {% if wizard.steps.prev %}
+              <button class="tf-btn btn-outline text-transform-none"
+                      type="submit"
+                      form="wizardForm"
+                      name="wizard_goto_step"
+                      value="{{ wizard.steps.prev }}">
+                <span class="text">Înapoi</span>
+              </button>
+            {% endif %}
+
+            <button class="tf-btn btn-fill text-transform-none flex-grow-1" type="submit" form="wizardForm">
+              <span class="text text-button">Finalizează</span>
+            </button>
+          </div>
+          {# ====== END: butoane mobile ====== #}
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">Cum să setezi licitația</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1"><strong>Preț de pornire</strong>: pornește realist ca să atragi bids.</li>
+          <li class="mb-1"><strong>Preț de rezervă</strong>: minim acceptat (opțional).</li>
+          <li class="mb-1"><strong>Increment minim</strong>: recomandat 5–15% ca să nu stagneze.</li>
+          <li class="mb-1"><strong>Start</strong>: dacă lași gol, pornește imediat la finalizare.</li>
+        </ul>
+
+        <div class="button-submit d-none d-md-flex gap-2">
+          <button class="tf-btn btn-outline text-transform-none"
+                  type="submit"
+                  form="wizardForm"
+                  name="wizard_cancel"
+                  value="1">
+            <span class="text">Renunță</span>
+          </button>
+
+          {% if wizard.steps.prev %}
+            <button class="tf-btn btn-outline text-transform-none"
+                    type="submit"
+                    form="wizardForm"
+                    name="wizard_goto_step"
+                    value="{{ wizard.steps.prev }}">
+              <span class="text">Înapoi</span>
+            </button>
+          {% endif %}
+
+          <button class="tf-btn btn-fill text-transform-none" type="submit" form="wizardForm">
+            <span class="text text-button">Finalizează</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

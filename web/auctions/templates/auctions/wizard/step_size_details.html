@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ mode_headline }} — Detalii{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="flat-spacing min-vh-100 d-flex align-items-center py-0" data-aos="fade-up">
+  <div class="container">
+    <div class="login-wrap position-relative">
+
+      <div class="left">
+        <div class="heading mb-3">
+          <div class="small text-secondary mb_8">Pasul {{ wizard.steps.step1 }} din {{ wizard.steps.count }}</div>
+          <div class="title text-lg fw-medium mb_16">Mărime + stare + material + culoare</div>
+          <div class="text-sm text-muted">Completează detaliile care ajută cumpărătorul să decidă rapid.</div>
+        </div>
+
+        <div class="wrap">
+          <form id="wizardForm" method="post" class="form-login" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb_16">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb_16">
+              {{ form.size.label_tag }} {{ form.size }}
+              {% for e in form.size.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            {% if form.shoe_size_eu %}
+              <div class="mb_16">
+                {{ form.shoe_size_eu.label_tag }} {{ form.shoe_size_eu }}
+                {% for e in form.shoe_size_eu.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+            {% if form.size_fr %}
+              <div class="mb_16">
+                {{ form.size_fr.label_tag }} {{ form.size_fr }}
+                {% for e in form.size_fr.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+            {% if form.size_it %}
+              <div class="mb_16">
+                {{ form.size_it.label_tag }} {{ form.size_it }}
+                {% for e in form.size_it.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+            {% if form.size_gb %}
+              <div class="mb_16">
+                {{ form.size_gb.label_tag }} {{ form.size_gb }}
+                {% for e in form.size_gb.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="mb_16">
+              {{ form.condition.label_tag }} {{ form.condition }}
+              {% for e in form.condition.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.condition_notes.label_tag }} {{ form.condition_notes }}
+              {% for e in form.condition_notes.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.material.label_tag }} {{ form.material }}
+              {% for e in form.material.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="mb_16">
+              {{ form.base_color.label_tag }} {{ form.base_color }}
+              {% for e in form.base_color.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+          </form>
+
+          {# ====== BUTOANE PE MOBILE ====== #}
+          <div class="button-submit d-flex gap-2 mt-3 flex-wrap d-md-none">
+            <button class="tf-btn btn-outline text-transform-none"
+                    type="submit"
+                    form="wizardForm"
+                    name="wizard_cancel"
+                    value="1">
+              <span class="text">Renunță</span>
+            </button>
+
+            {% if wizard.steps.prev %}
+              <button class="tf-btn btn-outline text-transform-none"
+                      type="submit"
+                      form="wizardForm"
+                      name="wizard_goto_step"
+                      value="{{ wizard.steps.prev }}">
+                <span class="text">Înapoi</span>
+              </button>
+            {% endif %}
+
+            <button class="tf-btn btn-fill text-transform-none flex-grow-1" type="submit" form="wizardForm">
+              <span class="text text-button">Continuă</span>
+            </button>
+          </div>
+          {# ====== END: butoane mobile ====== #}
+        </div>
+      </div>
+
+      <div class="right">
+        <h4 class="mb_8">Ghid rapid</h4>
+        <ul class="text-secondary small mb-3">
+          <li class="mb-1"><strong>Stare</strong>: fii sincer — reduce retururile și disputele.</li>
+          <li class="mb-1"><strong>Note</strong>: menționează defecte/urme (dacă există).</li>
+          <li class="mb-1"><strong>Material</strong>: dacă nu e sigur 100%, alege cel mai probabil și explică în descriere.</li>
+          <li class="mb-1"><strong>Culoare</strong>: alege culoarea de bază, nu toate nuanțele.</li>
+        </ul>
+
+        <div class="button-submit d-none d-md-flex gap-2">
+          <button class="tf-btn btn-outline text-transform-none"
+                  type="submit"
+                  form="wizardForm"
+                  name="wizard_cancel"
+                  value="1">
+            <span class="text">Renunță</span>
+          </button>
+
+          {% if wizard.steps.prev %}
+            <button class="tf-btn btn-outline text-transform-none"
+                    type="submit"
+                    form="wizardForm"
+                    name="wizard_goto_step"
+                    value="{{ wizard.steps.prev }}">
+              <span class="text">Înapoi</span>
+            </button>
+          {% endif %}
+
+          <button class="tf-btn btn-fill text-transform-none" type="submit" form="wizardForm">
+            <span class="text text-button">Continuă</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

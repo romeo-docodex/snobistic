@@ -23,7 +23,7 @@ Perfect — ai dat deja **tot nucleul din `orders`** (models/views/urls/forms/si
 
 ## ❌ CE LIPSEȘTE (față de „scope”-ul tău descris)
 
-### 1) Status machine complet pentru comandă
+<!-- ### 1) Status machine complet pentru comandă
 
 Tu ai acum doar:
 
@@ -36,7 +36,7 @@ Tu ai acum doar:
 
 * payment: failed/cancelled/refunded/chargeback (măcar failed/refunded)
 * shipping: delivered/returned/in_transit
-* order lifecycle: completed/cancelled_by_buyer/cancelled_by_seller (sau un `status` separat)
+* order lifecycle: completed/cancelled_by_buyer/cancelled_by_seller (sau un `status` separat) -->
 
 ### 2) Retururi “serioase”
 

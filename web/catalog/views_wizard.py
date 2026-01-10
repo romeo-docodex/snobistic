@@ -189,7 +189,7 @@ class ProductCreateWizard(PhotosMultiFileWizardMixin, SessionWizardView):
     file_storage = WIZ_TMP_STORAGE
 
     def get_template_names(self):
-        return [f"catalog/sell/step_{self.steps.current}.html"]
+        return [f"catalog/wizard/step_{self.steps.current}.html"]
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
@@ -425,7 +425,7 @@ class ProductEditWizard(PhotosMultiFileWizardMixin, SessionWizardView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_template_names(self):
-        return [f"catalog/sell/step_{self.steps.current}.html"]
+        return [f"catalog/wizard/step_{self.steps.current}.html"]
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
