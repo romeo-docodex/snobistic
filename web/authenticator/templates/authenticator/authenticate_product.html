@@ -1,26 +1,69 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Autentifică produs{% endblock %}
+
 {% block content %}
-<div class="card mx-auto" style="max-width:600px;">
+<div class="card mx-auto" style="max-width:700px;">
   <div class="card-body">
     <h1 class="card-title">Autentifică produsul tău</h1>
-    <p>Încarcă până la 5 imagini ale produsului pentru verificare.</p>
+
+    {% if product %}
+      <p class="mb-2 text-muted">
+        Cerere pentru produsul Snobistic:
+        <strong>{{ product.title }}</strong>
+      </p>
+    {% endif %}
+
+    <p class="text-muted mb-3">
+      Încarcă până la 5 imagini clare (logo, etichete, cusături, interior, serial).
+      Primești verdict + certificat (fișier/link).
+    </p>
+
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
+
       {% include "authenticator/partials/form_errors.html" with form=form %}
-      <div class="mb-3">
-        {{ form.images.label_tag }}<br>
-        {{ form.images }}
-        <small class="form-text text-muted">{{ form.images.help_text }}</small>
+
+      {{ form.product }} {# hidden #}
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          {{ form.brand_text.label_tag }}
+          {{ form.brand_text }}
+        </div>
+        <div class="col-md-6">
+          {{ form.model_text.label_tag }}
+          {{ form.model_text }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.serial_number.label_tag }}
+          {{ form.serial_number }}
+        </div>
+
+        {% if not request.user.is_authenticated %}
+        <div class="col-md-6">
+          {{ form.email.label_tag }}
+          {{ form.email }}
+          <small class="text-muted">Email obligatoriu dacă nu ai cont.</small>
+        </div>
+        {% endif %}
+
+        <div class="col-12">
+          {{ form.notes.label_tag }}
+          {{ form.notes }}
+        </div>
+
+        <div class="col-12">
+          {{ form.images.label_tag }}<br>
+          {{ form.images }}
+          <small class="text-muted">{{ form.images.help_text }}</small>
+        </div>
       </div>
-      {% if not request.user.is_authenticated %}
-      <div class="mb-3">
-        {{ form.email.label_tag }}
-        {{ form.email }}
-      </div>
-      {% endif %}
-      <button class="btn btn-primary" type="submit">Trimite pentru verificare</button>
+
+      {% include "authenticator/partials/upload_list.html" %}
+
+      <button class="btn btn-primary mt-3" type="submit">Trimite pentru verificare</button>
     </form>
   </div>
 </div>

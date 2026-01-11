@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Status autentificare{% endblock %}
+{% block content %}
+
+<div class="card mx-auto" style="max-width:700px;">
+  <div class="card-body">
+    <h1 class="card-title">Status autentificare</h1>
+
+    <p class="text-muted mb-1">
+      Cerere: <strong>#{{ req.pk }}</strong> · {{ req.submitted_at|date:"Y-m-d H:i" }}
+    </p>
+
+    <ul class="list-unstyled mb-3">
+      <li><strong>Status:</strong> {{ req.get_status_display }}</li>
+      <li><strong>Verdict:</strong> {{ req.get_verdict_display }}</li>
+      <li><strong>Brand/Model:</strong> {{ req.brand_text }} / {{ req.model_text }}</li>
+      {% if req.product %}
+        <li><strong>Produs Snobistic:</strong> <a href="{{ req.product.get_absolute_url }}">{{ req.product.title }}</a></li>
+      {% endif %}
+    </ul>
+
+    {% if req.status == req.Status.SUCCESS and (req.certificate_file or req.certificate_url) %}
+      <a href="{% url 'authenticator:download_certificate_token' req.public_token %}" class="btn btn-primary">
+        Descarcă / Vezi certificatul
+      </a>
+    {% else %}
+      <p class="text-muted mb-0">Certificatul va apărea aici când verificarea este finalizată.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -2,11 +2,14 @@
 {% block title %}Istoric autentificări{% endblock %}
 {% block content %}
 <h1>Istoricul cererilor mele de autentificare</h1>
-<table class="table">
+
+<table class="table align-middle">
   <thead>
     <tr>
       <th>Data</th>
+      <th>Produs</th>
       <th>Status</th>
+      <th>Verdict</th>
       <th>Certificat</th>
     </tr>
   </thead>
@@ -14,19 +17,34 @@
     {% for req in history %}
     <tr>
       <td>{{ req.submitted_at|date:"Y-m-d H:i" }}</td>
+      <td>
+        {% if req.product %}
+          <a href="{{ req.product.get_absolute_url }}">{{ req.product.title }}</a>
+        {% else %}
+          {{ req.brand_text }} / {{ req.model_text }}
+        {% endif %}
+      </td>
       <td>{{ req.get_status_display }}</td>
+      <td>{{ req.get_verdict_display }}</td>
       <td>
         {% if req.status == req.Status.SUCCESS %}
-          <a href="{% url 'authenticator:download_certificate' req.pk %}" class="btn btn-sm btn-outline-secondary">
-            Descarcă
-          </a>
+          {% if req.certificate_file or req.certificate_url %}
+            <a href="{% url 'authenticator:download_certificate' req.pk %}" class="btn btn-sm btn-outline-secondary">
+              Descarcă / Vezi
+            </a>
+          {% else %}
+            —
+          {% endif %}
+        {% else %}
+          —
         {% endif %}
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="3">Nu ai nici o cerere înregistrată.</td></tr>
+    <tr><td colspan="5">Nu ai nici o cerere înregistrată.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+
 <a href="{% url 'authenticator:authenticate_product' %}" class="btn btn-link">Autentifică un alt produs</a>
 {% endblock %}
