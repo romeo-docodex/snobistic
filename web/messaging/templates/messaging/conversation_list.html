@@ -1,36 +1,133 @@
 {% extends "base.html" %}
-{% block title %}Mesaje{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1>Mesaje</h1>
-  <a href="{% url 'messaging:start_conversation' %}" class="btn btn-primary">Începe conversație nouă</a>
-</div>
+{% load static %}
 
-{% if start_form %}
-  <div class="card mb-3">
-    <div class="card-body">
-      <h5 class="card-title">Începe o conversație nouă</h5>
-      <form method="post" action="{% url 'messaging:start_conversation' %}">
-        {% csrf_token %}
-        {{ start_form.non_field_errors }}
-        <div class="mb-2">
-          {{ start_form.recipient_email.label_tag }}
-          {{ start_form.recipient_email }}
-          {% for e in start_form.recipient_email.errors %}
-            <div class="text-danger small">{{ e }}</div>
-          {% endfor %}
-        </div>
-        <button type="submit" class="btn btn-primary">Pornește conversația</button>
-      </form>
+{% block title %}Mesaje – Snobistic{% endblock %}
+
+{% block content %}
+
+<style>
+  .msg-page-subtitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 1.75rem; }
+  .msg-toolbar { gap: .75rem; }
+  .msg-card { padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid rgba(15, 23, 42, 0.04); background: #fff; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04); }
+  .msg-list { display: flex; flex-direction: column; gap: .75rem; }
+
+  .msg-empty { padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px dashed rgba(15, 23, 42, 0.12); color: #6b7280; background: #fff; }
+
+  .msg-filters { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+  .msg-input { border-radius: 14px; border: 1px solid rgba(15,23,42,0.12); padding:.6rem .8rem; width: 260px; }
+  .msg-select { border-radius: 14px; border: 1px solid rgba(15,23,42,0.12); padding:.6rem .8rem; }
+  .msg-chip { border-radius: 999px; border: 1px solid rgba(15,23,42,0.10); padding: .35rem .7rem; background: rgba(15,23,42,0.02); font-size: .82rem; text-decoration:none; color:#111827; }
+  .msg-chip.active { background: rgba(37,99,235,0.10); border-color: rgba(37,99,235,0.20); font-weight: 700; }
+
+  .msg-pagination { display:flex; gap:.5rem; justify-content:center; margin-top: 1rem; }
+  .msg-pagebtn { border-radius: 12px; padding:.45rem .7rem; border: 1px solid rgba(15,23,42,0.10); background:#fff; text-decoration:none; color:#111827; font-size:.85rem; }
+  .msg-pagebtn.disabled { opacity:.45; pointer-events:none; }
+</style>
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Mesaje</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Mesaje</div>
+      </div>
     </div>
   </div>
-{% endif %}
+</section>
 
-<ul class="list-group">
-  {% for conv in conversations %}
-    {% include "messaging/partials/conversation_row.html" with conv=conv %}
-  {% empty %}
-    <li class="list-group-item">Nu ai conversații.</li>
-  {% endfor %}
-</ul>
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="msg-card mb-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h6 class="title-account mb-1">Inbox</h6>
+          <p class="msg-page-subtitle mb-0">
+            Aici găsești conversațiile cu vânzători/cumpărători și suportul Snobistic.
+          </p>
+        </div>
+
+        <div class="d-flex flex-wrap msg-toolbar">
+          <a href="{% url 'messaging:start_support' %}" class="tf-btn btn-out-line-dark">
+            Contactează suportul
+          </a>
+        </div>
+      </div>
+
+      {% if is_staff_inbox %}
+        <div class="alert alert-info mt-3 mb-0" style="border-radius: 14px;">
+          <strong>Inbox staff:</strong>
+          vezi conversațiile escaladate și conversațiile de suport (chiar dacă nu ai intrat încă în ele).
+        </div>
+      {% endif %}
+
+      <hr class="my-3">
+
+      <form method="get" class="msg-filters">
+        <input class="msg-input" type="text" name="q" placeholder="Caută (nume, email, text…)" value="{{ filters.q }}">
+
+        <select class="msg-select" name="kind">
+          <option value="">Toate</option>
+          <option value="ORDER" {% if filters.kind == "ORDER" %}selected{% endif %}>Comenzi</option>
+          <option value="SUPPORT" {% if filters.kind == "SUPPORT" %}selected{% endif %}>Suport</option>
+        </select>
+
+        <label class="d-inline-flex align-items-center gap-2">
+          <input type="checkbox" name="unread" value="1" {% if filters.unread %}checked{% endif %}>
+          Necitite
+        </label>
+
+        <label class="d-inline-flex align-items-center gap-2">
+          <input type="checkbox" name="muted" value="1" {% if filters.muted %}checked{% endif %}>
+          Muted
+        </label>
+
+        <input type="hidden" name="show" value="{{ filters.show }}">
+        <button class="tf-btn btn-out-line-dark" type="submit">Aplică</button>
+
+        <a class="msg-chip {% if filters.show != 'archived' %}active{% endif %}"
+           href="?show=&kind={{ filters.kind }}&q={{ filters.q }}{% if filters.unread %}&unread=1{% endif %}{% if filters.muted %}&muted=1{% endif %}">
+          Inbox
+        </a>
+
+        <a class="msg-chip {% if filters.show == 'archived' %}active{% endif %}"
+           href="?show=archived&kind={{ filters.kind }}&q={{ filters.q }}{% if filters.unread %}&unread=1{% endif %}{% if filters.muted %}&muted=1{% endif %}">
+          Arhivate
+        </a>
+      </form>
+    </div>
+
+    <div class="msg-list">
+      {% for conv in conversations %}
+        {% include "messaging/partials/conversation_row.html" with conv=conv %}
+      {% empty %}
+        <div class="msg-empty">
+          Nu ai conversații încă. Dacă ai nevoie de ajutor, apasă <strong>Contactează suportul</strong>.
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <div class="msg-pagination">
+        <a class="msg-pagebtn {% if not page_obj.has_previous %}disabled{% endif %}"
+           href="?page={{ page_obj.previous_page_number }}&show={{ filters.show }}&kind={{ filters.kind }}&q={{ filters.q }}{% if filters.unread %}&unread=1{% endif %}{% if filters.muted %}&muted=1{% endif %}">
+          ← Prev
+        </a>
+
+        <span class="msg-pagebtn" style="background: rgba(15,23,42,0.02);">
+          Pagina {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        <a class="msg-pagebtn {% if not page_obj.has_next %}disabled{% endif %}"
+           href="?page={{ page_obj.next_page_number }}&show={{ filters.show }}&kind={{ filters.kind }}&q={{ filters.q }}{% if filters.unread %}&unread=1{% endif %}{% if filters.muted %}&muted=1{% endif %}">
+          Next →
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
 {% endblock %}

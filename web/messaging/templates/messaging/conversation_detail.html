@@ -1,26 +1,190 @@
 {% extends "base.html" %}
-{% block title %}Conversatie{% endblock %}
+{% load static %}
+
+{% block title %}Conversație – Snobistic{% endblock %}
+
 {% block content %}
-<a href="{% url 'messaging:conversation_list' %}" class="btn btn-link">&larr; Înapoi la Mesaje</a>
-<h2 class="mb-3">
-  Conversație cu
-  {% for user in conversation.participants.all %}
-    {% if user != request.user %}{{ user.get_full_name|default:user.email }}{% endif %}
-  {% endfor %}
-</h2>
-<div class="border rounded p-3 mb-3" style="height:400px; overflow-y:auto;">
-  {% for msg in messages %}
-    {% include "messaging/partials/message_bubble.html" with msg=msg %}
-  {% endfor %}
-</div>
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="mb-2">
-    {{ form.text }}
-    {% if form.attachment %}
-      {{ form.attachment }}
-    {% endif %}
+
+<style>
+  .msg-topbar { padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid rgba(15, 23, 42, 0.04); background: #fff; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04); }
+  .msg-back { text-decoration: none; color: #111827; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; }
+  .msg-back:hover { text-decoration: underline; }
+  .msg-header-title { margin: 0; font-size: 1.1rem; }
+  .msg-header-sub { color: #6b7280; font-size: 0.85rem; }
+  .msg-chatbox { border-radius: 16px; border: 1px solid rgba(15, 23, 42, 0.06); background: #fff; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04); overflow: hidden; }
+  .msg-chatbox-header { padding: .85rem 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: rgba(15, 23, 42, 0.02); }
+  .msg-chatbox-body { padding: 1rem; height: 520px; overflow-y: auto; }
+  .msg-composer { padding: .9rem 1rem; border-top: 1px solid rgba(15, 23, 42, 0.06); background: #fff; }
+  .msg-textarea textarea { width: 100%; border-radius: 14px; border: 1px solid rgba(15, 23, 42, 0.12); padding: .75rem .9rem; outline: none; }
+  .msg-textarea textarea:focus { border-color: rgba(37, 99, 235, 0.35); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10); }
+  .msg-file input[type="file"]{ width: 100%; border-radius: 14px; border: 1px solid rgba(15, 23, 42, 0.12); padding: .55rem .75rem; background: #fff; }
+
+  .msg-older { display:flex; justify-content:center; margin-bottom: .75rem; }
+  .msg-older a { border-radius: 999px; border: 1px solid rgba(15,23,42,0.10); padding: .45rem .8rem; background: rgba(15,23,42,0.02); text-decoration:none; color:#111827; font-size:.85rem; }
+  .msg-older a:hover { background: rgba(15,23,42,0.04); }
+
+  @media (max-width: 576px) { .msg-chatbox-body { height: 460px; } }
+</style>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="msg-topbar mb-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+        <div>
+          <a href="{% url 'messaging:conversation_list' %}" class="msg-back mb-2">
+            <span aria-hidden="true">←</span> Înapoi la Mesaje
+          </a>
+
+          {% if is_order and order %}
+            <h2 class="msg-header-title">Conversație comandă #{{ order.id }}</h2>
+            <div class="msg-header-sub">Buyer ↔ Seller · (opțional) Staff</div>
+          {% elif is_support %}
+            <h2 class="msg-header-title">Suport Snobistic</h2>
+            <div class="msg-header-sub">User ↔ Staff</div>
+          {% else %}
+            <h2 class="msg-header-title">Conversație</h2>
+            <div class="msg-header-sub">Mesaje</div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+
+          <form method="post" action="{% url 'messaging:mute_toggle' conversation.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="tf-btn btn-out-line-dark" type="submit">
+              {% if state.is_muted_effective %}Unmute{% else %}Mute{% endif %}
+            </button>
+          </form>
+
+          <form method="post" action="{% url 'messaging:archive_toggle' conversation.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'messaging:conversation_list' %}">
+            <button class="tf-btn btn-out-line-dark" type="submit">
+              {% if state.is_archived %}Unarchive{% else %}Archive{% endif %}
+            </button>
+          </form>
+
+          {% if can_reopen %}
+            <form method="post" action="{% url 'messaging:reopen' conversation.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="tf-btn" type="submit" style="background:#10b981;">Redeschide</button>
+            </form>
+          {% elif can_close %}
+            <form method="post" action="{% url 'messaging:close' conversation.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="tf-btn" type="submit" style="background:#6b7280;">Închide</button>
+            </form>
+          {% endif %}
+
+          {% if can_staff_join %}
+            <a href="{% url 'messaging:staff_join' conversation.pk %}" class="tf-btn btn-out-line-dark">Intră în conversație</a>
+          {% endif %}
+
+          {% if can_escalate %}
+            <a href="{% url 'messaging:escalate_order' conversation.pk %}" class="tf-btn" style="background:#f59e0b;">Escaladează către suport</a>
+          {% endif %}
+
+          {% if is_support %}
+            <form method="post" action="{% url 'messaging:leave' conversation.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="tf-btn btn-out-line-dark" type="submit">Leave</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="msg-chatbox">
+      <div class="msg-chatbox-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          {% if is_order %}
+            <span class="badge rounded-pill bg-light text-dark text-xxs px-3 py-1">Comandă</span>
+          {% elif is_support %}
+            <span class="badge rounded-pill bg-light text-dark text-xxs px-3 py-1">Suport</span>
+          {% else %}
+            <span class="badge rounded-pill bg-light text-dark text-xxs px-3 py-1">Chat</span>
+          {% endif %}
+
+          {% if conversation.allow_staff %}
+            <span class="badge rounded-pill bg-warning text-dark text-xxs px-3 py-1">staff allowed</span>
+          {% endif %}
+
+          {% if conversation.is_closed %}
+            <span class="badge rounded-pill bg-secondary text-xxs px-3 py-1">închis</span>
+          {% endif %}
+        </div>
+
+        <div class="text-xxs text-grey">
+          Actualizat: {{ conversation.last_updated|date:"d.m.Y H:i" }}
+        </div>
+      </div>
+
+      <div class="msg-chatbox-body" id="chatBox">
+
+        {% if messages_page.has_next %}
+          <div class="msg-older">
+            <a href="?page={{ messages_page.next_page_number }}">Încarcă mesaje mai vechi</a>
+          </div>
+        {% endif %}
+
+        {% for msg in messages_page.object_list reversed %}
+          {% include "messaging/partials/message_bubble.html" with msg=msg %}
+        {% empty %}
+          <div class="text-muted">
+            Nu există mesaje încă. Trimite primul mesaj mai jos.
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="msg-composer">
+        {% if not can_post %}
+          <div class="alert alert-warning mb-0" style="border-radius:14px;">
+            Conversația este închisă. Redeschide ca să trimiți mesaje.
+          </div>
+        {% else %}
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="msg-textarea mb-2">
+              {{ form.text }}
+              {% for e in form.text.errors %}
+                <div class="text-danger small">{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex flex-column flex-md-row gap-2 align-items-md-center justify-content-between">
+              <div class="msg-file flex-grow-1">
+                {{ form.attachments }}
+                {% for e in form.attachments.errors %}
+                  <div class="text-danger small">{{ e }}</div>
+                {% endfor %}
+              </div>
+
+              <button class="tf-btn animate-btn" type="submit" style="white-space:nowrap;">
+                Trimite
+              </button>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
-  <button class="btn btn-primary">Trimite</button>
-</form>
+</div>
+
+<script>
+  // Auto-scroll doar pe pagina "latest" (page=1)
+  (function () {
+    const isLatest = {{ is_latest_page|yesno:"true,false" }};
+    const box = document.getElementById('chatBox');
+    if (box && isLatest) box.scrollTop = box.scrollHeight;
+  })();
+</script>
+
 {% endblock %}

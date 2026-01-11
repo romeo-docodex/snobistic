@@ -1,19 +1,108 @@
 {# messaging/templates/messaging/partials/message_bubble.html #}
-<div class="mb-2">
+
+<style>
+  .msg-bubble-wrap { margin-bottom: .65rem; }
+  .msg-bubble {
+    max-width: 72%;
+    border-radius: 16px;
+    padding: .75rem .9rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+    word-break: break-word;
+  }
+  .msg-bubble.me { background: rgba(37, 99, 235, 0.10); border-color: rgba(37, 99, 235, 0.18); }
+  .msg-bubble.other { background: #fff; }
+
+  .msg-bubble-name {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: .25rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .msg-bubble-text { font-size: .92rem; color: #111827; }
+
+  .msg-bubble-meta {
+    margin-top: .45rem;
+    font-size: .75rem;
+    color: #6b7280;
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+  }
+
+  .msg-attachments { margin-top: .6rem; display: flex; flex-direction: column; gap: .5rem; }
+  .att-card { border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 14px; padding: .55rem .65rem; background: rgba(15, 23, 42, 0.02); }
+  .att-row { display: flex; align-items: center; gap: .6rem; justify-content: space-between; }
+  .att-name { font-size: .86rem; font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .att-actions a { font-size: .82rem; text-decoration: underline; }
+  .att-thumb { width: 140px; max-width: 100%; border-radius: 12px; display: block; border: 1px solid rgba(15, 23, 42, 0.10); }
+
+  @media (max-width: 576px) {
+    .msg-bubble { max-width: 92%; }
+    .att-name { max-width: 170px; }
+    .att-thumb { width: 180px; }
+  }
+</style>
+
+<div class="msg-bubble-wrap">
   <div class="d-flex {% if msg.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
-    {% if msg.sender == request.user %}
-      {% set bubble_classes = "bg-primary text-white" %}
-    {% endif %}
-    <div class="p-2 rounded {% if msg.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %}">
-      <small class="fw-bold">
+    <div class="msg-bubble {% if msg.sender == request.user %}me{% else %}other{% endif %}">
+      <div class="msg-bubble-name">
         {{ msg.sender.full_name|default:msg.sender.email }}
-      </small><br>
-      {{ msg.text|linebreaksbr }}
-      {% if msg.attachment %}
-        <div><a href="{{ msg.attachment.url }}" target="_blank">Anexă</a></div>
+        {% if msg.sender.is_staff %}
+          <span class="badge bg-dark text-xxs px-2 py-1" style="border-radius:999px;">STAFF</span>
+        {% endif %}
+      </div>
+
+      {% if msg.text %}
+        <div class="msg-bubble-text">
+          {{ msg.text|linebreaksbr }}
+        </div>
       {% endif %}
-      <div class="text-end">
-        <small>{{ msg.sent_at|date:"H:i, d.m.Y" }}</small>
+
+      {% if msg.has_attachments %}
+        <div class="msg-attachments">
+          {% for att in msg.attachments.all %}
+            <div class="att-card">
+              {% if att.is_image %}
+                <a href="{% url 'messaging:attachment' att.pk %}?inline=1" target="_blank" rel="noopener">
+                  <img class="att-thumb"
+                       src="{% url 'messaging:attachment' att.pk %}?inline=1"
+                       alt="{{ att.original_name|default:'Imagine' }}">
+                </a>
+
+                <div class="att-row mt-2">
+                  <div class="att-name" title="{{ att.original_name }}">{{ att.original_name|default:"Imagine" }}</div>
+                  <div class="att-actions d-flex gap-2">
+                    <a href="{% url 'messaging:attachment' att.pk %}?inline=1" target="_blank" rel="noopener">Preview</a>
+                    <a href="{% url 'messaging:attachment' att.pk %}">Download</a>
+                  </div>
+                </div>
+              {% else %}
+                <div class="att-row">
+                  <div>
+                    <div class="att-name" title="{{ att.original_name }}">{{ att.original_name|default:"Fișier" }}</div>
+                    {% if att.content_type %}
+                      <div class="text-xxs text-grey">{{ att.content_type }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="att-actions">
+                    <a href="{% url 'messaging:attachment' att.pk %}">Download</a>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="msg-bubble-meta">
+        <span>{{ msg.sent_at|date:"H:i" }}</span>
+        <span>·</span>
+        <span>{{ msg.sent_at|date:"d.m.Y" }}</span>
       </div>
     </div>
   </div>

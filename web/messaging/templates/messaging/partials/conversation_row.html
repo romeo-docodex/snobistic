@@ -1,22 +1,77 @@
 {# messaging/templates/messaging/partials/conversation_row.html #}
-<li class="list-group-item">
-  <a href="{% url 'messaging:conversation_detail' conv.pk %}"
-     class="d-flex justify-content-between text-decoration-none align-items-center">
-    <span>
-      {% for u in conv.participants.all %}
-        {% if u != request.user %}
-          {{ u.full_name|default:u.email }}
+
+<style>
+  .msg-row {
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: #fff;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .msg-row:hover { transform: translateY(-1px); border-color: rgba(15, 23, 42, 0.10); box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06); }
+  .msg-row-title { font-size: 0.95rem; margin-bottom: .15rem; }
+  .msg-row-meta { font-size: 0.82rem; color: #6b7280; }
+  .msg-pill { font-size: 0.72rem; padding: .28rem .65rem; border-radius: 999px; border: 1px solid rgba(15, 23, 42, 0.06); background: rgba(15, 23, 42, 0.02); color: #111827; }
+  .msg-unread { min-width: 34px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+  .msg-preview { margin-top:.25rem; font-size:.86rem; color:#111827; opacity:.9; max-width: 680px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-time { font-size:.78rem; color:#6b7280; }
+</style>
+
+<a href="{% url 'messaging:conversation_detail' conv.pk %}"
+   class="msg-row d-flex justify-content-between align-items-center text-decoration-none">
+
+  <div class="d-flex flex-column">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+      {% if conv.kind == "ORDER" and conv.order_id %}
+        <span class="msg-pill">Comandă</span>
+        <div class="msg-row-title fw-semibold">Comanda #{{ conv.order_id }}</div>
+        {% if conv.allow_staff %}
+          <span class="badge rounded-pill bg-warning text-dark text-xxs px-3 py-1">escaladat</span>
         {% endif %}
-      {% endfor %}
-      <br>
-      <small class="text-muted">
-        {{ conv.last_updated|timesince }} în urmă
-      </small>
-    </span>
-    {% with unread=conv.messages.exclude(sender=request.user).count %}
-      {% if unread %}
-        <span class="badge bg-primary">{{ unread }}</span>
+      {% elif conv.kind == "SUPPORT" %}
+        <span class="msg-pill">Suport</span>
+        <div class="msg-row-title fw-semibold">Suport Snobistic</div>
+        {% if conv.is_closed %}
+          <span class="badge rounded-pill bg-secondary text-xxs px-3 py-1">închis</span>
+        {% endif %}
+      {% else %}
+        <span class="msg-pill">Conversație</span>
+        <div class="msg-row-title fw-semibold">Conversație</div>
       {% endif %}
-    {% endwith %}
-  </a>
-</li>
+
+      {% if conv.is_muted %}
+        <span class="msg-pill">muted</span>
+      {% endif %}
+    </div>
+
+    <div class="msg-preview">
+      {% with txt=conv.last_message_text|default:"" %}
+        {% if txt %}
+          {% if conv.last_message_sender_first_name or conv.last_message_sender_last_name %}
+            <strong>{{ conv.last_message_sender_first_name }} {{ conv.last_message_sender_last_name }}:</strong>
+          {% elif conv.last_message_sender_email %}
+            <strong>{{ conv.last_message_sender_email }}:</strong>
+          {% endif %}
+          {{ txt }}
+        {% else %}
+          <strong>📎 Atașament</strong>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <div class="msg-row-meta">
+      Ultima activitate: {{ conv.last_updated|timesince }} în urmă
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    {% if conv.last_message_sent_at %}
+      <span class="msg-time">{{ conv.last_message_sent_at|date:"d.m H:i" }}</span>
+    {% endif %}
+
+    {% if conv.unread_count %}
+      <span class="badge bg-primary msg-unread">{{ conv.unread_count }}</span>
+    {% endif %}
+  </div>
+
+</a>
