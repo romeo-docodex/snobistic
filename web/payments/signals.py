@@ -1,11 +1,10 @@
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+# payments/signals.py
+from django.dispatch import Signal
 
-from .models import Wallet
+# ✅ Events pentru integrare (wallet / notificări / analytics / audit)
+payment_succeeded = Signal()  # kwargs: payment, order
+payment_failed = Signal()     # kwargs: payment, order
+payment_canceled = Signal()   # kwargs: payment, order
 
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_user_wallet(sender, instance, created, **kwargs):
-    if created:
-        Wallet.objects.get_or_create(user=instance)
+# ✅ Refund event (wallet app poate asculta și credita user-ul)
+refund_succeeded = Signal()   # kwargs: refund, payment, order

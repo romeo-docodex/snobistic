@@ -17,103 +17,154 @@
 </section>
 <!-- /Title Page -->
 
-<!-- Wish list -->
-<section class="flat-spacing-13">
-  <div class="container">
-    {% if products %}
-      <div class="wrapper-wishlist tf-grid-layout tf-col-2 lg-col-3 xl-col-4">
-        {% for product in products %}
-          <div class="card-product style-wishlist style-3 card-product-size">
-            <form method="post"
-                  action="{% url 'catalog:toggle_favorite' product.pk %}"
-                  class="js-fav-form"
-                  data-product-id="{{ product.pk }}"
-                  data-remove-on-unfav="1">
-              {% csrf_token %}
-              <button type="submit" class="icon icon-close remove" data-toggle-fav aria-label="Șterge de la favorite"></button>
-            </form>
+<div class="flat-spacing-13">
+  <div class="container-7">
 
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none mb-3">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
 
-            <div class="card-product-wrapper">
-              <a href="{{ product.get_absolute_url }}" class="product-img">
-                <img class="img-product lazyload"
-                     data-src="{{ product.main_image.url }}"
-                     src="{{ product.main_image.url }}"
-                     alt="{{ product.title }}">
-                {% with extra=product.images.all|first %}
-                  {% if extra %}
-                    <img class="img-hover lazyload"
-                         data-src="{{ extra.image.url }}"
-                         src="{{ extra.image.url }}"
-                         alt="{{ extra.alt_text|default:product.title }}">
-                  {% else %}
-                    <img class="img-hover lazyload"
-                         data-src="{{ product.main_image.url }}"
-                         src="{{ product.main_image.url }}"
-                         alt="{{ product.title }}">
-                  {% endif %}
-                {% endwith %}
-              </a>
+    <div class="main-content-account">
 
-              <ul class="list-product-btn">
-                <li>
-                  <form method="post" action="{% url 'cart:add' product.pk %}">
-                    {% csrf_token %}
-                    <button class="box-icon hover-tooltip" type="submit">
-                      <span class="icon icon-cart2"></span>
-                      <span class="tooltip">Adaugă în coș</span>
-                    </button>
-                  </form>
-                </li>
-                <li>
+      {# ✅ Sidebar cont #}
+      {% include "accounts/profile/_account_sidebar.html" with account_section="favorites" %}
+
+      {# ✅ Content #}
+      <div class="my-acount-content account-address">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="title-account mb-0">
+            Favoritele mele
+            {% if products %}
+              <span class="text-xxs text-grey">({{ products|length }})</span>
+            {% endif %}
+          </h6>
+
+          {# opțional: buton către catalog #}
+          <a href="{% url 'catalog:product_list' %}" class="tf-btn btn-out-line-dark d-none d-sm-inline-flex">
+            Vezi catalogul
+          </a>
+        </div>
+
+        <p class="text-xxs text-grey mb-3">
+          Produsele salvate în favorite rămân aici pentru mai târziu.
+        </p>
+
+        <div class="widget-inner-address">
+
+          {% if products %}
+            <div class="wrapper-wishlist tf-grid-layout tf-col-2 lg-col-3 xl-col-4">
+            {% for product in products %}
+              <div class="card-product style-wishlist style-3 card-product-size">
+
+                {# ✅ scoatem butonul X de sus (remove) #}
+
+                <div class="card-product-wrapper">
+                  <a href="{{ product.get_absolute_url }}" class="product-img">
+                    <img class="img-product lazyload"
+                        data-src="{{ product.main_image.url }}"
+                        src="{{ product.main_image.url }}"
+                        alt="{{ product.title }}">
+                    {% with extra=product.images.all|first %}
+                      {% if extra %}
+                        <img class="img-hover lazyload"
+                            data-src="{{ extra.image.url }}"
+                            src="{{ extra.image.url }}"
+                            alt="{{ extra.alt_text|default:product.title }}">
+                      {% else %}
+                        <img class="img-hover lazyload"
+                            data-src="{{ product.main_image.url }}"
+                            src="{{ product.main_image.url }}"
+                            alt="{{ product.title }}">
+                      {% endif %}
+                    {% endwith %}
+                  </a>
+
+                  <ul class="list-product-btn">
+                    <li>
+                      <form method="post" action="{% url 'cart:add' product.pk %}">
+                        {% csrf_token %}
+                        <button class="box-icon hover-tooltip" type="submit">
+                          <span class="icon icon-cart2"></span>
+                          <span class="tooltip">Adaugă în coș</span>
+                        </button>
+                      </form>
+                    </li>
+
+                    <li>
+                      <a href="{{ product.get_absolute_url }}"
+                        class="box-icon hover-tooltip quickview">
+                        <span class="icon icon-view"></span>
+                        <span class="tooltip">Detalii</span>
+                      </a>
+                    </li>
+
+                    {# ✅ aici era Compare — acum devine Remove #}
+                    <li>
+                      <form method="post"
+                            action="{% url 'catalog:toggle_favorite' product.pk %}"
+                            class="js-fav-form d-inline"
+                            data-product-id="{{ product.pk }}"
+                            data-remove-on-unfav="1">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="box-icon hover-tooltip"
+                                data-toggle-fav
+                                aria-label="Șterge de la favorite">
+                          <span class="icon icon-close"></span>
+                          <span class="tooltip">Șterge</span>
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="card-product-info">
                   <a href="{{ product.get_absolute_url }}"
-                     class="box-icon hover-tooltip quickview">
-                    <span class="icon icon-view"></span>
-                    <span class="tooltip">Detalii</span>
+                    class="name-product link fw-medium text-md">
+                    {{ product.title }}
                   </a>
-                </li>
-                <li>
-                  <a href="#compare" data-bs-toggle="modal"
-                     class="box-icon hover-tooltip compare">
-                    <span class="icon icon-compare"></span>
-                    <span class="tooltip">Compară</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
+                  <p class="price-wrap fw-medium">
+                    <span class="price-new">{{ product.price }} RON</span>
+                  </p>
 
-            <div class="card-product-info">
-              <a href="{{ product.get_absolute_url }}"
-                 class="name-product link fw-medium text-md">
-                {{ product.title }}
-              </a>
-              <p class="price-wrap fw-medium">
-                <span class="price-new">{{ product.price }} RON</span>
+                  {% if product.material %}
+                    <ul class="list-color-product">
+                      <li class="list-color-item hover-tooltip tooltip-bot color-swatch active">
+                        <span class="tooltip color-filter">{{ product.material.name }}</span>
+                        <span class="swatch-value bg-beige"></span>
+                        <img class="lazyload"
+                            data-src="{{ product.main_image.url }}"
+                            src="{{ product.main_image.url }}"
+                            alt="{{ product.title }}">
+                      </li>
+                    </ul>
+                  {% endif %}
+                </div>
+
+              </div>
+            {% endfor %}
+            </div>
+          {% else %}
+            <div class="account-address-item">
+              <p class="text-md mb-1">Nu ai niciun produs în favorite momentan.</p>
+              <p class="text-xxs text-grey mb-3">
+                Explorează catalogul și salvează produsele pe care vrei să le urmărești.
               </p>
-
-              {% if product.material %}
-              <ul class="list-color-product">
-                <li class="list-color-item hover-tooltip tooltip-bot color-swatch active">
-                  <span class="tooltip color-filter">{{ product.material.name }}</span>
-                  <span class="swatch-value bg-beige"></span>
-                  <img class="lazyload"
-                       data-src="{{ product.main_image.url }}"
-                       src="{{ product.main_image.url }}"
-                       alt="{{ product.title }}">
-                </li>
-              </ul>
-              {% endif %}
+              <a href="{% url 'catalog:product_list' %}" class="tf-btn animate-btn">
+                Descoperă produse
+              </a>
             </div>
-          </div>
-        {% endfor %}
+          {% endif %}
+
+        </div>
       </div>
-    {% else %}
-      <p class="text-muted text-center mt-5">
-        Nu ai niciun produs în favorite momentan.
-      </p>
-    {% endif %}
+
+    </div>
   </div>
-</section>
-<!-- /Wish list -->
+</div>
 
 {% endblock %}

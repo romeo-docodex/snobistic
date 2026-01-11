@@ -432,12 +432,15 @@
                                         </li>
 
                                         {% if request.user.is_seller %}
-                                            <li>
-                                                <a href="{% url 'dashboard:wallet' %}"
-                                                   class="sub-nav-link">
-                                                    Portofel
-                                                </a>
-                                            </li>
+                                        <li>
+                                            <a href="{% url 'wallet:home' %}"
+                                            class="sub-nav-link d-flex justify-content-between align-items-center">
+                                            <span>Portofel</span>
+                                            <span class="text-muted small">
+                                                {{ header_wallet_balance|default:"0.00"|floatformat:2 }} RON
+                                            </span>
+                                            </a>
+                                        </li>
                                         {% endif %}
 
                                         <li>
@@ -756,11 +759,15 @@
                         </a>
                     </li>
                     {% if request.user.is_seller %}
-                        <li>
-                            <a href="{% url 'dashboard:wallet' %}" class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
-                                <span><i class="icon icon-wallet me-2"></i>Portofel</span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{% url 'wallet:home' %}"
+                        class="sub-nav-link d-flex justify-content-between align-items-center mobile-header-link">
+                        <span><i class="icon icon-wallet me-2"></i>Portofel</span>
+                        <span class="badge rounded-pill bg-dark text-white">
+                            {{ header_wallet_balance|default:"0.00"|floatformat:2 }} RON
+                        </span>
+                        </a>
+                    </li>
                     {% endif %}
                 {% endif %}
                 <li>

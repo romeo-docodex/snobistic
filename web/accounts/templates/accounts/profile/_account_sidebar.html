@@ -1,103 +1,237 @@
 {# templates/accounts/profile/_account_sidebar.html #}
 
 {% with account_section|default:"dashboard" as account_section %}
-<div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
-  <ul class="my-account-nav">
 
-    {# Dashboard #}
-    <li>
-      <a href="{% url 'accounts:profile' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dashboard' %}active{% endif %}">
-        Dashboard
-      </a>
-    </li>
+  {# ===================== DESKTOP SIDEBAR (>= lg) ===================== #}
+  <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
+    <ul class="my-account-nav">
 
-    {# Comenzi #}
-    <li>
-      <a href="{% url 'orders:order_list' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
-        Comenzile mele
-      </a>
-    </li>
+      {# Dashboard #}
+      <li>
+        <a href="{% url 'accounts:profile' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dashboard' %}active{% endif %}">
+          Dashboard
+        </a>
+      </li>
 
-    {# Favorite #}
-    <li>
-      <a href="{% url 'catalog:favorites' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'favorites' %}active{% endif %}">
-        Favorite
-      </a>
-    </li>
+      {# Comenzi #}
+      <li>
+        <a href="{% url 'dashboard:orders_list' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
+          Comenzile mele
+        </a>
+      </li>
 
-    {# Adrese #}
-    <li>
-      <a href="{% url 'accounts:address_list' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'addresses' %}active{% endif %}">
-        Adrese
-      </a>
-    </li>
+      {# Wallet #}
+      <li>
+        <a href="{% url 'wallet:home' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'wallet' %}active{% endif %}">
+          Portofel
+        </a>
+      </li>
 
-    {# Date personale #}
-    <li>
-      <a href="{% url 'accounts:profile_data' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'profile_data' %}active{% endif %}">
-        Date personale
-      </a>
-    </li>
+      {# Favorite #}
+      <li>
+        <a href="{% url 'catalog:favorites' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'favorites' %}active{% endif %}">
+          Favorite
+        </a>
+      </li>
 
-    {# Măsurători #}
-    <li>
-      <a href="{% url 'accounts:profile_dimensions' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dimensions' %}active{% endif %}">
-        Măsurători
-      </a>
-    </li>
+      {# Adrese #}
+      <li>
+        <a href="{% url 'accounts:address_list' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'addresses' %}active{% endif %}">
+          Adrese
+        </a>
+      </li>
 
-    {# Securitate & 2FA #}
-    <li>
-      <a href="{% url 'accounts:profile_security' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'security' %}active{% endif %}">
-        Securitate & 2FA
-      </a>
-    </li>
+      {# Date personale #}
+      <li>
+        <a href="{% url 'accounts:profile_data' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'profile_data' %}active{% endif %}">
+          Date personale
+        </a>
+      </li>
 
-    {# KYC #}
-    <li>
-      <a href="{% url 'accounts:kyc_center' %}"
-         class="text-sm link fw-medium my-account-nav-item {% if account_section == 'kyc' %}active{% endif %}">
-        Verificare identitate (KYC)
-      </a>
-    </li>
+      {# Măsurători #}
+      <li>
+        <a href="{% url 'accounts:profile_dimensions' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dimensions' %}active{% endif %}">
+          Măsurători
+        </a>
+      </li>
 
-    {# Secțiune vânzător #}
-    {% if request.user.is_seller %}
+      {# Securitate & 2FA #}
+      <li>
+        <a href="{% url 'accounts:profile_security' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'security' %}active{% endif %}">
+          Securitate &amp; 2FA
+        </a>
+      </li>
+
+      {# KYC #}
+      <li>
+        <a href="{% url 'accounts:kyc_center' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'kyc' %}active{% endif %}">
+          Verificare identitate (KYC)
+        </a>
+      </li>
+
+      {# ===== Secțiune vânzător ===== #}
+      {% if request.user.is_seller %}
+        <li class="border-top pt-4">
+          <span class="text-xxs text-uppercase text-muted d-block" style="font-size:14px; margin-bottom:15px;text-align:center;">
+            Vânzător
+          </span>
+        </li>
+
+        <li>
+          <a href="{% url 'dashboard:seller_dashboard' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_dashboard' %}active{% endif %}">
+            Panou vânzător
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:seller_settings' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_settings' %}active{% endif %}">
+            Setări vânzător
+          </a>
+        </li>
+      {% endif %}
+
+      {# ===== Logout (POST) ===== #}
       <li class="border-top">
-        <span class="text-xxs text-uppercase text-muted d-block mb-1">
-          Vânzător
-        </span>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="text-sm link fw-medium my-account-nav-item w-100 text-start"
+                  style="background:transparent;border:0;padding:0; color:red !important;padding: 15px 12px;">
+            Deloghează-te
+          </button>
+        </form>
       </li>
 
-      <li>
-        <a href="{% url 'dashboard:seller_dashboard' %}"
-           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_dashboard' %}active{% endif %}">
-          Panou vânzător
-        </a>
-      </li>
+    </ul>
+  </div>
 
-      <li>
-        <a href="{% url 'accounts:seller_settings' %}"
-           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_settings' %}active{% endif %}">
-          Setări vânzător
-        </a>
-      </li>
-    {% endif %}
 
-    {# Delogare #}
-    <li class="border-top">
-      <a href="{% url 'accounts:logout' %}"
-         class="text-sm link fw-medium my-account-nav-item">
-        Deloghează-te
-      </a>
-    </li>
-  </ul>
-</div>
+  {# ===================== MOBILE OFFCANVAS (< lg) ===================== #}
+  <div class="offcanvas offcanvas-start d-lg-none"
+       tabindex="-1"
+       id="mbAccount"
+       aria-labelledby="mbAccountLabel">
+
+    <div class="offcanvas-header">
+      <h6 class="offcanvas-title" id="mbAccountLabel">Contul meu</h6>
+      <button type="button"
+              class="btn-close text-reset"
+              data-bs-dismiss="offcanvas"
+              aria-label="Închide"></button>
+    </div>
+
+    <div class="offcanvas-body">
+      <ul class="my-account-nav">
+
+        <li>
+          <a href="{% url 'accounts:profile' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dashboard' %}active{% endif %}">
+            Dashboard
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'dashboard:orders_list' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
+            Comenzile mele
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'wallet:home' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'wallet' %}active{% endif %}">
+            Portofel
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'catalog:favorites' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'favorites' %}active{% endif %}">
+            Favorite
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:address_list' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'addresses' %}active{% endif %}">
+            Adrese
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:profile_data' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'profile_data' %}active{% endif %}">
+            Date personale
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:profile_dimensions' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dimensions' %}active{% endif %}">
+            Măsurători
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:profile_security' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'security' %}active{% endif %}">
+            Securitate &amp; 2FA
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'accounts:kyc_center' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'kyc' %}active{% endif %}">
+            Verificare identitate (KYC)
+          </a>
+        </li>
+
+        {% if request.user.is_seller %}
+          <li class="border-top pt-3 mt-3">
+            <span class="text-xxs text-uppercase text-muted d-block">
+              Vânzător
+            </span>
+          </li>
+
+          <li>
+            <a href="{% url 'dashboard:seller_dashboard' %}"
+               class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_dashboard' %}active{% endif %}">
+              Panou vânzător
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'accounts:seller_settings' %}"
+               class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_settings' %}active{% endif %}">
+              Setări vânzător
+            </a>
+          </li>
+        {% endif %}
+
+        <li class="border-top pt-3 mt-3">
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="text-sm link fw-medium my-account-nav-item"
+                    style="background:transparent;border:0;padding:0;color:red !important;">
+              Deloghează-te
+            </button>
+          </form>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+
 {% endwith %}

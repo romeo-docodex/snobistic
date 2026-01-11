@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tranzacții – Portofel{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Wallet Transactions – consistent with account/dashboard styles */
+
+  .account-address-item.dashboard-card {
+    padding: 1.5rem 1.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background-color: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .account-address-item.dashboard-card .title {
+    margin-bottom: 0.9rem;
+    font-size: 0.98rem;
+  }
+
+  .account-address-item.dashboard-card p,
+  .account-address-item.dashboard-card li,
+  .account-address-item.dashboard-card td,
+  .account-address-item.dashboard-card th {
+    font-size: 0.85rem;
+  }
+
+  .account-address-item.dashboard-card .text-xxs {
+    font-size: 0.8rem;
+  }
+
+  .wallet-section-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+  }
+
+  .wallet-table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .wallet-table td {
+    white-space: nowrap;
+  }
+
+  @media (min-width: 992px) {
+    .account-address-item.dashboard-card {
+      padding: 1.75rem 2rem;
+    }
+  }
+
+  .wallet-filter .tf-btn {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+</style>
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Tranzacții</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'wallet:home' %}">Portofel</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Tranzacții</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none mb-3">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+
+      {# Sidebar cont (desktop) #}
+      {% include "accounts/profile/_account_sidebar.html" with account_section="wallet" %}
+
+      {# ==== Conținut principal ==== #}
+      <div class="my-acount-content account-address">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+          <div>
+            <h6 class="title-account mb-1">Istoric tranzacții</h6>
+            <p class="text-sm text-grey mb-0">
+              Filtrează rapid și exportă în CSV.
+            </p>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'wallet:home' %}" class="tf-btn btn-out-line-dark">
+              Înapoi la portofel
+            </a>
+            <a href="?period={{ period }}&export=csv" class="tf-btn btn-out-line-dark">
+              Export CSV
+            </a>
+          </div>
+        </div>
+
+        {# ==== Card: filtre perioadă ==== #}
+        <div class="account-address-item dashboard-card mb-4">
+          <div class="wallet-section-title">Filtre</div>
+
+          <div class="wallet-filter d-flex flex-wrap gap-2">
+            <a href="?period=all"
+               class="tf-btn {% if period == 'all' %}btn-dark{% else %}btn-out-line-dark{% endif %}">
+              Toate
+            </a>
+            <a href="?period=daily"
+               class="tf-btn {% if period == 'daily' %}btn-dark{% else %}btn-out-line-dark{% endif %}">
+              Azi
+            </a>
+            <a href="?period=monthly"
+               class="tf-btn {% if period == 'monthly' %}btn-dark{% else %}btn-out-line-dark{% endif %}">
+              Luna curentă
+            </a>
+            <a href="?period=yearly"
+               class="tf-btn {% if period == 'yearly' %}btn-dark{% else %}btn-out-line-dark{% endif %}">
+              An curent
+            </a>
+          </div>
+
+          <p class="text-xxs text-grey mt-3 mb-0">
+            Perioada selectată afectează lista și exportul CSV.
+          </p>
+        </div>
+
+        {# ==== Card: tabel tranzacții ==== #}
+        <div class="account-address-item dashboard-card">
+          <div class="wallet-section-title">Lista tranzacțiilor</div>
+
+          {% if txs %}
+            <div class="table-responsive">
+              <table class="table mb-0 align-middle wallet-table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Data</th>
+                    <th>Tip</th>
+                    <th>Direcție</th>
+                    <th class="text-end">Sumă</th>
+                    <th>Metodă</th>
+                    <th class="text-end">Sold după</th>
+                    <th>External ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for tx in txs %}
+                    <tr>
+                      <td class="small text-muted">
+                        {{ tx.created_at|date:"Y-m-d H:i" }}
+                      </td>
+
+                      <td class="small">
+                        <strong>{{ tx.get_tx_type_display }}</strong>
+                      </td>
+
+                      <td class="small text-muted">
+                        {{ tx.get_direction_display }}
+                      </td>
+
+                      <td class="text-end">
+                        {# dacă ai tx.direction (ex: CREDIT/DEBIT) e mai robust; aici păstrăm compatibil #}
+                        {% if tx.get_direction_display|lower == "debit" %}
+                          <span class="text-danger">-{{ tx.amount }} {{ wallet.currency }}</span>
+                        {% else %}
+                          <span class="text-success">+{{ tx.amount }} {{ wallet.currency }}</span>
+                        {% endif %}
+                      </td>
+
+                      <td class="small">
+                        {{ tx.method|default:"—" }}
+                      </td>
+
+                      <td class="text-end small text-muted">
+                        {{ tx.balance_after }} {{ wallet.currency }}
+                      </td>
+
+                      <td class="text-muted small">
+                        {{ tx.external_id|default:"—" }}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="py-4 text-center text-muted">
+              Nu ai tranzacții.
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

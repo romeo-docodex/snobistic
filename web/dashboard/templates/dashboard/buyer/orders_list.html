@@ -23,7 +23,7 @@
   <div class="container-7">
 
     {# Sidebar button (mobil) #}
-    <div class="btn-sidebar-mb d-lg-none">
+    <div class="btn-sidebar-mb d-lg-none mb-3">
       <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
         <i class="icon icon-sidebar"></i>
       </button>
@@ -31,65 +31,8 @@
 
     <div class="main-content-account">
 
-      {# ==== Sidebar cont (desktop) ==== #}
-      <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
-        <ul class="my-account-nav">
-          <li>
-            <a href="{% url 'accounts:profile' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Profil
-            </a>
-          </li>
-
-          {% if request.user.is_seller %}
-          <li>
-            <a href="{% url 'dashboard:seller_dashboard' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Panou vânzător
-            </a>
-          </li>
-          {% endif %}
-
-          <li>
-            <a href="{% url 'orders:order_list' %}"
-               class="text-sm link fw-medium my-account-nav-item active">
-              Comenzile mele
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'catalog:favorites' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Favorite
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'accounts:profile_dimensions' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Măsurători
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'accounts:profile_security' %}"
-               class="text-sm link fw-medium my-account-nav-item">
-              Setări
-            </a>
-          </li>
-
-          {# Logout POST-only (safe) #}
-          <li>
-            <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
-              {% csrf_token %}
-              <button type="submit"
-                      class="text-sm link fw-medium my-account-nav-item btn btn-link p-0 border-0 bg-transparent">
-                Deloghează-te
-              </button>
-            </form>
-          </li>
-        </ul>
-      </div>
+      {# ✅ Sidebar cont (desktop + offcanvas mobil din include) #}
+      {% include "accounts/profile/_account_sidebar.html" with account_section="orders" %}
 
       {# ==== Conținut principal – Comenzile mele ==== #}
       <div class="my-acount-content account-address">
@@ -101,16 +44,15 @@
         <div class="widget-inner-address">
           <div class="account-address-item">
 
-            {# Header info (în stilul sold_list.html) #}
+            {# Header info #}
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
               <div>
                 <p class="text-sm mb-0 text-grey">
                   Total comenzi: <strong>{{ orders|length }}</strong>
                 </p>
               </div>
-              <div class="d-flex gap-2">
-                <a href="{% url 'accounts:profile' %}"
-                   class="tf-btn btn-out-line-dark">
+              <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'accounts:profile' %}" class="tf-btn btn-out-line-dark">
                   &larr; Înapoi la cont
                 </a>
               </div>
@@ -131,6 +73,7 @@
                     <th class="text-end">Acțiuni</th>
                   </tr>
                 </thead>
+
                 <tbody>
                 {% if orders %}
                   {% for order in orders %}
@@ -148,7 +91,7 @@
                         </div>
                       </td>
 
-                      <td class="small">
+                      <td class="small text-nowrap">
                         {{ order.created_at|date:"Y-m-d H:i" }}
                       </td>
 
@@ -242,11 +185,11 @@
               </table>
             </div>
 
-          </div> {# /account-address-item #}
-        </div> {# /widget-inner-address #}
-      </div> {# /my-acount-content #}
+          </div>
+        </div>
+      </div>
 
-    </div> {# /main-content-account #}
+    </div>
   </div>
 </div>
 

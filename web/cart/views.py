@@ -13,8 +13,9 @@ from django.views.decorators.http import require_GET, require_POST
 from catalog.models import Product
 from logistics.services.shipping import calculate_shipping_for_cart
 from orders.models import Order, _pct
-from payments.models import Wallet, Payment
-from payments.services import charge_order_from_wallet
+from wallet.models import Wallet
+from wallet.services import charge_order_from_wallet  # ✅ MUTAT din payments -> wallet
+from payments.models import Payment
 
 from .forms import CheckoutForm, CouponApplyForm
 from .models import Cart, CartItem, Coupon
@@ -94,19 +95,15 @@ def cart_add(request, product_id):
                 )
                 return redirect("catalog:product_list")
 
-    # ✅ creezi cart DOAR aici (POST/add)
     cart = get_or_create_cart(request)
 
-    # ✅ doar produse publice (marketplace)
     product_qs = Product.objects.public() if hasattr(Product.objects, "public") else Product.objects.filter(is_active=True)
     product = get_object_or_404(product_qs, pk=product_id)
 
-    # ✅ Prevent buy your own product
     if request.user.is_authenticated and getattr(product, "owner_id", None) == request.user.id:
         messages.error(request, "Nu poți adăuga în coș propriul tău produs.")
         return redirect(request.META.get("HTTP_REFERER") or product.get_absolute_url())
 
-    # ✅ qty=1 policy: dacă există deja, nu mai facem nimic
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
@@ -140,7 +137,6 @@ def cart_add(request, product_id):
 
 @require_POST
 def cart_remove(request, item_id: int):
-    # ✅ NU creăm cart aici (altfel umpli DB cu coșuri goale)
     cart = get_cart(request)
     if not cart:
         if _is_ajax(request):
@@ -187,7 +183,6 @@ def cart_offcanvas_partial(request):
 
 
 def cart_view(request):
-    # ✅ P0: pe GET nu creăm cart (anti-bots / anti-DB spam)
     cart = get_cart(request)
 
     shipping_address = None
@@ -211,12 +206,10 @@ def cart_view(request):
     totals = _compute_cart_totals(cart, shipping_cost=(shipping_cost or Decimal("0.00")))
 
     if request.method == "POST":
-        # ✅ dacă cineva postează fără cart real, nu îl creăm aici
         if not cart or not cart.items.exists():
             messages.info(request, "Coșul tău este gol.")
             return redirect("cart:cart")
 
-        # cupon
         if "apply_coupon" in request.POST:
             coupon_form = CouponApplyForm(request.POST)
             if coupon_form.is_valid():
@@ -259,7 +252,6 @@ def cart_view(request):
 
 @login_required
 def checkout_view(request):
-    # ✅ P0: nu mai există 404 pentru user fără cart
     cart = get_cart(request) or get_or_create_cart(request)
 
     if not cart.items.exists():
@@ -285,7 +277,6 @@ def checkout_view(request):
         shipping_method = form.cleaned_data["shipping_method"]
         payment_method = form.cleaned_data["payment_method"]
 
-        # 0) Validate coupon again at checkout (robust)
         if cart.coupon_id:
             ok, msg = cart.coupon.validate_for_cart(cart)
             if not ok:
@@ -294,7 +285,6 @@ def checkout_view(request):
                 cart.save(update_fields=["coupon"])
                 return redirect("cart:cart")
 
-        # 1) Reguli minime pentru ramburs (COD)
         if payment_method == "cash_on_delivery":
             can_cod = False
             profile = getattr(request.user, "profile", None)
@@ -323,7 +313,6 @@ def checkout_view(request):
                     },
                 )
 
-        # 2) Pre-check pentru Wallet
         if payment_method == "wallet":
             estimated_total = totals["total"]
             if wallet_obj.balance < estimated_total:
@@ -346,14 +335,12 @@ def checkout_view(request):
                     },
                 )
 
-        # 3) Adresa
         address = get_object_or_404(
             request.user.addresses.model,
             pk=address_id,
             user=request.user,
         )
 
-        # 4) Creăm Order din coș
         order = Order.create_from_cart(
             cart=cart,
             address=address,
@@ -363,7 +350,6 @@ def checkout_view(request):
             shipping_days_max=shipping_days_max,
         )
 
-        # ✅ 4.1) Consume coupon usage AFTER order creation (atomic)
         if cart.coupon_id:
             try:
                 cart.coupon.consume_one()
@@ -377,11 +363,9 @@ def checkout_view(request):
                 messages.error(request, str(e))
                 return redirect("cart:cart")
 
-        # 5) Card
         if payment_method == "card":
             return redirect(order.get_payment_url())
 
-        # 6) Wallet
         if payment_method == "wallet":
             try:
                 charge_order_from_wallet(order, user=request.user)
@@ -390,7 +374,6 @@ def checkout_view(request):
                 return redirect("dashboard:orders_list")
             return redirect("payments:payment_success", order_id=order.id)
 
-        # 7) Numerar / Ramburs
         if payment_method == "cash_on_delivery":
             Payment.objects.create(
                 order=order,

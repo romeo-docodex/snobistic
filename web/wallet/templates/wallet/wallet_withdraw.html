@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Retragere – Portofel{% endblock %}
+
+{% block content %}
+
+<style>
+  .account-address-item.dashboard-card {
+    padding: 1.5rem 1.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background-color: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .wallet-section-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+  }
+
+  @media (min-width: 992px) {
+    .account-address-item.dashboard-card {
+      padding: 1.75rem 2rem;
+    }
+  }
+</style>
+
+{# ==== Titlu pagină + breadcrumb ==== #}
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Retragere</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'wallet:home' %}">Portofel</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Retragere</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    {# Sidebar button (mobil) #}
+    <div class="btn-sidebar-mb d-lg-none mb-3">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+
+      {# Sidebar cont (desktop) #}
+      {% include "accounts/profile/_account_sidebar.html" with account_section="wallet" %}
+
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">Retrage bani din portofel</h6>
+        <p class="text-sm text-grey mb-4">
+          Trimite o cerere de retragere către contul tău bancar.
+        </p>
+
+        <div class="widget-inner-address">
+
+          <div class="account-address-item dashboard-card">
+            <div class="wallet-section-title">Sold disponibil</div>
+            <p class="mb-4">
+              <span class="text-muted">Disponibil:</span>
+              <strong>{{ wallet.balance }} {{ wallet.currency }}</strong>
+            </p>
+
+            <form method="post" class="mb-3">
+              {% csrf_token %}
+              {{ form|crispy }}
+
+              <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
+                <button class="tf-btn btn-dark" type="submit">
+                  Trimite cererea
+                </button>
+                <a class="tf-btn btn-out-line-dark" href="{% url 'wallet:home' %}">
+                  Înapoi
+                </a>
+              </div>
+            </form>
+
+            <p class="text-xxs text-grey mb-0">
+              Cererile pot necesita verificări suplimentare (KYC / anti-fraudă) înainte de procesare.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -16,7 +16,7 @@ from django.utils import timezone
 from auctions.models import Auction
 from catalog.models import Product
 from orders.models import Order, OrderItem
-from payments.models import WalletTransaction, Wallet
+from wallet.models import Wallet
 from logistics.models import Shipment
 from invoices.models import Invoice
 
@@ -92,7 +92,6 @@ def seller_dashboard(request):
             target = TOP_THRESHOLD
             next_level_label = "Top Seller"
         elif current_level == SellerProfile.SELLER_LEVEL_TOP:
-            # Top = maxim automat, următorul ar fi VIP (setat manual)
             target = TOP_THRESHOLD
             next_level_label = "Nivel maxim automat"
         elif current_level == SellerProfile.SELLER_LEVEL_VIP:
@@ -110,7 +109,6 @@ def seller_dashboard(request):
                 raw = Decimal("100")
             level_progress = int(raw)
         else:
-            # VIP sau fără prag – considerăm 100%
             level_progress = 100
 
     kyc_status = profile.kyc_status if profile else None
@@ -120,7 +118,6 @@ def seller_dashboard(request):
     # ---- Statistici de vânzător ----
     total_products = Product.objects.filter(owner=user).count()
 
-    # ✅ FIX: nu există Auction.is_active -> folosim status + fereastra timp
     active_auctions = (
         Auction.objects.filter(
             creator=user,
@@ -139,11 +136,11 @@ def seller_dashboard(request):
         .count()
     )
 
-    # 2) Ensure wallet exists
+    # Wallet: ensure exists
     wallet_obj, _ = Wallet.objects.get_or_create(user=user)
     wallet_balance = wallet_obj.balance
 
-    # 3) Last 6 months labels (YYYY-MM)
+    # Labels last 6 months
     today = date.today()
     months = []
     for i in range(5, -1, -1):
@@ -151,7 +148,6 @@ def seller_dashboard(request):
         y = today.year - ((today.month - i - 1) // 12)
         months.append(f"{y}-{m:02d}")
 
-    # 4) Orders per month
     orders_qs = (
         Order.objects.filter(items__product__owner=user, payment_status="paid")
         .annotate(month=TruncMonth("created_at"))
@@ -160,7 +156,6 @@ def seller_dashboard(request):
     )
     orders_data = {o["month"].strftime("%Y-%m"): o["count"] for o in orders_qs}
 
-    # 5) Products created per month
     prods_qs = (
         Product.objects.filter(owner=user)
         .annotate(month=TruncMonth("created_at"))
@@ -181,7 +176,7 @@ def seller_dashboard(request):
             "chart_orders": [orders_data.get(m, 0) for m in months],
             "chart_products": [prods_data.get(m, 0) for m in months],
 
-            # ---- Nou: context pentru cardul de profil vânzător ----
+            # context profil vânzător
             "seller": seller,
             "profile": profile,
             "seller_trust_score": seller_trust_score,
@@ -222,19 +217,11 @@ def products_list(request):
             status = "Validat" if p.is_active else "În Validare"
             created = p.created_at.strftime("%Y-%m-%d %H:%M")
             validated = p.updated_at.strftime("%Y-%m-%d %H:%M") if p.is_active else ""
-            img_url = (
-                request.build_absolute_uri(p.main_image.url) if p.main_image else ""
-            )
-            writer.writerow(
-                [p.title, p.sku, subcat, status, created, validated, p.price, img_url]
-            )
+            img_url = request.build_absolute_uri(p.main_image.url) if p.main_image else ""
+            writer.writerow([p.title, p.sku, subcat, status, created, validated, p.price, img_url])
         return response
 
-    return render(
-        request,
-        "dashboard/seller/products_list.html",
-        {"products": qs},
-    )
+    return render(request, "dashboard/seller/products_list.html", {"products": qs})
 
 
 @login_required
@@ -249,7 +236,6 @@ def auctions_list(request):
         .order_by("-created_at")
     )
 
-    # CSV export
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="licitatii_postate.csv"'
@@ -290,11 +276,7 @@ def auctions_list(request):
             start_amt = a.start_price or ""
             reserve = a.reserve_price if a.reserve_price is not None else a.start_price
 
-            img_url = (
-                request.build_absolute_uri(a.product.main_image.url)
-                if a.product.main_image
-                else ""
-            )
+            img_url = request.build_absolute_uri(a.product.main_image.url) if a.product.main_image else ""
 
             writer.writerow(
                 [
@@ -314,25 +296,12 @@ def auctions_list(request):
             )
         return response
 
-    return render(
-        request,
-        "dashboard/seller/auctions_list.html",
-        {
-            "auctions": qs,
-            "now": now,  # ✅ folosit în template la timeuntil / comparații
-        },
-    )
+    return render(request, "dashboard/seller/auctions_list.html", {"auctions": qs, "now": now})
 
 
 @login_required
 @user_passes_test(is_seller)
 def sold_list(request):
-    """
-    Articole vândute pentru vânzătorul curent.
-    - listăm comenzile PLĂTITE în care apar produse ale userului
-    - pentru fiecare comandă, prefetch-uim DOAR OrderItem-urile
-      unde product.owner = user (nu vedem produsele altor vânzători)
-    """
     user = request.user
 
     sold_orders = (
@@ -346,71 +315,22 @@ def sold_list(request):
             "payments",
             Prefetch(
                 "items",
-                queryset=OrderItem.objects.select_related("product").filter(
-                    product__owner=user
-                ),
+                queryset=OrderItem.objects.select_related("product").filter(product__owner=user),
             ),
         )
         .distinct()
         .order_by("-created_at")
     )
 
-    return render(
-        request,
-        "dashboard/seller/sold_list.html",
-        {"sold_orders": sold_orders},
-    )
+    return render(request, "dashboard/seller/sold_list.html", {"sold_orders": sold_orders})
 
 
+# ✅ Wallet NU mai e în dashboard.
+# Păstrăm endpoint-ul vechi doar ca redirect pentru compatibilitate.
 @login_required
 @user_passes_test(is_seller)
 def wallet(request):
-    # Ensure wallet exists
-    wallet_obj, _ = Wallet.objects.get_or_create(user=request.user)
-
-    # Base queryset
-    qs = WalletTransaction.objects.filter(user=request.user).order_by("-date")
-
-    # Period filtering
-    period = request.GET.get("period", "all")
-    now = timezone.now()
-    if period == "daily":
-        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        qs = qs.filter(date__gte=start)
-    elif period == "monthly":
-        qs = qs.filter(date__year=now.year, date__month=now.month)
-    elif period == "yearly":
-        qs = qs.filter(date__year=now.year)
-    # else: 'all' → no extra filter
-
-    # CSV export
-    if request.GET.get("export") == "csv":
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = (
-            f'attachment; filename="wallet_{period}.csv"'
-        )
-        writer = csv.writer(response)
-        writer.writerow(["Dată", "Tip", "Sumă", "Sold după"])
-        for tx in qs:
-            writer.writerow(
-                [
-                    tx.date.strftime("%Y-%m-%d %H:%M"),
-                    tx.get_transaction_type_display(),
-                    tx.amount,
-                    tx.balance_after,
-                ]
-            )
-        return response
-
-    return render(
-        request,
-        "dashboard/seller/wallet.html",
-        {
-            "balance": wallet_obj.balance,
-            "transactions": qs,
-            "period": period,
-        },
-    )
+    return redirect("wallet:home")
 
 
 # ---- SELLER ORDER ACTIONS – legate acum de logistics + invoices ------------
@@ -418,23 +338,14 @@ def wallet(request):
 @login_required
 @user_passes_test(is_seller)
 def generate_awb(request, order_id, item_id):
-    """
-    Generează / editează AWB pentru comanda dată.
-    AWB-ul este definit la nivel de comandă (nu per item),
-    deci item_id e ignorat – dar îl păstrăm în URL pentru compatibilitate.
-    """
     return redirect("logistics:generate_awb", order_id=order_id)
 
 
 @login_required
 @user_passes_test(is_seller)
 def download_awb(request, order_id, item_id):
-    """
-    Descarcă / deschide AWB-ul pentru comanda dată, dacă există Shipment.
-    """
     user = request.user
 
-    # ne asigurăm că sellerul are articole în comanda respectivă
     order = get_object_or_404(
         Order.objects.filter(items__product__owner=user).distinct(),
         pk=order_id,
@@ -443,77 +354,52 @@ def download_awb(request, order_id, item_id):
     try:
         shipment = order.shipment
     except Shipment.DoesNotExist:
-        messages.error(
-            request,
-            "Nu există încă un AWB generat pentru această comandă.",
-        )
+        messages.error(request, "Nu există încă un AWB generat pentru această comandă.")
         return redirect("dashboard:sold_list")
 
-    # dacă ai salvat PDF local
     if shipment.label_pdf:
         return redirect(shipment.label_pdf.url)
 
-    # dacă ai URL de label de la Curiera
     if shipment.label_url:
         return redirect(shipment.label_url)
 
-    # ultim fallback – link de tracking (nu e PDF, dar tot ajută)
     if shipment.effective_tracking_url:
         return redirect(shipment.effective_tracking_url)
 
-    messages.error(
-        request,
-        "AWB-ul nu are încă un fișier sau link de etichetă disponibil.",
-    )
+    messages.error(request, "AWB-ul nu are încă un fișier sau link de etichetă disponibil.")
     return redirect("dashboard:sold_list")
 
 
 @login_required
 @user_passes_test(is_seller)
 def upload_package_photos(request, order_id, item_id):
-    messages.info(
-        request,
-        "Upload-ul de poze pentru colet va fi disponibil în curând.",
-    )
+    messages.info(request, "Upload-ul de poze pentru colet va fi disponibil în curând.")
     return redirect("dashboard:sold_list")
 
 
 @login_required
 @user_passes_test(is_seller)
 def mark_sent(request, order_id, item_id):
-    """
-    Marchează comanda ca predată curierului + aplică trust scoring.
-    """
     return redirect("logistics:hand_to_courier", order_id=order_id)
 
 
 @login_required
 @user_passes_test(is_seller)
 def view_package_photos(request, order_id, item_id):
-    messages.info(
-        request,
-        "Vizualizarea pozelor pentru colet va fi disponibilă în curând.",
-    )
+    messages.info(request, "Vizualizarea pozelor pentru colet va fi disponibilă în curând.")
     return redirect("dashboard:sold_list")
 
 
 @login_required
 @user_passes_test(is_seller)
 def initiate_return_seller(request, order_id, item_id):
-    messages.info(
-        request,
-        "Fluxul de retur pentru acest produs va fi disponibil în curând.",
-    )
+    messages.info(request, "Fluxul de retur pentru acest produs va fi disponibil în curând.")
     return redirect("dashboard:sold_list")
 
 
 @login_required
 @user_passes_test(is_seller)
 def download_commission_invoice(request, order_id, item_id):
-    """
-    Descarcă factura de comision pentru seller (dacă există) pentru comanda dată.
-    Căutăm ultima factură de tip COMMISSION emisă pentru seller + order.
-    """
     user = request.user
     try:
         invoice = (
@@ -529,10 +415,7 @@ def download_commission_invoice(request, order_id, item_id):
         invoice = None
 
     if not invoice:
-        messages.info(
-            request,
-            "Factura de comision nu este încă disponibilă pentru această comandă.",
-        )
+        messages.info(request, "Factura de comision nu este încă disponibilă pentru această comandă.")
         return redirect("dashboard:sold_list")
 
     return redirect("invoices:invoice_download", pk=invoice.pk)
@@ -547,10 +430,8 @@ def download_commission_invoice(request, order_id, item_id):
 def buyer_dashboard(request):
     user = request.user
 
-    # 1. Comenzi plasate
     orders_count = Order.objects.filter(buyer=user).count()
 
-    # 2. Favorite – dacă nu există profil sau relația, nu dăm crash
     favorites_count = 0
     has_dimensions = False
     try:
@@ -573,7 +454,6 @@ def buyer_dashboard(request):
             ]
         )
     except Exception:
-        # Fără profil → doar 0 / False
         favorites_count = 0
         has_dimensions = False
 
@@ -599,10 +479,7 @@ def orders_list(request):
     return render(
         request,
         "dashboard/buyer/orders_list.html",
-        {
-            "orders": orders,
-            "now": timezone.now(),
-        },
+        {"orders": orders, "now": timezone.now()},
     )
 
 
@@ -611,12 +488,5 @@ def orders_list(request):
 def chat_quick(request):
     from messaging.models import Conversation
 
-    convs = (
-        Conversation.objects.filter(participants=request.user)
-        .order_by("-last_updated")[:5]
-    )
-    return render(
-        request,
-        "dashboard/buyer/chat_quick.html",
-        {"conversations": convs},
-    )
+    convs = Conversation.objects.filter(participants=request.user).order_by("-last_updated")[:5]
+    return render(request, "dashboard/buyer/chat_quick.html", {"conversations": convs})

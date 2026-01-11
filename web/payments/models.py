@@ -8,14 +8,14 @@ from django.db.models import Sum
 
 class Payment(models.Model):
     """
-    Plată procesată prin Stripe (sau Wallet intern / Numerar).
+    Plată procesată prin Stripe (sau Numerar/Ramburs / Wallet).
     Un Order poate avea mai multe încercări de plată (multiple Payment-uri).
     """
 
     class Provider(models.TextChoices):
         STRIPE = "stripe", "Stripe"
-        WALLET = "wallet", "Wallet intern"
         CASH = "cash", "Numerar / Ramburs"
+        WALLET = "wallet", "Wallet"
 
     class Status(models.TextChoices):
         PENDING = "pending", "În așteptare"
@@ -38,16 +38,6 @@ class Payment(models.Model):
         max_length=20,
         choices=Provider.choices,
         default=Provider.STRIPE,
-    )
-
-    # dacă plata a folosit un wallet intern (provider=WALLET)
-    wallet = models.ForeignKey(
-        "Wallet",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="payments",
-        help_text="Dacă plata a folosit un wallet intern, este legată aici.",
     )
 
     amount = models.DecimalField(
@@ -81,7 +71,6 @@ class Payment(models.Model):
         help_text="Payment Intent ID din Stripe (dacă este disponibil).",
     )
 
-    # Pentru debugging / audit – răspunsul JSON de la Stripe
     raw_response = models.JSONField(
         blank=True,
         null=True,
@@ -103,17 +92,10 @@ class Payment(models.Model):
 
     @property
     def amount_minor_units(self) -> int:
-        """
-        Stripe lucrează în 'minor units' (bani, cents).
-        Pentru RON: 10.50 RON => 1050.
-        """
         return int((self.amount * Decimal("100")).quantize(Decimal("1")))
 
     @property
     def refunded_amount(self) -> Decimal:
-        """
-        Totalul deja returnat (pending + succeeded) pentru acest payment.
-        """
         total = (
             self.refunds.filter(
                 status__in=[Refund.Status.PENDING, Refund.Status.SUCCEEDED]
@@ -124,71 +106,13 @@ class Payment(models.Model):
 
     @property
     def refundable_amount(self) -> Decimal:
-        """
-        Cât mai poți returna (pentru partial/full refund).
-        """
         return max(Decimal("0.00"), self.amount - self.refunded_amount)
-
-
-class Wallet(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="wallet",
-    )
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-
-    def __str__(self):
-        return f"Wallet {self.user.email}: {self.balance} RON"
-
-
-class WalletTransaction(models.Model):
-    TOP_UP = "topup"
-    WITHDRAW = "withdraw"
-    ORDER_PAYMENT = "order_payment"
-    REFUND = "refund"
-    SALE_PAYOUT = "sale_payout"
-
-    TYPES = [
-        (TOP_UP, "Încărcare"),
-        (WITHDRAW, "Retragere"),
-        (ORDER_PAYMENT, "Plată comandă"),
-        (REFUND, "Refund către client"),
-        (SALE_PAYOUT, "Încasare vânzare"),
-    ]
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="wallet_transactions",
-    )
-    transaction_type = models.CharField(max_length=20, choices=TYPES)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    method = models.CharField(max_length=50)  # e.g. 'card', 'bank', 'wallet'
-    date = models.DateTimeField(auto_now_add=True)
-    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
-
-    # nou: pentru idempotency / tracking extern (Stripe, etc.)
-    external_id = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="ID tranzacție externă (ex: Stripe payment_intent).",
-    )
-
-    class Meta:
-        ordering = ["-date"]
-
-    def __str__(self):
-        return (
-            f"{self.get_transaction_type_display()} {self.amount} RON "
-            f"on {self.date.strftime('%Y-%m-%d %H:%M')}"
-        )
 
 
 class Refund(models.Model):
     """
     Refund total/parțial pentru un Payment.
-    Poate fi trimis în wallet intern și/sau prin Stripe (refund card).
+    Wallet credit (dacă vrei) se face în wallet app, nu aici.
     """
 
     class Status(models.TextChoices):
@@ -214,10 +138,6 @@ class Refund(models.Model):
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    to_wallet = models.BooleanField(
-        default=True,
-        help_text="Dacă True, suma se creditează în walletul userului.",
-    )
 
     status = models.CharField(
         max_length=20,
@@ -226,7 +146,6 @@ class Refund(models.Model):
         db_index=True,
     )
 
-    # Dacă facem refund prin Stripe
     stripe_refund_id = models.CharField(
         max_length=255,
         blank=True,

@@ -1,7 +1,7 @@
 # payments/admin.py
 from django.contrib import admin
 
-from .models import Wallet, WalletTransaction, Payment, Refund
+from .models import Payment, Refund
 
 
 @admin.register(Payment)
@@ -26,28 +26,6 @@ class PaymentAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-@admin.register(Wallet)
-class WalletAdmin(admin.ModelAdmin):
-    list_display = ("user", "balance")
-    search_fields = ("user__email", "user__first_name", "user__last_name")
-
-
-@admin.register(WalletTransaction)
-class WalletTransactionAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "user",
-        "transaction_type",
-        "amount",
-        "method",
-        "date",
-        "balance_after",
-    )
-    list_filter = ("transaction_type", "method", "date")
-    search_fields = ("user__email",)
-    ordering = ("-date",)
-
-
 @admin.register(Refund)
 class RefundAdmin(admin.ModelAdmin):
     list_display = (
@@ -57,9 +35,8 @@ class RefundAdmin(admin.ModelAdmin):
         "user",
         "amount",
         "status",
-        "to_wallet",
         "created_at",
     )
-    list_filter = ("status", "to_wallet", "created_at")
+    list_filter = ("status", "created_at")
     search_fields = ("payment__id", "order__id", "user__email")
     ordering = ("-created_at",)

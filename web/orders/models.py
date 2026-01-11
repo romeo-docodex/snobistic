@@ -11,7 +11,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from accounts.models import Address
-
+from collections import defaultdict
+from wallet.models import Wallet, WalletTransaction
 
 def _pct(amount: Decimal, percent: Decimal) -> Decimal:
     """
@@ -417,8 +418,6 @@ class Order(models.Model):
     # Escrow transitions
     # -----------------------------
     def _payout_sellers_from_escrow(self):
-        from collections import defaultdict
-        from payments.models import Wallet, WalletTransaction
 
         per_seller_gross = defaultdict(lambda: Decimal("0.00"))
 
