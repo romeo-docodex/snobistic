@@ -1,12 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Editează Ticket #{{ ticket.id }}{% endblock %}
+{% load static %}
+
+{% block title %}Editează Ticket #{{ ticket.id }} – Snobistic{% endblock %}
+
 {% block content %}
-<h1>Actualizează tichetul #{{ ticket.id }}</h1>
-<form method="post">
-  {% csrf_token %}
-  {% include "support/partials/form_errors.html" with form=form %}
-  {{ form.as_p }}
-  <button class="btn btn-primary">Salvează modificările</button>
-  <a class="btn btn-outline-secondary" href="{% url 'support:ticket_detail' ticket.id %}">Anulează</a>
-</form>
+
+<style>
+  .support-card {
+    padding: 1.5rem 1.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background-color: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .support-subtitle { font-size: 0.9rem; color: #6b7280; }
+
+  .support-form input,
+  .support-form select,
+  .support-form textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    padding: .65rem .85rem;
+    outline: none;
+    background: #fff;
+    font-size: 0.92rem;
+  }
+
+  .support-form input:focus,
+  .support-form select:focus,
+  .support-form textarea:focus {
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+  }
+
+  .support-actions .tf-btn { min-width: 170px; }
+</style>
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Editează ticket</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'support:tickets_list' %}">Suport</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'support:ticket_detail' ticket.id %}">Ticket #{{ ticket.id }}</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Editare</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="support-card">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+        <div>
+          <h6 class="title-account mb-1">Actualizează ticketul #{{ ticket.id }}</h6>
+          <p class="support-subtitle mb-0">
+            Modifică statusul, prioritatea, categoria sau legăturile către comandă/retur.
+          </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="tf-btn btn-out-line-dark" href="{% url 'support:ticket_detail' ticket.id %}">
+            Înapoi la ticket
+          </a>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      <form method="post" class="support-form">
+        {% csrf_token %}
+        {% include "support/partials/form_errors.html" with form=form %}
+        {{ form.as_p }}
+
+        <div class="support-actions d-flex flex-column flex-sm-row gap-2 justify-content-end mt-3">
+          <a class="tf-btn btn-out-line-dark" href="{% url 'support:ticket_detail' ticket.id %}">
+            Anulează
+          </a>
+          <button class="tf-btn animate-btn" type="submit">
+            Salvează modificările
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
 {% endblock %}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Facturile mele – Snobistic{% endblock %}
+
+{% block content %}
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Facturile mele</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Facturi</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="btn-sidebar-mb d-lg-none mb-3">
+      <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+        <i class="icon icon-sidebar"></i>
+      </button>
+    </div>
+
+    <div class="main-content-account">
+
+      {% include "accounts/profile/_account_sidebar.html" with account_section=account_section %}
+
+      <div class="my-acount-content account-address">
+        <h6 class="title-account mb-2">Facturile mele</h6>
+        <p class="text-sm text-grey mb-4">
+          Caută după număr, filtrează după tip/status și descarcă documentele în PDF.
+        </p>
+
+        <div class="account-address-item mb-4" style="border-radius:16px;">
+          <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="text-xxs text-grey mb-1">Caută după număr</label>
+              <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="SNB-20250111-000123">
+            </div>
+
+            <div class="col-6 col-md-2">
+              <label class="text-xxs text-grey mb-1">Tip</label>
+              <select name="type" class="form-select">
+                <option value="">Toate</option>
+                {% for v, label in TYPE_CHOICES %}
+                  <option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+              <label class="text-xxs text-grey mb-1">Document</label>
+              <select name="doc" class="form-select">
+                <option value="">Toate</option>
+                {% for v, label in DOC_CHOICES %}
+                  <option value="{{ v }}" {% if filters.doc == v %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+              <label class="text-xxs text-grey mb-1">Status</label>
+              <select name="status" class="form-select">
+                <option value="">Toate</option>
+                {% for v, label in STATUS_CHOICES %}
+                  <option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+              <label class="text-xxs text-grey mb-1">De la</label>
+              <input type="date" name="from" value="{{ filters.from }}" class="form-control">
+            </div>
+
+            <div class="col-6 col-md-2">
+              <label class="text-xxs text-grey mb-1">Până la</label>
+              <input type="date" name="to" value="{{ filters.to }}" class="form-control">
+            </div>
+
+            <div class="col-12 col-md-4 d-flex gap-2">
+              <button class="tf-btn btn-fill w-100" type="submit">Aplică filtre</button>
+              <a class="tf-btn btn-out-line-dark w-100" href="{% url 'invoices:my_invoices' %}">Reset</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="account-address-item" style="border-radius:16px;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="title text-sm fw-medium mb-0">Rezultate</p>
+            <p class="text-xxs text-grey mb-0">
+              {{ page_obj.paginator.count }} document{{ page_obj.paginator.count|pluralize:"e" }}
+            </p>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Număr</th>
+                  <th>Document</th>
+                  <th>Tip</th>
+                  <th>Status</th>
+                  <th>Comandă</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-end">Emisă</th>
+                  <th class="text-end">Acțiuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inv in invoices %}
+                  <tr>
+                    <td class="fw-semibold">
+                      <a href="{% url 'invoices:invoice_detail' inv.pk %}">
+                        #{{ inv.invoice_number|default:inv.pk }}
+                      </a>
+                      {% if inv.original_invoice %}
+                        <div class="text-xxs text-grey">
+                          Corecție pentru
+                          <a href="{% url 'invoices:invoice_detail' inv.original_invoice.pk %}">
+                            #{{ inv.original_invoice.invoice_number|default:inv.original_invoice.pk }}
+                          </a>
+                        </div>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      <span class="badge rounded-pill bg-light text-dark border">
+                        {{ inv.get_document_type_display }}
+                      </span>
+                    </td>
+
+                    <td class="text-sm">
+                      {{ inv.get_invoice_type_display }}
+                    </td>
+
+                    <td>
+                      {% if inv.status == "issued" %}
+                        <span class="badge rounded-pill bg-success-subtle text-success border">{{ inv.get_status_display }}</span>
+                      {% elif inv.status == "draft" %}
+                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border">{{ inv.get_status_display }}</span>
+                      {% else %}
+                        <span class="badge rounded-pill bg-danger-subtle text-danger border">{{ inv.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-sm">
+                      <a href="{% url 'dashboard:orders_list' %}">#{{ inv.order_id }}</a>
+                    </td>
+
+                    <td class="text-end fw-semibold">
+                      {{ inv.total_amount }} {{ inv.currency }}
+                    </td>
+
+                    <td class="text-end text-sm">
+                      {% if inv.issued_at %}
+                        {{ inv.issued_at|date:"Y-m-d" }}
+                      {% else %}
+                        <span class="text-grey">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end">
+                      <div class="d-inline-flex gap-2">
+                        <a class="tf-btn btn-out-line-dark" style="padding:8px 12px;"
+                           href="{% url 'invoices:invoice_detail' inv.pk %}">
+                          Vezi
+                        </a>
+                        <a class="tf-btn btn-fill" style="padding:8px 12px;"
+                           href="{% url 'invoices:invoice_download' inv.pk %}">
+                          PDF
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="8" class="text-grey">
+                      Nu există documente pentru filtrele selectate.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if page_obj.paginator.num_pages > 1 %}
+            <nav class="mt-4">
+              <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}{% if request.GET.doc %}doc={{ request.GET.doc }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.from %}from={{ request.GET.from }}&{% endif %}{% if request.GET.to %}to={{ request.GET.to }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                      &laquo;
+                    </a>
+                  </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                  <span class="page-link">
+                    Pagina {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                  </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}{% if request.GET.doc %}doc={{ request.GET.doc }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.from %}from={{ request.GET.from }}&{% endif %}{% if request.GET.to %}to={{ request.GET.to }}&{% endif %}page={{ page_obj.next_page_number }}">
+                      &raquo;
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

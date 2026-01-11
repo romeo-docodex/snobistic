@@ -1,16 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Ticket-uri{% endblock %}
+{% load static %}
+
+{% block title %}Suport – Tichetele mele – Snobistic{% endblock %}
+
 {% block content %}
-<h1>Solicitările mele</h1>
-<a class="btn btn-primary mb-3" href="{% url 'support:ticket_create' %}">Creează Ticket Nou</a>
-<table class="table">
-  <thead><tr><th>ID</th><th>Subiect</th><th>Data</th><th>Status</th><th>Prioritate</th><th>Acțiuni</th></tr></thead>
-  <tbody>
-    {% for tic in tickets %}
-      {% include "support/partials/ticket_row.html" with ticket=tic %}
-    {% empty %}
-      <tr><td colspan="6">Nu ai solicitări.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<style>
+  .support-card {
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .support-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0;
+  }
+
+  .support-list {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+
+  .support-empty {
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    color: #6b7280;
+    background: #fff;
+  }
+</style>
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Suport</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Suport</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="support-card mb-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h6 class="title-account mb-1">Solicitările mele</h6>
+          <p class="support-subtitle">
+            Aici vezi toate tichetele trimise către suport și statusul lor.
+          </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="tf-btn animate-btn" href="{% url 'support:ticket_create' %}">
+            Creează ticket
+          </a>
+          <a class="tf-btn btn-out-line-dark" href="{% url 'support:chat_queue' %}">
+            Vezi coada live
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="support-list">
+      {% for tic in tickets %}
+        {% include "support/partials/ticket_row.html" with ticket=tic %}
+      {% empty %}
+        <div class="support-empty">
+          Nu ai solicitări încă. Apasă <strong>Creează ticket</strong> ca să trimiți o cerere către suport.
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
 {% endblock %}

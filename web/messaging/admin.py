@@ -7,14 +7,28 @@ from .models import Conversation, Message, ConversationReadState, MessageAttachm
 @admin.register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "kind", "order_id", "support_user", "allow_staff",
-        "is_closed", "closed_at", "closed_by",
-        "participants_list", "last_updated",
+        "id",
+        "kind",
+        "order_id",
+        "support_user",
+        "support_ticket_id",
+        "allow_staff",
+        "is_closed",
+        "closed_at",
+        "closed_by",
+        "participants_list",
+        "last_updated",
     )
     list_filter = ("kind", "allow_staff", "is_closed", "last_updated")
-    search_fields = ("participants__email", "participants__first_name", "participants__last_name", "support_user__email")
+    search_fields = (
+        "participants__email",
+        "participants__first_name",
+        "participants__last_name",
+        "support_user__email",
+        "support_ticket__id",
+    )
     filter_horizontal = ("participants",)
-    autocomplete_fields = ("support_user", "order", "closed_by")
+    autocomplete_fields = ("support_user", "order", "support_ticket", "closed_by")
 
     def participants_list(self, obj):
         return ", ".join(
@@ -54,8 +68,15 @@ class MessageAttachmentAdmin(admin.ModelAdmin):
 @admin.register(ConversationReadState)
 class ConversationReadStateAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "conversation", "user", "last_read_at", "is_archived",
-        "is_muted", "muted_until", "left_at", "updated_at",
+        "id",
+        "conversation",
+        "user",
+        "last_read_at",
+        "is_archived",
+        "is_muted",
+        "muted_until",
+        "left_at",
+        "updated_at",
     )
     search_fields = ("user__email",)
     list_filter = ("is_archived", "is_muted", "last_read_at", "updated_at")

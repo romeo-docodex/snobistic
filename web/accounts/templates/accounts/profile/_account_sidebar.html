@@ -2,11 +2,9 @@
 
 {% with account_section|default:"dashboard" as account_section %}
 
-  {# ===================== DESKTOP SIDEBAR (>= lg) ===================== #}
   <div class="sidebar-account-wrap sidebar-content-wrap sticky-top d-lg-block d-none">
     <ul class="my-account-nav">
 
-      {# Dashboard #}
       <li>
         <a href="{% url 'accounts:profile' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dashboard' %}active{% endif %}">
@@ -14,7 +12,6 @@
         </a>
       </li>
 
-      {# Comenzi #}
       <li>
         <a href="{% url 'dashboard:orders_list' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
@@ -22,7 +19,14 @@
         </a>
       </li>
 
-      {# Wallet #}
+      {# ✅ NOI: Facturile mele (buyer) #}
+      <li>
+        <a href="{% url 'invoices:my_invoices' %}"
+           class="text-sm link fw-medium my-account-nav-item {% if account_section == 'invoices' %}active{% endif %}">
+          Facturile mele
+        </a>
+      </li>
+
       <li>
         <a href="{% url 'wallet:home' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'wallet' %}active{% endif %}">
@@ -30,7 +34,6 @@
         </a>
       </li>
 
-      {# Favorite #}
       <li>
         <a href="{% url 'catalog:favorites' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'favorites' %}active{% endif %}">
@@ -38,7 +41,6 @@
         </a>
       </li>
 
-      {# Adrese #}
       <li>
         <a href="{% url 'accounts:address_list' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'addresses' %}active{% endif %}">
@@ -46,7 +48,6 @@
         </a>
       </li>
 
-      {# Date personale #}
       <li>
         <a href="{% url 'accounts:profile_data' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'profile_data' %}active{% endif %}">
@@ -54,7 +55,6 @@
         </a>
       </li>
 
-      {# Măsurători #}
       <li>
         <a href="{% url 'accounts:profile_dimensions' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'dimensions' %}active{% endif %}">
@@ -62,7 +62,6 @@
         </a>
       </li>
 
-      {# Securitate & 2FA #}
       <li>
         <a href="{% url 'accounts:profile_security' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'security' %}active{% endif %}">
@@ -70,7 +69,6 @@
         </a>
       </li>
 
-      {# KYC #}
       <li>
         <a href="{% url 'accounts:kyc_center' %}"
            class="text-sm link fw-medium my-account-nav-item {% if account_section == 'kyc' %}active{% endif %}">
@@ -78,7 +76,6 @@
         </a>
       </li>
 
-      {# ===== Secțiune vânzător ===== #}
       {% if request.user.is_seller %}
         <li class="border-top pt-4">
           <span class="text-xxs text-uppercase text-muted d-block" style="font-size:14px; margin-bottom:15px;text-align:center;">
@@ -93,6 +90,14 @@
           </a>
         </li>
 
+        {# ✅ NOI: Facturi comision (seller) #}
+        <li>
+          <a href="{% url 'invoices:commission_invoices' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_invoices_commission' %}active{% endif %}">
+            Facturi comision
+          </a>
+        </li>
+
         <li>
           <a href="{% url 'accounts:seller_settings' %}"
              class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_settings' %}active{% endif %}">
@@ -101,7 +106,6 @@
         </li>
       {% endif %}
 
-      {# ===== Logout (POST) ===== #}
       <li class="border-top">
         <form method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}
@@ -117,7 +121,6 @@
   </div>
 
 
-  {# ===================== MOBILE OFFCANVAS (< lg) ===================== #}
   <div class="offcanvas offcanvas-start d-lg-none"
        tabindex="-1"
        id="mbAccount"
@@ -145,6 +148,14 @@
           <a href="{% url 'dashboard:orders_list' %}"
              class="text-sm link fw-medium my-account-nav-item {% if account_section == 'orders' %}active{% endif %}">
             Comenzile mele
+          </a>
+        </li>
+
+        {# ✅ NOI: Facturile mele #}
+        <li>
+          <a href="{% url 'invoices:my_invoices' %}"
+             class="text-sm link fw-medium my-account-nav-item {% if account_section == 'invoices' %}active{% endif %}">
+            Facturile mele
           </a>
         </li>
 
@@ -208,6 +219,14 @@
             <a href="{% url 'dashboard:seller_dashboard' %}"
                class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_dashboard' %}active{% endif %}">
               Panou vânzător
+            </a>
+          </li>
+
+          {# ✅ NOI: Facturi comision #}
+          <li>
+            <a href="{% url 'invoices:commission_invoices' %}"
+               class="text-sm link fw-medium my-account-nav-item {% if account_section == 'seller_invoices_commission' %}active{% endif %}">
+              Facturi comision
             </a>
           </li>
 

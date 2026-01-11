@@ -1,0 +1,63 @@
+{# templates/support/partials/ticket_row.html #}
+
+<style>
+  .tic-row {
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: #fff;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .tic-row:hover {
+    transform: translateY(-1px);
+    border-color: rgba(15, 23, 42, 0.10);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .tic-title { font-size: .95rem; margin-bottom: .15rem; }
+  .tic-meta { font-size: .82rem; color: #6b7280; }
+  .tic-pill {
+    font-size: .72rem;
+    padding: .28rem .65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(15, 23, 42, 0.02);
+    color: #111827;
+  }
+  .tic-time { font-size: .78rem; color: #6b7280; }
+</style>
+
+<a class="tic-row" href="{% url 'support:ticket_detail' ticket.id %}">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+
+    <div class="d-flex flex-column">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+        <span class="tic-pill">Ticket #{{ ticket.id }}</span>
+        <div class="tic-title fw-semibold">{{ ticket.subject }}</div>
+
+        <span class="tic-pill">Status: <strong>{{ ticket.get_status_display }}</strong></span>
+        <span class="tic-pill">Prioritate: <strong>{{ ticket.get_priority_display }}</strong></span>
+        <span class="tic-pill">Categorie: <strong>{{ ticket.get_category_display }}</strong></span>
+
+        {% if ticket.order_id %}
+          <span class="tic-pill">Comandă #{{ ticket.order_id }}</span>
+        {% endif %}
+      </div>
+
+      <div class="tic-meta">
+        Ultima activitate: {{ ticket.updated_at|timesince }} în urmă
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 justify-content-md-end">
+      <span class="tic-time">{{ ticket.created_at|date:"d.m.Y H:i" }}</span>
+      <span class="tf-btn btn-out-line-dark" style="pointer-events:none;">
+        Deschide
+      </span>
+    </div>
+
+  </div>
+</a>

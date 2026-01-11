@@ -10,9 +10,7 @@ class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
         fields = ["subject", "description", "priority", "category", "order"]
-        widgets = {
-            "description": forms.Textarea(attrs={"rows": 4}),
-        }
+        widgets = {"description": forms.Textarea(attrs={"rows": 4})}
         labels = {
             "subject": "Subiect",
             "description": "Descriere",
@@ -23,14 +21,10 @@ class TicketForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # order este opțional
         self.fields["order"].required = False
 
         if user is not None:
-            # Comenzi unde user-ul este buyer SAU are produse ca seller
-            qs = Order.objects.filter(
-                Q(buyer=user) | Q(items__product__owner=user)
-            ).distinct()
+            qs = Order.objects.filter(Q(buyer=user) | Q(items__product__owner=user)).distinct()
             self.fields["order"].queryset = qs
 
 
@@ -38,11 +32,7 @@ class TicketMessageForm(forms.ModelForm):
     class Meta:
         model = TicketMessage
         fields = ["text"]
-        widgets = {
-            "text": forms.Textarea(
-                attrs={"rows": 3, "placeholder": "Scrie răspuns…"}
-            )
-        }
+        widgets = {"text": forms.Textarea(attrs={"rows": 3, "placeholder": "Scrie răspuns…"})}
         labels = {"text": ""}
 
 

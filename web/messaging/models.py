@@ -47,6 +47,15 @@ class Conversation(models.Model):
         related_name="support_conversations_started",
     )
 
+    # ✅ NEW: conversatie per ticket (1:1)
+    support_ticket = models.OneToOneField(
+        "support.Ticket",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="conversation",
+    )
+
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="conversations",
@@ -77,30 +86,48 @@ class Conversation(models.Model):
             models.Index(fields=["is_closed", "last_updated"]),
         ]
         constraints = [
+            # ORDER: trebuie order, fără support_user / support_ticket
+            # SUPPORT: trebuie support_user; support_ticket poate fi null (conversație generală) sau setat (per ticket)
             models.CheckConstraint(
                 condition=(
-                    Q(kind=KIND_ORDER, order__isnull=False, support_user__isnull=True)
+                    Q(kind=KIND_ORDER, order__isnull=False, support_user__isnull=True, support_ticket__isnull=True)
                     | Q(kind=KIND_SUPPORT, order__isnull=True, support_user__isnull=False)
                 ),
                 name="conv_kind_requires_correct_link",
             ),
+            # dacă ai support_ticket => obligatoriu kind SUPPORT
+            models.CheckConstraint(
+                condition=(Q(support_ticket__isnull=True) | Q(kind=KIND_SUPPORT)),
+                name="support_ticket_requires_support_kind",
+            ),
+            # 1 conversație ORDER / comandă
             models.UniqueConstraint(
                 fields=["order"],
                 condition=Q(kind=KIND_ORDER),
                 name="uniq_order_conversation",
             ),
+            # 1 conversație SUPPORT "generală" / user (support_ticket IS NULL)
             models.UniqueConstraint(
                 fields=["support_user"],
-                condition=Q(kind=KIND_SUPPORT),
-                name="uniq_support_conversation_per_user",
+                condition=Q(kind=KIND_SUPPORT, support_ticket__isnull=True),
+                name="uniq_general_support_conversation_per_user",
+            ),
+            # 1 conversație SUPPORT / ticket
+            models.UniqueConstraint(
+                fields=["support_ticket"],
+                condition=Q(kind=KIND_SUPPORT, support_ticket__isnull=False),
+                name="uniq_support_ticket_conversation",
             ),
         ]
 
     def __str__(self) -> str:
         if self.kind == self.KIND_ORDER and self.order_id:
             return f"Conv ORDER (Order #{self.order_id})"
-        if self.kind == self.KIND_SUPPORT and self.support_user_id:
-            return f"Conv SUPPORT ({self.support_user_id})"
+        if self.kind == self.KIND_SUPPORT:
+            if self.support_ticket_id:
+                return f"Conv SUPPORT (Ticket #{self.support_ticket_id})"
+            if self.support_user_id:
+                return f"Conv SUPPORT (User {self.support_user_id})"
         return f"Conversation #{self.pk}"
 
     def is_participant(self, user) -> bool:

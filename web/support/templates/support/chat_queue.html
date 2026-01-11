@@ -1,8 +1,286 @@
+{# templates/support/chat_queue.html #}
 {% extends "base.html" %}
-{% block title %}Live Chat{% endblock %}
+{% load static %}
+
+{% block title %}Suport live – Snobistic{% endblock %}
+
 {% block content %}
-<h1>Live Chat</h1>
-<p>Ești pe locul <strong>#{{ position }}</strong> în coadă.</p>
-<p>Timp estimat: ~{{ eta }} minute.</p>
-<a class="btn btn-secondary" href="{% url 'support:tickets_list' %}">Trimite un ticket</a>
+
+<style>
+  /* Support Queue – same vibe ca messaging/account pages */
+
+  .support-card {
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .support-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0;
+  }
+
+  .queue-hero {
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(15, 23, 42, 0.02);
+    padding: 1.15rem 1.25rem;
+  }
+
+  .queue-kpi {
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+    padding: 1rem 1.15rem;
+  }
+
+  .queue-kpi-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: .25rem;
+  }
+
+  .queue-kpi-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #111827;
+  }
+
+  .queue-note {
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(37, 99, 235, 0.06);
+    padding: .85rem 1rem;
+    color: #111827;
+  }
+
+  .queue-pill {
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    padding: .35rem .7rem;
+    background: rgba(15, 23, 42, 0.02);
+    font-size: .82rem;
+    color: #111827;
+  }
+
+  .queue-filter {
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+    align-items:center;
+  }
+
+  .queue-chip {
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,0.10);
+    padding: .35rem .7rem;
+    background: rgba(15,23,42,0.02);
+    font-size: .82rem;
+    text-decoration:none;
+    color:#111827;
+  }
+  .queue-chip.active {
+    background: rgba(37,99,235,0.10);
+    border-color: rgba(37,99,235,0.20);
+    font-weight: 700;
+  }
+</style>
+
+<section class="tf-page-title">
+  <div class="container">
+    <div class="box-title text-center">
+      <h4 class="title">Suport live</h4>
+      <div class="breadcrumb-list">
+        <a class="breadcrumb-item" href="{% url 'core:home' %}">Acasă</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <a class="breadcrumb-item" href="{% url 'support:tickets_list' %}">Suport</a>
+        <div class="breadcrumb-item dot"><span></span></div>
+        <div class="breadcrumb-item current">Coada live</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="flat-spacing-13">
+  <div class="container-7">
+
+    <div class="support-card mb-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h6 class="title-account mb-1">Coada de suport</h6>
+          <p class="support-subtitle">
+            Vezi poziția ta și timpul estimat până când un agent preia solicitarea.
+          </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'support:ticket_create' %}" class="tf-btn animate-btn">
+            Creează ticket
+          </a>
+          <a href="{% url 'support:tickets_list' %}" class="tf-btn btn-out-line-dark">
+            Tichetele mele
+          </a>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      <div class="queue-filter">
+        <span class="queue-pill">Filtru categorie:</span>
+
+        <a class="queue-chip {% if category == 'all' %}active{% endif %}"
+           href="?category=all">
+          Toate
+        </a>
+
+        <a class="queue-chip {% if category == 'general' %}active{% endif %}"
+           href="?category=general">
+          General
+        </a>
+
+        <a class="queue-chip {% if category == 'order' %}active{% endif %}"
+           href="?category=order">
+          Comandă
+        </a>
+
+        <a class="queue-chip {% if category == 'return' %}active{% endif %}"
+           href="?category=return">
+          Retur
+        </a>
+
+        <a class="queue-chip {% if category == 'payment' %}active{% endif %}"
+           href="?category=payment">
+          Plată / escrow
+        </a>
+      </div>
+    </div>
+
+    {% if queue_note %}
+      <div class="queue-note mb-3">
+        {{ queue_note }}
+      </div>
+    {% endif %}
+
+    {% if position == 0 %}
+      <div class="queue-hero mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+          <div>
+            <div class="queue-kpi-label mb-1">Status</div>
+            <div class="queue-kpi-value">Nu ești în coadă</div>
+            <div class="text-sm text-muted mt-1">
+              Nu ai niciun ticket activ (NEW / IN_PROGRESS) pentru categoria selectată.
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <a class="tf-btn animate-btn" href="{% url 'support:ticket_create' %}">
+              Creează ticket
+            </a>
+            <a class="tf-btn btn-out-line-dark" href="{% url 'support:tickets_list' %}">
+              Vezi tichetele mele
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="support-card">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+          <div>
+            <div class="queue-kpi-label mb-1">Cum intri în coadă?</div>
+            <div class="text-sm text-muted mb-0">
+              Creezi un ticket, iar dacă are status <strong>Nou</strong> sau <strong>În lucru</strong>,
+              apare automat în coadă. Dacă este <strong>Așteaptă răspuns utilizator</strong>, nu ocupă coada.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    {% else %}
+
+      <div class="support-card mb-3">
+        <div class="queue-hero">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+              <div class="queue-kpi-label mb-1">Poziția ta în coadă</div>
+              <div class="queue-kpi-value">#{{ position }}</div>
+
+              {% if queue_ticket %}
+                <div class="text-sm text-muted mt-2">
+                  Ticket activ: <strong>#{{ queue_ticket.id }}</strong> ·
+                  <span class="queue-pill">{{ queue_ticket.get_priority_display }}</span>
+                  <span class="queue-pill">{{ queue_ticket.get_category_display }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+              {% if queue_ticket %}
+                <a class="tf-btn animate-btn" href="{% url 'support:ticket_detail' queue_ticket.id %}">
+                  Deschide ticketul
+                </a>
+              {% endif %}
+              <a class="tf-btn btn-out-line-dark" href="{% url 'support:tickets_list' %}">
+                Toate tichetele
+              </a>
+              <a class="tf-btn btn-out-line-dark" href="{% url 'support:ticket_create' %}">
+                Creează alt ticket
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-md-4">
+            <div class="queue-kpi">
+              <div class="queue-kpi-label">Timp estimat</div>
+              <div class="queue-kpi-value">~{{ eta }} min</div>
+              <div class="text-xxs text-grey mt-1">
+                Estimare orientativă, poate varia.
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <div class="queue-kpi">
+              <div class="queue-kpi-label">Agenți activi</div>
+              <div class="queue-kpi-value">{{ agents }}</div>
+              <div class="text-xxs text-grey mt-1">
+                Număr estimat de staff disponibil.
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <div class="queue-kpi">
+              <div class="queue-kpi-label">Medie / ticket</div>
+              <div class="queue-kpi-value">{{ avg_minutes }} min</div>
+              <div class="text-xxs text-grey mt-1">
+                În funcție de categoria aleasă.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="support-card">
+        <div class="queue-kpi-label mb-2">Sfaturi ca să scurtezi timpul</div>
+        <ul class="text-sm text-muted mb-0">
+          <li>Scrie pașii exacți (ce ai făcut, ce ai așteptat, ce s-a întâmplat).</li>
+          <li>Dacă e legat de comandă, include ID-ul comenzii și detalii despre livrare/plată.</li>
+          <li>Adaugă capturi de ecran sau mesaje de eroare (dacă există).</li>
+        </ul>
+      </div>
+
+    {% endif %}
+
+  </div>
+</div>
+
 {% endblock %}

@@ -1,36 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}Factura {{ invoice.invoice_number }} – Snobistic{% endblock %}
+{% block title %}
+  {% if invoice.document_type == "credit_note" %}
+    Storno {{ invoice.invoice_number|default:invoice.pk }} – Snobistic
+  {% else %}
+    Factura {{ invoice.invoice_number|default:invoice.pk }} – Snobistic
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-10">
 
-      {# ====== HEADER FACTURĂ ====== #}
+      {# ====== BANNER: CREDIT NOTE / STORNO + LINK FACTURA ORIGINALĂ ====== #}
+      {% if invoice.document_type == "credit_note" %}
+        <div class="alert alert-warning border-0 shadow-sm mb-4">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <div class="fw-semibold">Storno / Credit note</div>
+              <div class="small text-muted">
+                Acest document corectează factura inițială.
+                {% if invoice.original_invoice %}
+                  Factura: <a class="fw-semibold" href="{% url 'invoices:invoice_detail' invoice.original_invoice.pk %}">
+                    #{{ invoice.original_invoice.invoice_number|default:invoice.original_invoice.pk }}
+                  </a>
+                {% endif %}
+              </div>
+
+              {% if invoice.cancel_reason %}
+                <div class="small text-muted mt-2">
+                  <span class="text-uppercase small">Motiv:</span> {{ invoice.cancel_reason }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="text-end">
+              <span class="badge rounded-pill bg-warning text-dark">
+                {{ invoice.get_document_type_display }}
+              </span>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {# ====== HEADER DOCUMENT ====== #}
       <div class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4 pb-3">
-
           <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
             <div class="d-flex align-items-center gap-3">
-              {# Logo / Brand #}
               <div class="bg-dark text-white d-flex align-items-center justify-content-center rounded-3"
                    style="width:56px;height:56px;">
                 <span class="fw-bold">SN</span>
               </div>
               <div>
-                <div class="text-uppercase small text-muted">Factura</div>
-                <h1 class="h4 mb-1">#{{ invoice.invoice_number }}</h1>
+                <div class="text-uppercase small text-muted">
+                  {% if invoice.document_type == "credit_note" %}
+                    Storno / Credit note
+                  {% else %}
+                    Factura
+                  {% endif %}
+                </div>
+
+                <h1 class="h4 mb-1">
+                  #{{ invoice.invoice_number|default:invoice.pk }}
+                </h1>
 
                 <div class="small text-muted">
                   Comanda #{{ order.id }} •
-                  {% if order.order_type == 'auction_win' %}
-                    Licitație
-                  {% else %}
-                    Magazin
-                  {% endif %}
+                  {% if order.order_type == 'auction_win' %}Licitație{% else %}Magazin{% endif %}
                   • {{ invoice.get_invoice_type_display }}
                 </div>
+
+                {% if invoice.document_type != "credit_note" and invoice.original_invoice %}
+                  <div class="small text-muted mt-1">
+                    Corecție pentru:
+                    <a href="{% url 'invoices:invoice_detail' invoice.original_invoice.pk %}">
+                      #{{ invoice.original_invoice.invoice_number|default:invoice.original_invoice.pk }}
+                    </a>
+                  </div>
+                {% endif %}
               </div>
             </div>
 
@@ -41,175 +90,247 @@
               </div>
 
               <div class="small text-muted mt-2">
-                Emisă la<br>
-                <span class="fw-semibold">
-                  {{ invoice.issued_at|date:"Y-m-d" }}
-                </span>
-                · {{ invoice.issued_at|date:"H:i" }}
+                {% if invoice.status == "draft" %}
+                  Draft (neemis)
+                {% else %}
+                  Emisă la<br>
+                  <span class="fw-semibold">
+                    {{ invoice.issued_at|date:"Y-m-d"|default:"—" }}
+                  </span>
+                  {% if invoice.issued_at %}
+                    · {{ invoice.issued_at|date:"H:i" }}
+                  {% endif %}
+                {% endif %}
               </div>
 
               <div class="mt-2">
-                <span class="badge rounded-pill bg-light text-muted border">
-                  Status: {{ invoice.get_status_display }}
-                </span>
+                {% if invoice.status == "issued" %}
+                  <span class="badge rounded-pill bg-success-subtle text-success border">
+                    Status: {{ invoice.get_status_display }}
+                  </span>
+                {% elif invoice.status == "draft" %}
+                  <span class="badge rounded-pill bg-secondary-subtle text-secondary border">
+                    Status: {{ invoice.get_status_display }}
+                  </span>
+                {% else %}
+                  <span class="badge rounded-pill bg-danger-subtle text-danger border">
+                    Status: {{ invoice.get_status_display }}
+                  </span>
+                {% endif %}
               </div>
+
+              {% if invoice.status == "cancelled" %}
+                <div class="small text-muted mt-2">
+                  Anulată la:
+                  <span class="fw-semibold">{{ invoice.cancelled_at|date:"Y-m-d H:i"|default:"—" }}</span>
+                </div>
+                {% if invoice.cancel_reason %}
+                  <div class="small text-muted mt-1">
+                    Motiv: {{ invoice.cancel_reason }}
+                  </div>
+                {% endif %}
+              {% endif %}
             </div>
           </div>
 
-          {# Subtitle tip factură #}
           <div class="mt-3 small text-muted">
             {% if kind == 'product' %}
-              Factură pentru valoarea produselor din comandă.
+              {% if invoice.document_type == "credit_note" %}
+                Storno pentru produsele din comandă.
+              {% else %}
+                Factură pentru valoarea produselor din comandă.
+              {% endif %}
             {% elif kind == 'shipping' %}
-              Factură pentru costul de transport al comenzii.
+              {% if invoice.document_type == "credit_note" %}
+                Storno pentru costul de transport al comenzii.
+              {% else %}
+                Factură pentru costul de transport al comenzii.
+              {% endif %}
             {% elif kind == 'commission' %}
-              Factură de comision emisă de platforma Snobistic către vânzător.
+              {% if invoice.document_type == "credit_note" %}
+                Storno pentru comisionul platformei.
+              {% else %}
+                Factură de comision emisă de platforma Snobistic către vânzător.
+              {% endif %}
             {% elif kind == 'return' %}
-              Factură aferentă unui retur (diferențe/regularizări).
+              {% if invoice.document_type == "credit_note" %}
+                Storno/regularizare aferentă unui retur.
+              {% else %}
+                Factură aferentă unui retur (diferențe/regularizări).
+              {% endif %}
             {% endif %}
           </div>
-
         </div>
       </div>
 
-      {# ====== DATE PARTI (CUMPĂRĂTOR / VÂNZĂTOR) ====== #}
+      {# ====== DATE PĂRȚI (BENEFICIAR / EMITENT) ====== #}
       <div class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4">
-
           <div class="row g-4">
             <div class="col-md-6">
-              <h6 class="text-uppercase small text-muted mb-2">Cumpărător</h6>
+              <h6 class="text-uppercase small text-muted mb-2">Beneficiar</h6>
               <div class="border rounded-3 p-3 h-100">
-                <p class="mb-1 fw-semibold">
-                  {{ invoice.buyer.get_full_name|default:invoice.buyer.email }}
-                </p>
-                <p class="mb-1 small text-muted">
-                  {{ invoice.buyer.email }}
-                </p>
-                {# aici ulterior poți afișa și date firmă / adresă din profil #}
+                <p class="mb-1 fw-semibold">{{ invoice.bill_to_name|default:"—" }}</p>
+                {% if invoice.bill_to_email %}<p class="mb-1 small text-muted">{{ invoice.bill_to_email }}</p>{% endif %}
+                {% if invoice.bill_to_vat %}<p class="mb-1 small text-muted">CUI/VAT: {{ invoice.bill_to_vat }}</p>{% endif %}
+                {% if invoice.bill_to_reg_no %}<p class="mb-1 small text-muted">RC: {{ invoice.bill_to_reg_no }}</p>{% endif %}
+                {% if invoice.bill_to_address or invoice.bill_to_city or invoice.bill_to_country %}
+                  <p class="mb-0 small text-muted">
+                    {{ invoice.bill_to_address }}{% if invoice.bill_to_city %}, {{ invoice.bill_to_city }}{% endif %}{% if invoice.bill_to_country %}, {{ invoice.bill_to_country }}{% endif %}
+                  </p>
+                {% endif %}
               </div>
             </div>
 
             <div class="col-md-6">
-              <h6 class="text-uppercase small text-muted mb-2">Vânzător / Emitent</h6>
+              <h6 class="text-uppercase small text-muted mb-2">Emitent</h6>
               <div class="border rounded-3 p-3 h-100 text-md-end">
-                {% if invoice.seller %}
-                  <p class="mb-1 fw-semibold">
-                    {{ invoice.seller.get_full_name|default:invoice.seller.email }}
-                  </p>
-                  <p class="mb-1 small text-muted">
-                    {{ invoice.seller.email }}
-                  </p>
+                <p class="mb-1 fw-semibold">{{ invoice.issuer_name|default:"—" }}</p>
+                {% if invoice.issuer_vat %}<p class="mb-1 small text-muted">CUI/VAT: {{ invoice.issuer_vat }}</p>{% endif %}
+                {% if invoice.issuer_reg_no %}<p class="mb-1 small text-muted">RC: {{ invoice.issuer_reg_no }}</p>{% endif %}
+                {% if invoice.issuer_email %}<p class="mb-1 small text-muted">{{ invoice.issuer_email }}</p>{% endif %}
+                {% if invoice.issuer_phone %}<p class="mb-1 small text-muted">{{ invoice.issuer_phone }}</p>{% endif %}
+                {% if invoice.issuer_address or invoice.issuer_city or invoice.issuer_country %}
                   <p class="mb-0 small text-muted">
-                    {# în viitor: CUI, firmă, adresă, IBAN din profil seller #}
-                    Factură emisă în numele vânzătorului.
-                  </p>
-                {% else %}
-                  <p class="mb-1 fw-semibold">
-                    Snobistic Platform
-                  </p>
-                  <p class="mb-0 small text-muted">
-                    Factură pentru servicii de comision &amp; intermediere.
+                    {{ invoice.issuer_address }}{% if invoice.issuer_city %}, {{ invoice.issuer_city }}{% endif %}{% if invoice.issuer_country %}, {{ invoice.issuer_country }}{% endif %}
                   </p>
                 {% endif %}
               </div>
             </div>
           </div>
 
-          {# Info comandă #}
           <div class="row mt-4 g-3 small">
             <div class="col-md-4">
               <div class="text-muted text-uppercase mb-1">Comandă</div>
               <div class="fw-semibold">#{{ order.id }}</div>
-              <div class="text-muted">
-                {{ order.created_at|date:"Y-m-d H:i" }}
-              </div>
+              <div class="text-muted">{{ order.created_at|date:"Y-m-d H:i" }}</div>
             </div>
             <div class="col-md-4">
               <div class="text-muted text-uppercase mb-1">Plată</div>
-              <div class="fw-semibold">
-                {{ order.payment_status_label }}
-              </div>
+              <div class="fw-semibold">{{ order.payment_status_label }}</div>
               {% if order.latest_payment %}
                 <div class="text-muted">
-                  {{ order.latest_payment.get_provider_display }}
-                  · P#{{ order.latest_payment.id }}
+                  {{ order.latest_payment.get_provider_display }} · P#{{ order.latest_payment.id }}
                 </div>
               {% endif %}
             </div>
             <div class="col-md-4">
               <div class="text-muted text-uppercase mb-1">Escrow</div>
-              <div class="fw-semibold">
-                {{ order.escrow_status_label }}
-              </div>
+              <div class="fw-semibold">{{ order.escrow_status_label }}</div>
             </div>
           </div>
-
         </div>
       </div>
 
-      {# ====== DETALII SUME ====== #}
+      {# ====== LINII DOCUMENT ====== #}
       <div class="card shadow-sm mb-4 border-0">
         <div class="card-body p-4">
-          <h6 class="text-uppercase small text-muted mb-3">Detalii sumă</h6>
+          <h6 class="text-uppercase small text-muted mb-3">
+            {% if invoice.document_type == "credit_note" %}Linii storno{% else %}Linii factură{% endif %}
+          </h6>
 
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
               <thead class="table-light">
                 <tr>
                   <th class="border-0">Descriere</th>
-                  <th class="border-0 text-end" style="width: 180px;">Valoare</th>
+                  <th class="border-0 text-end" style="width: 90px;">Cant.</th>
+                  <th class="border-0 text-end" style="width: 140px;">Preț unitar (net)</th>
+                  <th class="border-0 text-end" style="width: 110px;">TVA %</th>
+                  <th class="border-0 text-end" style="width: 160px;">Total (cu TVA)</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>
-                    {% if kind == 'product' %}
-                      Valoare produse din comanda #{{ order.id }}
-                    {% elif kind == 'shipping' %}
-                      Cost de transport pentru comanda #{{ order.id }}
-                    {% elif kind == 'commission' %}
-                      Comision platformă Snobistic aferent comenzii #{{ order.id }}
-                    {% elif kind == 'return' %}
-                      Regularizare / retur aferent comenzii #{{ order.id }}
+                {% for line in lines %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ line.description }}</div>
+                      <div class="small text-muted">
+                        {% if line.kind %}Tip: {{ line.get_kind_display }}{% endif %}
+                        {% if line.sku %}{% if line.kind %} · {% endif %}SKU: {{ line.sku }}{% endif %}
+                        {% if line.product_id %}{% if line.kind or line.sku %} · {% endif %}Produs ID: {{ line.product_id }}{% endif %}
+                      </div>
+                    </td>
+                    <td class="text-end">{{ line.quantity }}</td>
+                    <td class="text-end">{{ line.unit_net_amount }} {{ line.currency }}</td>
+                    <td class="text-end">{{ line.vat_percent }}%</td>
+
+                    {% if line.total_amount < 0 %}
+                      <td class="text-end fw-semibold text-danger">{{ line.total_amount }} {{ line.currency }}</td>
                     {% else %}
-                      Bază impozabilă
+                      <td class="text-end fw-semibold">{{ line.total_amount }} {{ line.currency }}</td>
                     {% endif %}
-                  </td>
-                  <td class="text-end">
-                    {{ invoice.net_amount }} {{ invoice.currency }}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    TVA ({{ invoice.vat_percent }}%)
-                  </td>
-                  <td class="text-end">
-                    {{ invoice.vat_amount }} {{ invoice.currency }}
-                  </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-muted">Nu există linii de factură.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="table-light">
+                  <th colspan="4" class="text-end">Subtotal (net)</th>
+                  <th class="text-end">{{ invoice.net_amount }} {{ invoice.currency }}</th>
                 </tr>
                 <tr class="table-light">
-                  <th>Total de plată</th>
-                  <th class="text-end">
-                    {{ invoice.total_amount }} {{ invoice.currency }}
-                  </th>
+                  <th colspan="4" class="text-end">TVA</th>
+                  <th class="text-end">{{ invoice.vat_amount }} {{ invoice.currency }}</th>
                 </tr>
-              </tbody>
+                <tr class="table-light">
+                  <th colspan="4" class="text-end">Total de plată</th>
+                  {% if invoice.total_amount < 0 %}
+                    <th class="text-end text-danger">{{ invoice.total_amount }} {{ invoice.currency }}</th>
+                  {% else %}
+                    <th class="text-end">{{ invoice.total_amount }} {{ invoice.currency }}</th>
+                  {% endif %}
+                </tr>
+              </tfoot>
             </table>
           </div>
+
         </div>
       </div>
 
-      {# ====== ACTIONS ====== #}
+      {# ====== ACTIONS + WORKFLOW ====== #}
       <div class="d-flex justify-content-between align-items-center mb-5">
         <a href="{% url 'dashboard:orders_list' %}" class="btn btn-outline-secondary">
           &larr; Înapoi la comenzi
         </a>
 
-        <a href="{% url 'invoices:invoice_download' invoice.pk %}"
-        class="btn btn-primary">
-        Download PDF
-        </a>
+        <div class="d-flex align-items-center gap-2">
+
+          <a href="{% url 'invoices:invoice_download' invoice.pk %}" class="btn btn-primary">
+            Download PDF
+          </a>
+
+          {% if can_manage %}
+            {% if invoice.status == "draft" %}
+              <form method="post" action="{% url 'invoices:invoice_issue' invoice.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-success" type="submit">
+                  Emite
+                </button>
+              </form>
+            {% elif invoice.status == "issued" %}
+              <form method="post" action="{% url 'invoices:invoice_credit_note' invoice.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="reason" value="">
+                <button class="btn btn-warning" type="submit">
+                  Storno
+                </button>
+              </form>
+
+              <form method="post" action="{% url 'invoices:invoice_cancel' invoice.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="reason" value="">
+                <button class="btn btn-outline-danger" type="submit">
+                  Anulează
+                </button>
+              </form>
+            {% endif %}
+          {% endif %}
+
+        </div>
       </div>
 
     </div>
