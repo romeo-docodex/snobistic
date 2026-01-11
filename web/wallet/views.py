@@ -184,6 +184,9 @@ def wallet_withdraw(request):
 
 @csrf_exempt
 def stripe_webhook_wallet(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("Invalid method")
+
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
     endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", "")
@@ -201,42 +204,63 @@ def stripe_webhook_wallet(request):
     event_type = event.get("type")
     data = event.get("data", {}).get("object", {}) or {}
 
-    if event_type == "checkout.session.completed":
-        metadata = data.get("metadata", {}) or {}
-        purpose = metadata.get("purpose")
-        if purpose != "wallet_topup":
-            return HttpResponse(status=200)
+    handled_types = {
+        "checkout.session.completed",
+        "checkout.session.async_payment_succeeded",
+    }
+    if event_type not in handled_types:
+        return HttpResponse(status=200)
 
-        payment_intent_id = data.get("payment_intent") or ""
-        user_id = metadata.get("user_id")
+    metadata = data.get("metadata", {}) or {}
+    if metadata.get("purpose") != "wallet_topup":
+        return HttpResponse(status=200)
+
+    # ✅ asigură-te că e plătit
+    if data.get("payment_status") not in (None, "paid"):
+        # Stripe poate să nu trimită payment_status în anumite cazuri,
+        # dar în mod normal la completed/succeeded e "paid"
+        return HttpResponse(status=200)
+
+    user_id = metadata.get("user_id")
+    if not user_id:
+        return HttpResponse(status=200)
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return HttpResponse(status=200)
+
+    # ✅ folosește amount_total din session (în subunități, ex bani)
+    amount_total = data.get("amount_total")
+    if amount_total is None:
+        # fallback la metadata dacă e absolut necesar
         amount_str = metadata.get("amount")
-
-        if not user_id or not amount_str:
+        if not amount_str:
             return HttpResponse(status=200)
-
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return HttpResponse(status=200)
-
         try:
             amount = Decimal(amount_str)
         except Exception:
             return HttpResponse(status=200)
+    else:
+        try:
+            amount = (Decimal(str(amount_total)) / Decimal("100")).quantize(Decimal("0.01"))
+        except Exception:
+            return HttpResponse(status=200)
 
-        credit_wallet(
-            user=user,
-            amount=amount,
-            tx_type=WalletTransaction.Type.TOP_UP,
-            method="card",
-            external_id=payment_intent_id or data.get("id") or "",
-            note="Încărcare wallet (Stripe)",
-            meta={"session_id": data.get("id"), "payment_intent": payment_intent_id},
-        )
+    payment_intent_id = data.get("payment_intent") or ""
+    session_id = data.get("id") or ""
+    external_id = payment_intent_id or session_id
 
-        return HttpResponse(status=200)
-
+    credit_wallet(
+        user=user,
+        amount=amount,
+        tx_type=WalletTransaction.Type.TOP_UP,
+        method="card",
+        external_id=external_id,
+        note="Încărcare wallet (Stripe)",
+        meta={"session_id": session_id, "payment_intent": payment_intent_id, "event_type": event_type},
+    )
     return HttpResponse(status=200)

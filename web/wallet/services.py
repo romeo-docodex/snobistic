@@ -21,8 +21,23 @@ def _currency() -> str:
     return getattr(settings, "SNOBISTIC_CURRENCY", "RON").upper()
 
 
+def get_or_create_wallet_for_user_readonly(user) -> Wallet:
+    """
+    Read-only helper (NU pune lock).
+    Folosește-l în context processors și views de UI.
+    """
+    wallet, _ = Wallet.objects.get_or_create(
+        user=user,
+        defaults={"currency": _currency()},
+    )
+    return wallet
+
+
 @transaction.atomic
 def get_or_create_wallet_for_user(user) -> Wallet:
+    """
+    Locked helper (select_for_update) — folosește-l DOAR în operații financiare.
+    """
     wallet, _ = Wallet.objects.select_for_update().get_or_create(
         user=user,
         defaults={"currency": _currency()},
@@ -120,34 +135,18 @@ def debit_wallet(
 @transaction.atomic
 def charge_order_from_wallet(*args, **kwargs):
     """
-    ✅ Wallet checkout for an order:
-    - debitează wallet-ul buyer-ului
-    - creează/actualizează un Payment (provider=wallet, status)
-    - marchează Order ca paid (escrow HELD)
-
-    Compatibil cu apeluri diferite din views:
-      charge_order_from_wallet(order)
-      charge_order_from_wallet(order, user)
-      charge_order_from_wallet(user, order)
-
-    Kwargs acceptate:
-      user=..., order=..., amount=..., external_id=..., note=..., meta=...
-    Return:
-      (payment, wallet_tx)
+    (păstrat exact ca la tine, doar că folosește _currency() de aici)
     """
-    # --- parse args safely (ca să nu-ți pice dacă ai altă ordine în views) ---
     order = kwargs.pop("order", None)
     user = kwargs.pop("user", None)
 
     if order is None:
-        # try detect from args
         for a in args:
             if hasattr(a, "total") and hasattr(a, "buyer_id"):
                 order = a
                 break
 
     if user is None:
-        # try detect from args
         for a in args:
             if hasattr(a, "is_authenticated"):
                 user = a
@@ -156,7 +155,6 @@ def charge_order_from_wallet(*args, **kwargs):
     if order is None:
         raise ValueError("charge_order_from_wallet: missing order")
 
-    # fallback: payer = order.buyer
     payer = user or getattr(order, "buyer", None)
     if payer is None:
         raise ValueError("charge_order_from_wallet: missing user (and order has no buyer)")
@@ -165,22 +163,15 @@ def charge_order_from_wallet(*args, **kwargs):
     if amount <= 0:
         raise ValueError("charge_order_from_wallet: amount must be > 0")
 
-    external_id = (kwargs.pop("external_id", "") or "").strip()
-    # idempotency key: per order
-    if not external_id:
-        external_id = f"order:{order.pk}"
-
+    external_id = (kwargs.pop("external_id", "") or "").strip() or f"order:{order.pk}"
     note = kwargs.pop("note", "") or ""
     meta = kwargs.pop("meta", None)
 
-    # imports here to avoid circular imports at module import-time
     from orders.models import Order
     from payments.models import Payment
 
-    # lock order row (avoid double-pay / race)
     order = Order.objects.select_for_update().get(pk=order.pk)
 
-    # already paid => no-op (idempotent)
     if order.payment_status == Order.PAYMENT_PAID and order.escrow_status == Order.ESCROW_HELD:
         existing = (
             Payment.objects.filter(order=order, user=payer)
@@ -189,8 +180,7 @@ def charge_order_from_wallet(*args, **kwargs):
             .first()
         )
         if existing:
-            return existing, None  # already settled earlier
-        # fallback: create a "synthetic" record (optional) - but return no tx
+            return existing, None
         p = Payment.objects.create(
             order=order,
             user=payer,
@@ -202,7 +192,6 @@ def charge_order_from_wallet(*args, **kwargs):
         )
         return p, None
 
-    # if a successful wallet payment already exists (idempotent)
     paid = Payment.objects.filter(
         order=order,
         user=payer,
@@ -210,11 +199,9 @@ def charge_order_from_wallet(*args, **kwargs):
         status=Payment.Status.SUCCEEDED,
     ).order_by("-created_at").first()
     if paid:
-        # ensure order synced
         order.mark_as_paid()
         return paid, None
 
-    # create a pending attempt (so UI can show attempt even if debit fails)
     payment = Payment.objects.create(
         order=order,
         user=payer,
@@ -246,7 +233,6 @@ def charge_order_from_wallet(*args, **kwargs):
 
         order.mark_as_paid()
 
-        # optional: emit signal (dacă îl folosești)
         try:
             from payments.signals import payment_succeeded
             payment_succeeded.send(sender=Payment, payment=payment, order=order)
@@ -255,11 +241,10 @@ def charge_order_from_wallet(*args, **kwargs):
 
         return payment, tx
 
-    except InsufficientFunds as e:
+    except InsufficientFunds:
         payment.status = Payment.Status.FAILED
         payment.raw_response = {**(payment.raw_response or {}), "error": "insufficient_funds"}
         payment.save(update_fields=["status", "raw_response", "updated_at"])
-
         order.mark_payment_failed()
 
         try:
@@ -274,7 +259,6 @@ def charge_order_from_wallet(*args, **kwargs):
         payment.status = Payment.Status.FAILED
         payment.raw_response = {**(payment.raw_response or {}), "error": str(e)}
         payment.save(update_fields=["status", "raw_response", "updated_at"])
-
         order.mark_payment_failed()
 
         try:

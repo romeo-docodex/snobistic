@@ -179,7 +179,7 @@
 
                       <td class="text-end">
                         {# dacă ai tx.direction (ex: CREDIT/DEBIT) e mai robust; aici păstrăm compatibil #}
-                        {% if tx.get_direction_display|lower == "debit" %}
+                        {% if tx.direction == "DEBIT" %}
                           <span class="text-danger">-{{ tx.amount }} {{ wallet.currency }}</span>
                         {% else %}
                           <span class="text-success">+{{ tx.amount }} {{ wallet.currency }}</span>

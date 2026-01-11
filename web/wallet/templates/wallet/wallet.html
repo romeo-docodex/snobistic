@@ -190,7 +190,7 @@
                         </td>
 
                         <td class="text-end">
-                          {% if tx.get_direction_display|lower == "debit" %}
+                          {% if tx.direction == "DEBIT" %}
                             <span class="text-danger">-{{ tx.amount }} {{ wallet.currency }}</span>
                           {% else %}
                             <span class="text-success">+{{ tx.amount }} {{ wallet.currency }}</span>
