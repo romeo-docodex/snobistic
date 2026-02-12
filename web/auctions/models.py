@@ -119,7 +119,7 @@ class Auction(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="auction_reserve_gte_start_or_null",
-                check=Q(reserve_price__isnull=True)
+                condition=Q(reserve_price__isnull=True)
                 | Q(reserve_price__gte=models.F("start_price")),
             )
         ]

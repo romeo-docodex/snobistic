@@ -8145,13 +8145,14 @@ button.animate-btn::after,
   overflow: hidden auto;
 }
 .box-nav-menu .mega-menu .menu-heading {
-  font-size: 14px;
+  font-size: 22px;
   line-height: 22.4px;
   padding-bottom: 10px;
   margin-bottom: 15px;
   border-bottom: 1px solid rgba(161, 161, 161, 0.2);
-  font-weight: 500;
-  color: var(--dark);
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 700 !important;
+  color: #171716;
   text-transform: uppercase;
   text-align: start;
 }
@@ -8212,7 +8213,7 @@ button.animate-btn::after,
 .box-nav-menu .mega-product .wrapper-sub-menu {
   width: 67%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 .box-nav-menu .mega-product .wrapper-sub-product {
@@ -8288,12 +8289,13 @@ button.animate-btn::after,
   margin-bottom: 10px;
 }
 .box-nav-menu .menu-list .menu-link-text {
-  font-size: 14px;
+  font-size: 16px;
+  font-family: "Lato", sans-serif !important;
+  font-weight: 400 !important;
   line-height: 21px;
-  color: #5d5d5d;
+  color: #1E1B18;
   display: flex;
   align-items: center;
-  font-weight: 400;
   text-align: start;
 }
 .box-nav-menu .menu-list .menu-link-text .demo-label {

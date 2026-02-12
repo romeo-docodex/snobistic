@@ -78,213 +78,188 @@
                         <a href="{% url 'core:home' %}" class="item-link">Acasă</a>
                     </li>
 
-                    {# Magazin – mega menu (ca Femei înainte) #}
+                    {# ===== Magazin – mega menu (nou) ===== #}
                     <li class="menu-item">
                         <a href="{% url 'catalog:product_list' %}" class="item-link">
-                        Magazin<i class="icon icon-arr-down"></i>
+                            Magazin<i class="icon icon-arr-down"></i>
                         </a>
 
                         <div class="sub-menu mega-menu mega-product">
-                        <div class="wrapper-sub-menu">
+                            <div class="wrapper-sub-menu">
 
-                            {# Femei – Categorii + subcategorii (DB) #}
-                            <div class="mega-menu-item">
-                            <div class="menu-heading">Femei</div>
-                            <ul class="menu-list">
-                                <li>
-                                <a href="{% url 'catalog:product_list' %}?gender=F" class="menu-link-text link">Toate</a>
-                                </li>
-
-                                {% for cat in nav_categories_women %}
-                                <li class="{% if cat.subcategories.all %}has-children{% endif %}">
-                                    <a href="{% url 'catalog:product_list' %}?gender=F&category={{ cat.slug }}"
-                                    class="menu-link-text link">
-                                    {{ cat.name }}
-                                    </a>
-
-                                    {% if cat.subcategories.all %}
-                                    <ul class="sub-menu-list">
-                                        {% for sub in cat.subcategories.all %}
-                                        {% if sub.is_active %}
-                                            <li>
-                                            <a href="{% url 'catalog:product_list' %}?gender=F&category={{ cat.slug }}&subcategory={{ sub.slug }}"
-                                                class="menu-link-text">
-                                                {{ sub.name }}
+                                {# Coloana 1 — Categorii #}
+                                <div class="mega-menu-item">
+                                    <div class="menu-heading">Categorii</div>
+                                    <ul class="menu-list">
+                                        <li>
+                                            <a href="{% url 'catalog:product_list' %}?category=imbracaminte"
+                                               class="menu-link-text link">
+                                                Îmbrăcăminte
                                             </a>
-                                            </li>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            </div>
-
-                            {# Bărbați – Categorii + subcategorii (DB) #}
-                            <div class="mega-menu-item">
-                            <div class="menu-heading">Bărbați</div>
-                            <ul class="menu-list">
-                                <li>
-                                <a href="{% url 'catalog:product_list' %}?gender=M" class="menu-link-text link">Toate</a>
-                                </li>
-
-                                {% for cat in nav_categories_men %}
-                                <li class="{% if cat.subcategories.all %}has-children{% endif %}">
-                                    <a href="{% url 'catalog:product_list' %}?gender=M&category={{ cat.slug }}"
-                                    class="menu-link-text link">
-                                    {{ cat.name }}
-                                    </a>
-
-                                    {% if cat.subcategories.all %}
-                                    <ul class="sub-menu-list">
-                                        {% for sub in cat.subcategories.all %}
-                                        {% if sub.is_active %}
-                                            <li>
-                                            <a href="{% url 'catalog:product_list' %}?gender=M&category={{ cat.slug }}&subcategory={{ sub.slug }}"
-                                                class="menu-link-text">
-                                                {{ sub.name }}
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'catalog:product_list' %}?category=incaltaminte"
+                                               class="menu-link-text link">
+                                                Încălțăminte
                                             </a>
-                                            </li>
-                                        {% endif %}
-                                        {% endfor %}
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'catalog:product_list' %}?category=accesorii"
+                                               class="menu-link-text link">
+                                                Accesorii
+                                            </a>
+                                        </li>
                                     </ul>
-                                    {% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            </div>
-
-                            {# Colecții (mix) #}
-                            <div class="mega-menu-item">
-                            <div class="menu-heading">Colecții</div>
-                            <ul class="menu-list">
-                                <li><a href="{% url 'catalog:product_list' %}?segment=new" class="menu-link-text link">New In</a></li>
-                                <li><a href="{% url 'catalog:product_list' %}?segment=outlet" class="menu-link-text link">Outlet</a></li>
-                                <li><a href="{% url 'catalog:product_list' %}?segment=preloved" class="menu-link-text link">Preloved</a></li>
-                                <li><a href="{% url 'auctions:auction_list' %}" class="menu-link-text link">Licitații</a></li>
-                            </ul>
-                            </div>
-
-                            {# Funcționalități #}
-                            <div class="mega-menu-item">
-                            <div class="menu-heading">Funcționalități</div>
-                            <ul class="menu-list">
-                                <li><a href="{% url 'catalog:product_list' %}?tag=best-sellers" class="menu-link-text link">Best Sellers</a></li>
-                                <li><a href="{% url 'catalog:product_list' %}?tag=editor-choice" class="menu-link-text link">Recomandate</a></li>
-                                <li><a href="{% url 'catalog:product_list' %}?tag=last-chance" class="menu-link-text link">Last Chance</a></li>
-                                <li><a href="{% url 'catalog:product_list' %}?tag=eco" class="menu-link-text link">Eco / Sustainable</a></li>
-                            </ul>
-                            </div>
-
-                        </div>
-
-                        {# Slider-ul de produse (păstrat ca în Femei) #}
-                        <div class="wrapper-sub-product">
-                            <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
-                                "slidesPerView": 2,
-                                "spaceBetween": 24,
-                                "speed": 800,
-                                "observer": true,
-                                "observeParents": true,
-                                "slidesPerGroup": 2,
-                                "navigation": {
-                                "clickable": true,
-                                "nextEl": ".nav-next-product-header",
-                                "prevEl": ".nav-prev-product-header"
-                                },
-                                "pagination": { "el": ".sw-pagination-product-header", "clickable": true }
-                            }'>
-                            <div class="swiper-wrapper">
-
-                                <div class="swiper-slide">
-                                <div class="card-product">
-                                    <div class="card-product-wrapper">
-                                    <a href="{% url 'catalog:product_list' %}" class="product-img">
-                                        <img class="img-product lazyload"
-                                            data-src="https://themesflat.co/html/vineta/images/products/fashion/product-12.jpg"
-                                            src="https://themesflat.co/html/vineta/images/products/fashion/product-12.jpg"
-                                            alt="image-product">
-                                        <img class="img-hover lazyload"
-                                            data-src="https://themesflat.co/html/vineta/images/products/fashion/product-20.jpg"
-                                            src="https://themesflat.co/html/vineta/images/products/fashion/product-20.jpg"
-                                            alt="image-product">
-                                    </a>
-                                    </div>
-                                    <div class="card-product-info text-center">
-                                    <a href="{% url 'catalog:product_list' %}" class="name-product link fw-medium text-md">
-                                        New Arrivals
-                                    </a>
-                                    <p class="price-wrap fw-medium">
-                                        <span class="price-new">Vezi produsele</span>
-                                    </p>
-                                    </div>
-                                </div>
                                 </div>
 
-                                <div class="swiper-slide">
-                                <div class="card-product">
-                                    <div class="card-product-wrapper">
-                                    <a href="{% url 'auctions:auction_list' %}" class="product-img">
-                                        <img class="img-product lazyload"
-                                            data-src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
-                                            src="https://themesflat.co/html/vineta/images/products/fashion/product-8.jpg"
-                                            alt="image-product">
-                                        <img class="img-hover lazyload"
-                                            data-src="https://themesflat.co/html/vineta/images/products/fashion/product-7.jpg"
-                                            src="https://themesflat.co/html/vineta/images/products/fashion/product-7.jpg"
-                                            alt="image-product">
-                                    </a>
-                                    </div>
-                                    <div class="card-product-info text-center">
-                                    <a href="{% url 'auctions:auction_list' %}" class="name-product link fw-medium text-md">
-                                        Licitații Live
-                                    </a>
-                                    <p class="price-wrap fw-medium">
-                                        <span class="price-new">Intră acum</span>
-                                    </p>
-                                    </div>
+                                {# Coloana 2 — Stiluri (non-funcțional momentan) #}
+                                <div class="mega-menu-item">
+                                    <div class="menu-heading">Stiluri</div>
+                                    <ul class="menu-list">
+                                        <li><a href="#" class="menu-link-text link">Casual</a></li>
+                                        <li><a href="#" class="menu-link-text link">Office / Business</a></li>
+                                        <li><a href="#" class="menu-link-text link">Elegant / Evening</a></li>
+                                        <li><a href="#" class="menu-link-text link">Party / Glam</a></li>
+                                        <li><a href="#" class="menu-link-text link">Sport</a></li>
+                                        <li><a href="#" class="menu-link-text link">Beachwear / Resort</a></li>
+                                    </ul>
                                 </div>
+
+                                {# Coloana 3 — Platformă #}
+                                <div class="mega-menu-item">
+                                    <div class="menu-heading">Platformă</div>
+                                    <ul class="menu-list">
+                                        <li>
+                                            <a href="{% url 'catalog:product_list' %}" class="menu-link-text link">
+                                                Magazin
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'auctions:auction_list' %}" class="menu-link-text link">
+                                                Licitații
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'authenticator:authenticate_product' %}" class="menu-link-text link">
+                                                Autenticitate
+                                            </a>
+                                        </li>
+                                        <li><a href="#" class="menu-link-text link">Ghid cumpărător</a></li>
+                                        <li><a href="#" class="menu-link-text link">Ghid vânzător</a></li>
+                                    </ul>
                                 </div>
 
                             </div>
 
-                            <div class="sw-dot-default sw-pagination-product-header justify-content-center"></div>
-                            {# dacă ai butoane în header, lasă clasele astea, chiar dacă nu le-ai pus în HTML #}
-                            <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-product-header"></div>
-                            <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-product-header"></div>
+                            {# Slider-ul de produse (păstrat) — acum: Femei / Bărbați #}
+                            <div class="wrapper-sub-product">
+                                <div dir="ltr" class="swiper tf-swiper wrap-sw-over" data-swiper='{
+                                    "slidesPerView": 2,
+                                    "spaceBetween": 24,
+                                    "speed": 800,
+                                    "observer": true,
+                                    "observeParents": true,
+                                    "slidesPerGroup": 2,
+                                    "navigation": {
+                                        "clickable": true,
+                                        "nextEl": ".nav-next-product-header",
+                                        "prevEl": ".nav-prev-product-header"
+                                    },
+                                    "pagination": { "el": ".sw-pagination-product-header", "clickable": true }
+                                }'>
+                                    <div class="swiper-wrapper">
+
+                                        {# Slide 1 — Femei #}
+                                        <div class="swiper-slide">
+                                            <div class="card-product">
+                                                <div class="card-product-wrapper">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=F" class="product-img">
+                                                        <img class="img-product lazyload"
+                                                             data-src="{% static 'images/categories/femei.png' %}"
+                                                             src="{% static 'images/categories/femei.png' %}"
+                                                             alt="Femei">
+                                                        <img class="img-hover lazyload"
+                                                             data-src="{% static 'images/categories/femei.png' %}"
+                                                             src="{% static 'images/categories/femei.png' %}"
+                                                             alt="Femei">
+                                                    </a>
+                                                </div>
+                                                <div class="card-product-info text-center">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=F"
+                                                       class="name-product link fw-medium text-md">
+                                                        Femei
+                                                    </a>
+                                                    <p class="price-wrap fw-medium">
+                                                        <span class="price-new">Vezi produsele</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {# Slide 2 — Bărbați #}
+                                        <div class="swiper-slide">
+                                            <div class="card-product">
+                                                <div class="card-product-wrapper">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=M" class="product-img">
+                                                        <img class="img-product lazyload"
+                                                             data-src="{% static 'images/categories/barbati.png' %}"
+                                                             src="{% static 'images/categories/barbati.png' %}"
+                                                             alt="Bărbați">
+                                                        <img class="img-hover lazyload"
+                                                             data-src="{% static 'images/categories/barbati.png' %}"
+                                                             src="{% static 'images/categories/barbati.png' %}"
+                                                             alt="Bărbați">
+                                                    </a>
+                                                </div>
+                                                <div class="card-product-info text-center">
+                                                    <a href="{% url 'catalog:product_list' %}?gender=M"
+                                                       class="name-product link fw-medium text-md">
+                                                        Bărbați
+                                                    </a>
+                                                    <p class="price-wrap fw-medium">
+                                                        <span class="price-new">Vezi produsele</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="sw-dot-default sw-pagination-product-header justify-content-center"></div>
+                                    <div class="d-none d-xl-flex swiper-button-next nav-swiper nav-next-product-header"></div>
+                                    <div class="d-none d-xl-flex swiper-button-prev nav-swiper nav-prev-product-header"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </li>
+                    </li>
 
-                <!-- Vinde -->
-                <li class="menu-item">
-                    <a href="{% url 'catalog:product_create_wizard' %}" class="item-link">Vinde</a>
-                </li>
+                    <!-- Vinde -->
+                    <li class="menu-item">
+                        <a href="{% url 'catalog:product_create_wizard' %}" class="item-link">Vinde</a>
+                    </li>
 
-                <!-- Licitații -->
-                <li class="menu-item">
-                    <a href="{% url 'auctions:auction_list' %}" class="item-link">Licitații</a>
-                </li>
+                    <!-- Licitații -->
+                    <li class="menu-item">
+                        <a href="{% url 'auctions:auction_list' %}" class="item-link">Licitații</a>
+                    </li>
 
-                <!-- Autenticitate -->
-                <li class="menu-item">
-                    <a href="{% url 'authenticator:authenticate_product' %}" class="item-link">Autenticitate</a>
-                </li>
+                    <!-- Autenticitate -->
+                    <li class="menu-item">
+                        <a href="{% url 'authenticator:authenticate_product' %}" class="item-link">Autenticitate</a>
+                    </li>
 
-                <!-- Blog -->
-                <li class="menu-item">
-                    <a href="#" class="item-link">Blog</a>
-                </li>
+                    <!-- Blog -->
+                    <li class="menu-item">
+                        <a href="#" class="item-link">Blog</a>
+                    </li>
 
-                <!-- Despre noi -->
-                <li class="menu-item">
-                    <a href="{% url 'core:about' %}" class="item-link">Despre noi</a>
-                </li>
+                    <!-- Despre noi -->
+                    <li class="menu-item">
+                        <a href="{% url 'core:about' %}" class="item-link">Despre noi</a>
+                    </li>
 
-                </ul>
-            </nav>
+                    </ul>
+                </nav>
             </div>
 
             <!-- RIGHT ICONS: search, account (dropdown), wishlist, cart -->
@@ -807,4 +782,3 @@
         </div>
     </div>
 </div>
-
