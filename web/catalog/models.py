@@ -19,7 +19,7 @@ User = settings.AUTH_USER_MODEL
 def _path_and_rename(filename: str, prefix: str) -> str:
     """
     Generează un nume scurt și unic pentru fișier, de forma:
-    <prefix>/<uuid>.<ext>
+    <prefix>/<uuid>.<ext>a
 
     Exemplu:
     products/main/3f9c2a1b8f2d4c0e9a7b.png

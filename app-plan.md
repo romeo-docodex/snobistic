@@ -232,26 +232,25 @@
 
 * Oferă **interfața de tip „cont”** pentru fiecare tip de utilizator.
 * Pentru **cumpărător**:
-
   * afișează „Comenzile mele” (listă + detalii),
   * afișează „Favoritele mele”,
   * afișează „Dimensiunile mele” și permite modificarea lor,
   * afișează acces la facturi și documente disponibile.
-* Pentru **vânzător**:
 
+* Pentru **vânzător**:
   * afișează „Articole Magazin” (produse postate, status, preț, SKU),
   * afișează „Articole Licitație” (licitații create și statusul lor),
   * afișează „Articole Vândute” (comenzi finalizate),
   * afișează „Istoric Articole” și permite repostarea produselor,
   * afișează secțiunea „Wallet” (sold și tranzacții),
   * afișează setările de cont și de vânzător.
-* Pentru **shop manager**:
 
+* Pentru **shop manager**:
   * afișează lista de produse în **validare** (de la vânzători),
   * permite aprobarea sau respingerea produselor,
   * afișează istoricul de validări.
-* Pentru **admin**:
 
+* Pentru **admin**:
   * afișează rapoarte: comisioane, vânzări, retururi, scoruri,
   * afișează și permite modificarea **setărilor globale**:
 
@@ -269,21 +268,22 @@
 **Ce face:**
 
 * Gestionează **plățile online** pentru comenzi:
-
   * inițierea plății (de ex. către procesator card),
   * primirea rezultatului plății (reușită, eșec, anulare).
+
 * Leagă **comanda** de tranzacțiile de plată efectuate.
 * Calculează și gestionează **taxa de Buyer Protection**.
 * Aplică **comisionul de platformă** pentru vânzători, pe baza nivelului definit în `accounts` (Amator / Rising / Top / VIP) și calculează suma **„Tu primești”** (net pentru vânzător).
-* Gestionează partea tehnică de **escrow**:
 
+* Gestionează partea tehnică de **escrow**:
   * reținerea banilor plătiți de cumpărător,
   * marcarea banilor ca „în escrow” până la confirmarea comenzii sau expirarea termenului de retur,
   * eliberarea banilor către vânzător,
   * inițierea de rambursări dacă este nevoie.
-* La eliberarea escrow-ului, trimite sumele corespunzătoare către **Wallet-ul vânzătorului**.
-* Gestionează **plata la ramburs**, care este mereu disponibilă ca opțiune de plată:
 
+* La eliberarea escrow-ului, trimite sumele corespunzătoare către **Wallet-ul vânzătorului**.
+
+* Gestionează **plata la ramburs**, care este mereu disponibilă ca opțiune de plată:
   * platforma se ocupă de **încasarea banilor de la curier**,
   * platforma se ocupă de **decontarea sumelor către Wallet-ul vânzătorului**,
   * verifică dacă există **limite de valoare sau reguli speciale** (de exemplu pe baza scorului de seriozitate),
@@ -296,18 +296,18 @@
 **Ce face:**
 
 * Gestionează **tichetele de suport** deschise de utilizatori:
-
   * pentru retururi,
   * pentru produse neconforme,
   * pentru probleme de plată sau livrare,
   * pentru alte întrebări.
-* Leagă tichetele de:
 
+* Leagă tichetele de:
   * un anumit utilizator,
   * o anumită comandă sau licitație (dacă e cazul).
-* Stabilește și urmărește **statusul fiecărui tichet**:
 
+* Stabilește și urmărește **statusul fiecărui tichet**:
   * nou, în lucru, rezolvat, respins.
+
 * Gestionează **coada tichetelelor** și poziția utilizatorului în listă (queue), astfel încât acesta să vadă cât de departe este de un operator.
 * Permite echipei Snobistic să comunice cu utilizatorul în cadrul tichetului, eventual și cu vânzătorul.
 * Se integrează cu **messaging** pentru partea de conversație efectivă (dacă alegi varianta asta).
@@ -319,17 +319,17 @@
 **Ce face:**
 
 * Gestionează toate **documentele fiscale** care țin de platformă:
-
   * facturi de comision emise de Snobistic către vânzători,
   * facturi de transport și buyer protection emise de Snobistic către cumpărători,
   * eventual facturi de produs emise automat pentru vânzători PJ (dacă se integrează un sistem extern),
   * facturi storno pentru retururi.
+
 * Stochează informațiile fiecărei facturi:
-
   * număr, serie, dată, sumă, TVA, tip factură.
-* Stochează sau generează **fișierul PDF** al facturii.
-* Permite **descărcarea facturilor** de către:
 
+* Stochează sau generează **fișierul PDF** al facturii.
+
+* Permite **descărcarea facturilor** de către:
   * cumpărător (din contul lui),
   * vânzător (facturile de comision),
   * admin (dintr-un panou de administrare intern).
@@ -341,27 +341,27 @@
 **Ce face:**
 
 * Gestionează **curierii** folosiți pe platformă:
-
   * nume, tip serviciu (standard, express, ramburs),
   * tarife.
+
 * Gestionează **tarifele de livrare**:
-
   * în funcție de curier, zonă, greutate sau altă regulă aleasă.
-* Gestionează **AWB-urile**:
 
+* Gestionează **AWB-urile**:
   * permite vânzătorului să genereze sau să introducă AWB,
   * salvează numărul de AWB pentru fiecare comandă,
   * asociază pozele obligatorii (conținut colet și colet ambalat).
+
 * Gestionează **statusul livrării**:
-
   * creat, în tranzit, livrat, returnat.
-* Afișează în panoul vânzătorului:
 
+* Afișează în panoul vânzătorului:
   * lista de **Colete Netrimise** (comenzi plătite, dar fără AWB),
   * lista de **Colete Trimise** (comenzi cu AWB și status de livrare).
-* Permite cumpărătorului să vadă **tracking-ul coletelelor** (statusul AWB-ului).
-* Respectă regula de **3 zile pentru generarea AWB**:
 
+* Permite cumpărătorului să vadă **tracking-ul coletelelor** (statusul AWB-ului).
+
+* Respectă regula de **3 zile pentru generarea AWB**:
   * dacă termenul este depășit, trimite informație mai departe pentru scăderea scorului de seriozitate și eventual anularea comenzii.
 
 ---
@@ -371,27 +371,28 @@
 **Ce face:**
 
 * Gestionează **portofelul intern** al fiecărui utilizator:
-
   * soldul disponibil în RON.
-* Înregistrează toate **tranzacțiile legate de wallet**:
 
+* Înregistrează toate **tranzacțiile legate de wallet**:
   * sume încasate din vânzări (după eliberarea escrow),
   * bonusuri din referral,
   * sume primite în urma retururilor,
   * retrageri de bani către contul bancar al utilizatorului,
   * încărcări manuale (dacă va exista opțiunea),
   * taxe și comisioane reținute.
+
 * Primește automat **bonusurile de referral** (1% din sumele cheltuite de utilizatorii invitați, după finalizarea tranzacțiilor fără retur).
 * Actualizează **soldul** la fiecare tranzacție.
-* Permite utilizatorului:
 
+* Permite utilizatorului:
   * să vadă **soldul curent**,
   * să vadă **istoricul tranzacțiilor** (filtrat pe perioade),
   * să inițieze o **cerere de retragere** de bani în contul bancar.
+
 * Respectă regula de **sumă minimă de retragere** (de ex. minim 1 RON, configurabil).
 * Poate permite **plata cu wallet-ul** la checkout, dacă există sold suficient.
-* Se integrează cu:
 
+* Se integrează cu:
   * `payments` (pentru eliberarea banilor din escrow),
   * `orders` și `support` (pentru refund-uri),
   * `accounts` (pentru bonusuri referral).
